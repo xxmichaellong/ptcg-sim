@@ -813,7 +813,15 @@ const restoredSelection = (
 
 const hasDropTarget = (view: MatchViewState, scene: BoardScene, id: string) =>
   Boolean(
-    scene.zones.some((zone) => zone.id === id && zone.interactive) ||
+    // Work areas are logical targets supplied by the visible-window adapter.
+    // Their scene rectangles stay excluded from physical picking.
+    scene.zones.some(
+      (zone) =>
+        zone.id === id &&
+        (zone.interactive ||
+          zone.kind === 'inspection' ||
+          zone.kind === 'attachmentResolution')
+    ) ||
     (view.stacks[id] &&
       scene.cards.some((card) => card.parentId === id && card.interactive))
   );

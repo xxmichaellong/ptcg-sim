@@ -6,6 +6,7 @@ import type {
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import {
   deckCoinRevision,
+  setDeckCoinSelection,
   deckCoinSelection,
   subscribeDeckCoin,
 } from './deck-coin-selection.js';
@@ -38,6 +39,7 @@ const memories = new WeakMap<
   object,
   { coin: string; deckRevision: number; attempted: CoinAttempt | undefined }
 >();
+const initialized = new WeakSet<object>();
 const RETRYABLE = new Set([
   'stale_reference',
   'precondition_failed',
@@ -57,9 +59,12 @@ export const useCoinCustomization = (
   );
   const coin = deckCoinSelection(session) ?? personalCoin;
   useEffect(() => {
+    const effectCoin = deckCoinSelection(session) ?? personalCoin;
+    const effectRevision = deckCoinRevision(session);
     const remembered = memories.get(session);
     let attempted =
-      remembered?.coin === coin && remembered.deckRevision === deckRevision
+      remembered?.coin === effectCoin &&
+      remembered.deckRevision === effectRevision
         ? remembered.attempted
         : undefined;
     let retry: number | undefined;
@@ -78,6 +83,32 @@ export const useCoinCustomization = (
       const playerId = view.viewer.playerId;
       const player = view.players[playerId];
       if (!player) return;
+      if (!initialized.has(session)) {
+        initialized.add(session);
+        const board = view.boards[playerId];
+        const areas = view.workAreas[playerId];
+        const hasOwnTable =
+          state.roomMode !== undefined &&
+          (Object.values(view.zones).some(
+            (zone) => zone.ownerId === playerId && zone.cards.length > 0
+          ) ||
+            board?.activeStackId ||
+            board?.benchStackIds.length ||
+            areas?.inspection?.cards.length ||
+            areas?.attachmentResolution?.cards.length);
+        // An existing table is authoritative, including Standard after Undo.
+        // A fresh empty seat still takes its personal default.
+        if (
+          deckCoinRevision(session) === 0 &&
+          (player.coin ?? STANDARD_COIN) !== personalCoin &&
+          (player.coin !== undefined ||
+            hasOwnTable ||
+            (state.roomMode === 'solo' && view.revision > 0))
+        )
+          setDeckCoinSelection(session, player.coin ?? STANDARD_COIN);
+      }
+      // A child can restore its deck override before this effect's first sync.
+      const coin = deckCoinSelection(session) ?? personalCoin;
       const key = `${view.matchId}/${playerId}`;
       const pending = pendingCoinChange(state, playerId);
       if (pending?.coin === coin) {
@@ -133,7 +164,11 @@ export const useCoinCustomization = (
     return () => {
       clearRetry();
       unsubscribe();
-      memories.set(session, { coin, deckRevision, attempted });
+      memories.set(session, {
+        coin: effectCoin,
+        deckRevision: effectRevision,
+        attempted,
+      });
     };
-  }, [coin, session, deckRevision]);
+  }, [coin, personalCoin, session, deckRevision]);
 };

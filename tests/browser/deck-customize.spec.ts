@@ -115,6 +115,15 @@ for (const viewport of [
       await expect(
         page.locator('[data-zone-kind="bench"][data-zone-side="local"]')
       ).toHaveAttribute('data-table-art-swatch', 'charcoal');
+      await page.reload();
+      await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
+      await expect(
+        page.locator('[data-table-coin="local"] .table-coin__face--heads img')
+      ).toHaveAttribute('src', coin!);
+      await expect(page.locator('[data-player-frame-side="local"]')).toHaveCSS(
+        'background-image',
+        /data:image\/svg/
+      );
       await openSettings(page);
       const p1 = page.getByRole('textbox', {
           name: 'Name for P1',

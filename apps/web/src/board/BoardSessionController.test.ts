@@ -5,6 +5,9 @@ import {
 } from '@ptcgsim/game-core';
 import {
   createBoardSceneForViewport,
+  createBoardScene,
+  createTableLayoutSnapshot,
+  tableVerticalLayout,
   createRendererSpikeView,
   DEFAULT_BOARD_PRESENTATION,
   selectedCardIdOf,
@@ -268,6 +271,85 @@ describe('headless board session controller', () => {
     expect(result.outcome).toBe('rejected');
     expect(result.state.view?.revision).toBe(5);
   });
+
+  it.each(['inspection', 'attachmentResolution'] as const)(
+    'keeps a visible %s window as a logical drag target without physical picking',
+    (kind) => {
+      const base = createRendererSpikeView();
+      const me = base.playerOrder[0]!;
+      const hand = base.zones[`zone:${me}:hand`]!;
+      const held = hand.cards[0]!,
+        staged = hand.cards[1]!;
+      const id = `visible-${kind}`;
+      const view: MatchViewState = {
+        ...base,
+        zones: {
+          ...base.zones,
+          [hand.id]: {
+            ...hand,
+            cards: hand.cards.filter((card) => card.id !== staged.id),
+          },
+        },
+        workAreas: {
+          ...base.workAreas,
+          [me]: {
+            ...base.workAreas[me]!,
+            ...(kind === 'inspection'
+              ? { inspection: { id, sourceZoneId: hand.id, cards: [staged] } }
+              : {
+                  attachmentResolution: {
+                    id,
+                    sourceStackId: base.boards[me]!.activeStackId!,
+                    cards: [staged],
+                    evolutionCards: [],
+                    attachmentCards: [staged],
+                    suggestedSlot: 'bench' as const,
+                  },
+                }),
+          },
+        },
+      };
+      const deps = {
+        createScene: (projected: MatchViewState) =>
+          createBoardScene(
+            projected,
+            createTableLayoutSnapshot({
+              geometryVersion: 2,
+              shellMode: 'fullscreen',
+              viewport,
+              playerIds: [base.playerOrder[0]!, base.playerOrder[1]!],
+              bottomPlayerId: me,
+              vertical: tableVerticalLayout(0.5),
+            })
+          ),
+      };
+      const state = install(initialFrame(view), deps);
+      expect(
+        state.scene!.zones.find((zone) => zone.id === id)!.interactive
+      ).toBe(false);
+      const dragged = apply(
+        state,
+        {
+          kind: 'RendererPresentationUpdated',
+          update: {
+            kind: 'DragChanged',
+            drag: { cardId: held.id, x: 5, y: 6, targetId: id },
+          },
+        },
+        deps
+      ).state;
+      expect(dragged.presentation.drag?.targetId).toBe(id);
+      const refreshed = apply(
+        dragged,
+        {
+          kind: 'FrameReceived',
+          frame: liveFrame(2, withRevision(view, view.revision + 1)),
+        },
+        deps
+      ).state;
+      expect(refreshed.presentation.drag?.targetId).toBe(id);
+    }
+  );
 
   it('lights only a target the drop would take, and the card keeps following over anything else', () => {
     const state = install();

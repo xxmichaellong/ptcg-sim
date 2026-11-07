@@ -18,7 +18,7 @@ TCG Live's [publisher screenshots](https://apps.apple.com/us/app/pok%C3%A9mon-tc
 
 ## Targeting and responsive layout
 
-Modern work-area scene rectangles are not physical drop targets and their placeholder cards are not painted. Only a registered, visible, active window's actual DOM bounds accept ingress. Its own source, hidden windows and exit copies do not intercept drops. Physical card picking excludes unpainted nodes. View board hides and inerts every other header action, including Undo, across all panels.
+Modern work-area scene rectangles are not physical drop targets and their placeholder cards are not painted. Only a registered, visible, active window's actual DOM bounds accept ingress. Its own source, hidden windows and exit copies do not intercept drops. Physical picking and logical eligibility are separate: the controller retains a valid work-area id supplied by the visible-window adapter so the actual window highlights during hover and across new projections. Physical card picking excludes unpainted nodes. View board hides and inerts every other header action, including Undo, across all panels.
 
 Portrait piles are smaller, with Deck then Discard at the right edge and Prizes at the left. Counts sit on the pile corner away from the hand, with smaller badges and less outset. The owner's landscape-phone card size is retained. Thickness now has a maximum of 1 and a default of 0.6; older larger choices are clamped.
 

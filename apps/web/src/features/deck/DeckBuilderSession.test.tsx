@@ -546,6 +546,186 @@ describe('DeckBuilderSession', () => {
   });
 
   it.each(['main', 'alternate'] as const)(
+    'keeps live %s appearance through a metadata-only edit',
+    async (target) => {
+      const session = new FakeSession();
+      const store = new DeckBuilderStore();
+      const cardBackStore = new CardBackCustodyStore();
+      const player = target === 'main' ? ownPlayerId : alternatePlayerId;
+      const deck = library.create({
+        name: 'Metadata deck',
+        format: 'standard',
+        cards: [{ card: card('Theme mon'), count: 1 }],
+        cardBack: 'preset:azure',
+        coin: 'preset:violet',
+        playmat: 'style:frost',
+      });
+      store.replaceDeck(target, deck.cards, {
+        deckId: deck.id,
+        name: deck.name,
+      });
+      session.showTable({
+        ...view,
+        players: {
+          ...view.players,
+          [player]: {
+            ...view.players[player]!,
+            cardBackUrl: 'preset:crimson',
+            coin: 'preset:jade',
+            playmat: 'style:ocean',
+          },
+        },
+      });
+      await renderSession({
+        session,
+        store,
+        open: true,
+        alternateEnabled: true,
+        cardBackStore,
+      });
+      expect(session.commands).toHaveLength(0);
+      const backsBefore = cardBackStore.getSnapshot().slots;
+      await click(`[data-edit-deck="${deck.id}"]`);
+      const input = host.querySelector<HTMLInputElement>('#deckNameInput')!;
+      await act(async () => {
+        input.focus();
+        Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          'value'
+        )!.set!.call(input, 'Metadata renamed');
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      await act(async () => input.blur());
+      await vi.waitFor(() =>
+        expect(library.get(deck.id)?.name).toBe('Metadata renamed')
+      );
+      expect(cardBackStore.getSnapshot().slots).toEqual(backsBefore);
+      expect(session.commands).toHaveLength(0);
+      // A real mat-only edit must not also reapply the saved coin or sleeves.
+      await act(async () =>
+        library.update(deck.id, { playmat: 'style:midnight' })
+      );
+      expect(session.commands).toEqual([
+        {
+          type: 'SetPlayerProfile',
+          targetPlayerId: player,
+          playmat: 'style:midnight',
+        },
+      ]);
+    }
+  );
+
+  it('waits for saved-deck metadata before baselining a restored table', async () => {
+    const session = new FakeSession();
+    const store = new DeckBuilderStore();
+    const deck = library.create({
+      name: 'Loading theme',
+      format: 'standard',
+      cards: [{ card: card('Theme mon'), count: 1 }],
+      coin: 'preset:violet',
+      playmat: 'style:frost',
+    });
+    store.replaceDeck('main', deck.cards, { deckId: deck.id, name: deck.name });
+    session.showTable({
+      ...view,
+      players: {
+        ...view.players,
+        [ownPlayerId]: {
+          ...view.players[ownPlayerId]!,
+          coin: 'preset:jade',
+          playmat: 'style:ocean',
+        },
+      },
+    });
+    let loading = true;
+    const get = library.get.bind(library),
+      snapshot = library.getSnapshot.bind(library);
+    vi.spyOn(library, 'get').mockImplementation((id) =>
+      loading && id === deck.id ? undefined : get(id)
+    );
+    const loadingSnapshot = { ...snapshot(), status: 'loading' as const };
+    vi.spyOn(library, 'getSnapshot').mockImplementation(() =>
+      loading ? loadingSnapshot : snapshot()
+    );
+    await renderSession({ session, store, open: true });
+    await act(async () => {
+      loading = false;
+      library.update(deck.id, { name: 'Loaded metadata' }, { touch: false });
+    });
+    expect(session.commands).toHaveLength(0);
+    expect(deckCoinSelection(session)).toBe('preset:jade');
+  });
+
+  it('applies an explicit new deck choice made while older library records are loading', async () => {
+    const session = new FakeSession();
+    const store = new DeckBuilderStore();
+    const old = library.create({
+      name: 'Loading theme',
+      format: 'standard',
+      cards: [{ card: card('Theme mon'), count: 1 }],
+      playmat: 'style:frost',
+    });
+    store.replaceDeck('main', old.cards, { deckId: old.id, name: old.name });
+    session.showTable({
+      ...view,
+      players: {
+        ...view.players,
+        [ownPlayerId]: {
+          ...view.players[ownPlayerId]!,
+          coin: 'preset:jade',
+          playmat: 'style:ocean',
+        },
+      },
+    });
+    let loading = true;
+    const get = library.get.bind(library),
+      snapshot = library.getSnapshot.bind(library);
+    vi.spyOn(library, 'get').mockImplementation((id) =>
+      loading && id === old.id ? undefined : get(id)
+    );
+    const loadingSnapshot = { ...snapshot(), status: 'loading' as const };
+    vi.spyOn(library, 'getSnapshot').mockImplementation(() =>
+      loading ? loadingSnapshot : snapshot()
+    );
+    await renderSession({ session, store, open: true });
+    await click('#deckNewButton');
+    await click('.deck-editor__sections button:nth-child(2)');
+    await click('#deckMat-midnight');
+    await click('#deckUseOnSeatButton');
+    await act(async () => {
+      loading = false;
+      library.update(old.id, { name: 'Loaded metadata' }, { touch: false });
+    });
+    expect(
+      session.commands
+        .filter((command) => command.type === 'SetPlayerProfile')
+        .at(-1)
+    ).toMatchObject({ playmat: 'style:midnight' });
+  });
+
+  it('saves a current unsaved list without replacing restored table looks', async () => {
+    const session = new FakeSession();
+    const store = new DeckBuilderStore({
+      mainDeck: [{ card: card('Current mon'), count: 1 }],
+    });
+    session.showTable({
+      ...view,
+      players: {
+        ...view.players,
+        [ownPlayerId]: {
+          ...view.players[ownPlayerId]!,
+          coin: 'preset:jade',
+          playmat: 'style:ocean',
+        },
+      },
+    });
+    await renderSession({ session, store, open: true });
+    await click('[data-unsaved="true"] button[aria-label^="Save "]');
+    expect(library.getSnapshot().decks).toHaveLength(1);
+    expect(session.commands).toHaveLength(0);
+  });
+
+  it.each(['main', 'alternate'] as const)(
     'keeps restored %s looks when mounting a saved deck association',
     async (target) => {
       const session = new FakeSession();
@@ -585,7 +765,9 @@ describe('DeckBuilderSession', () => {
             command.type === 'SetCoin' || command.type === 'SetPlayerProfile'
         )
       ).toEqual([]);
-      expect(deckCoinSelection(session)).toBeUndefined();
+      expect(deckCoinSelection(session)).toBe(
+        target === 'main' ? 'preset:jade' : undefined
+      );
       await click(
         target === 'main'
           ? '#nativeDeckBuilderTargetMain'

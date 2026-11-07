@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { STANDARD_COIN } from '@ptcgsim/game-core';
-import { setDeckCoinSelection } from '../../session/deck-coin-selection.js';
+import {
+  deckCoinRevision,
+  setDeckCoinSelection,
+} from '../../session/deck-coin-selection.js';
 import type { DeckBuilderTarget } from './deck-builder-store.js';
 export type DeckLookField = 'coin' | 'playmat';
 import type { DeckBuilderStore } from './deck-builder-store.js';
@@ -13,6 +16,7 @@ interface LookMemory {
     { signature: string; revision: number; deckId: string | undefined }
   >;
   readonly active: Set<string>;
+  readonly requested: Map<string, Set<DeckLookField>>;
   readonly ownCoins: Map<string, string>;
 }
 // The table and its seats outlive an editor (for example, while a tutorial is open).
@@ -35,6 +39,7 @@ const memoryFor = (
       attempted: new Map(),
       observed: new Map(),
       active: new Set(),
+      requested: new Map(),
       ownCoins: new Map(),
     };
     stores.set(store, memory);
@@ -62,7 +67,12 @@ export const useDeckLooks = (
     const sync = () => {
       const state = session.getSnapshot(),
         view = state.view;
-      if (state.phase !== 'ready' || view?.viewer.kind !== 'player') return;
+      if (
+        state.phase !== 'ready' ||
+        view?.viewer.kind !== 'player' ||
+        library.getSnapshot().status === 'loading'
+      )
+        return;
       const ownId = view.viewer.playerId;
       const otherId = view.playerOrder.find((id) => id !== ownId);
       for (const target of ['main', 'alternate'] as const) {
@@ -73,6 +83,16 @@ export const useDeckLooks = (
         const deck = slot.label?.deckId
           ? library.get(slot.label.deckId)
           : undefined;
+        const choiceId = deck?.id ?? `unsaved:${String(slot.revision)}`;
+        const choices = [
+          ...(target === 'alternate'
+            ? [{ type: 'SetCoin' as const, coin: deck?.coin ?? STANDARD_COIN }]
+            : []),
+          {
+            type: 'SetPlayerProfile' as const,
+            playmat: deck?.playmat ?? 'style:default',
+          },
+        ];
         const selectionKey = `${view.matchId}/${target}`;
         const signature = JSON.stringify([deck?.id, deck?.coin, deck?.playmat]);
         const previousSelection = memory.observed.get(selectionKey);
@@ -93,14 +113,49 @@ export const useDeckLooks = (
           revision: slot.revision,
           deckId: slot.label?.deckId,
         });
-        if (!previousSelection && !installInitially()) {
-          if (target === 'main')
+        const requested = memory.requested.get(selectionKey);
+        const holdBaseline = () => {
+          for (const choice of choices) {
+            const key = `${view.matchId}/${playerId}/${choice.type}`;
+            attempted.set(key, { value: JSON.stringify([choiceId, choice]) });
+          }
+          if (target === 'main') {
             memory.ownCoins.set(
               selectionKey,
               JSON.stringify([deck?.id, deck?.coin])
             );
-          continue;
+            if (
+              deck &&
+              deckCoinRevision(session) === 0 &&
+              !requested?.has('coin')
+            )
+              setDeckCoinSelection(
+                session,
+                view.players[playerId]?.coin ?? STANDARD_COIN
+              );
+          }
+          memory.active.delete(selectionKey);
+        };
+        if (
+          (!previousSelection && !installInitially()) ||
+          (previousSelection &&
+            !replaced &&
+            deck &&
+            previousSelection.deckId !== slot.label?.deckId)
+        ) {
+          holdBaseline();
+          if (!requested?.size) continue;
+          memory.active.add(selectionKey);
+          for (const field of requested) {
+            if (target === 'main' && field === 'coin')
+              setDeckCoinSelection(session, deck?.coin);
+            else
+              attempted.delete(
+                `${view.matchId}/${playerId}/${field === 'coin' ? 'SetCoin' : 'SetPlayerProfile'}`
+              );
+          }
         }
+        memory.requested.delete(selectionKey);
         if (
           (!previousSelection && deck) ||
           ((changed || replaced) && (deck || choseDefaults))
@@ -117,16 +172,6 @@ export const useDeckLooks = (
               setDeckCoinSelection(session, deck?.coin);
           }
         }
-        const choiceId = deck?.id ?? `unsaved:${String(slot.revision)}`;
-        const choices = [
-          ...(target === 'alternate'
-            ? [{ type: 'SetCoin' as const, coin: deck?.coin ?? STANDARD_COIN }]
-            : []),
-          {
-            type: 'SetPlayerProfile' as const,
-            playmat: deck?.playmat ?? 'style:default',
-          },
-        ];
         for (const choice of choices) {
           const key = `${view.matchId}/${playerId}/${choice.type}`;
           const value = JSON.stringify([choiceId, choice]);
@@ -201,6 +246,7 @@ export const useDeckLooks = (
       }
     };
     force.current = (target, fields) => {
+      if (fields.length === 0) return;
       const view = session.getSnapshot().view;
       if (
         view?.viewer.kind !== 'player' ||
@@ -211,7 +257,17 @@ export const useDeckLooks = (
       const deck = slot.label?.deckId
         ? library.get(slot.label.deckId)
         : undefined;
-      memory.active.add(`${view.matchId}/${target}`);
+      const selectionKey = `${view.matchId}/${target}`;
+      memory.active.add(selectionKey);
+      if (
+        !memory.observed.has(selectionKey) ||
+        library.getSnapshot().status === 'loading'
+      ) {
+        const requested =
+          memory.requested.get(selectionKey) ?? new Set<DeckLookField>();
+        for (const field of fields) requested.add(field);
+        memory.requested.set(selectionKey, requested);
+      }
       const ownId = view.viewer.playerId;
       const playerId =
         target === 'main' ? ownId : view.playerOrder.find((id) => id !== ownId);

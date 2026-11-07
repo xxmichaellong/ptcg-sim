@@ -150,7 +150,9 @@ export const DeckCustomize = ({
                 >
                   <span className="table-art-swatch__mat" />
                 </span>
-                {i18n._(look.name)}
+                <span className="table-art-swatch__name">
+                  {i18n._(look.name)}
+                </span>
               </label>
             </span>
           ))}

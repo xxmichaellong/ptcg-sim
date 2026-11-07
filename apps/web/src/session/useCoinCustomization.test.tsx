@@ -260,3 +260,58 @@ it('keeps an accepted deck coin through Undo and a board remount, but honors an 
   await act(async () => setDeckCoinSelection(session, 'preset:violet', true));
   expect(session.commands).toHaveLength(2);
 });
+
+it('keeps a restored canonical coin before personal defaults can synchronize', async () => {
+  const session = new Session();
+  session.state = {
+    ...session.state,
+    view: {
+      ...base,
+      players: {
+        ...base.players,
+        [own]: { ...base.players[own]!, coin: 'preset:jade' },
+      },
+    },
+  };
+  await mount(session);
+  expect(session.commands).toHaveLength(0);
+  await act(async () => root.render(null));
+  await mount(session);
+  expect(session.commands).toHaveLength(0);
+});
+it('keeps Standard on an existing Solo table even when the personal default differs', async () => {
+  const session = new Session();
+  session.state = {
+    ...session.state,
+    roomMode: 'solo',
+    view: { ...base, revision: base.revision + 10 },
+  };
+  await mount(session);
+  expect(session.commands).toHaveLength(0);
+});
+
+it('applies a personal default to a fresh multiplayer seat in a room already in play', async () => {
+  const session = new Session();
+  session.state = {
+    ...session.state,
+    roomMode: 'multiplayer',
+    view: {
+      ...base,
+      revision: base.revision + 10,
+      zones: Object.fromEntries(
+        Object.entries(base.zones).map(([id, zone]) => [
+          id,
+          zone.ownerId === own ? { ...zone, cards: [] } : zone,
+        ])
+      ),
+      boards: {
+        ...base.boards,
+        [own]: { ...base.boards[own]!, activeStackId: null, benchStackIds: [] },
+      },
+    },
+  };
+  await mount(session);
+  expect(session.commands).toEqual([
+    { type: 'SetCoin', targetPlayerId: own, coin: 'preset:crimson' },
+  ]);
+});

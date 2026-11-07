@@ -268,6 +268,52 @@ for (const viewport of [
         '.ptcgsim-board-surface [data-zone-kind="attachmentResolution"]'
       )
     ).toHaveCount(0);
+    if (viewport.width === 1440) {
+      await expect(area).toHaveCSS('opacity', '1');
+      await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+        'data-board-motion',
+        'idle'
+      );
+      // A source outside the visible window can enter it, with real hover feedback.
+      const grip = await page.evaluate(() => {
+        for (const card of document.querySelectorAll<HTMLElement>(
+          '.ptcgsim-board-surface .ptcgsim-card[data-in-hand][data-card-side="local"]'
+        )) {
+          const box = card.getBoundingClientRect();
+          const left = Math.max(2, box.left + 2),
+            right = Math.min(innerWidth - 2, box.right - 2);
+          const top = Math.max(2, box.top + 2),
+            bottom = Math.min(innerHeight - 2, box.bottom - 2);
+          if (left >= right || top >= bottom) continue;
+          for (const u of [0.2, 0.5, 0.8])
+            for (const v of [0.2, 0.5, 0.8]) {
+              const x = left + (right - left) * u,
+                y = top + (bottom - top) * v;
+              if (
+                document.elementFromPoint(x, y)?.closest('.ptcgsim-card') ===
+                card
+              )
+                return { x, y };
+            }
+        }
+        return null;
+      });
+      expect(grip).not.toBeNull();
+      const target = (await area.boundingBox())!;
+      const beforeIngress = await revision(page);
+      await page.mouse.move(grip!.x, grip!.y);
+      await page.mouse.down();
+      await page.mouse.move(target.x + target.width / 2, target.y + 60, {
+        steps: 12,
+      });
+      await expect(area).toHaveAttribute('data-work-area-drop-target', 'true');
+      await page.mouse.up();
+      await expect.poll(() => revision(page)).toBe(beforeIngress + 1);
+      await expect(area.locator('[data-work-area-card-id]')).toHaveCount(2);
+      await page.keyboard.press('u');
+      await expect.poll(() => revision(page)).toBe(beforeIngress + 2);
+      await expect(area.locator('[data-work-area-card-id]')).toHaveCount(1);
+    }
     const handCountBeforeDrag = Object.values((await current()).zones).find(
       (zone) => zone.id === hand.id
     )!.cards.length;

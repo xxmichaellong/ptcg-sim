@@ -16,6 +16,8 @@ A chosen deck applies its looks to its live seat. Personal coin defaults remain 
 
 Opening or remounting the editor retains a restored table's live looks. Explicitly choosing a deck or editing its appearance applies its saved choices, including choosing the same deck again. A list without saved looks takes defaults; deleting only the saved entry leaves the live table dressed until a real deck choice or card replacement. Accepted synchronization survives editor/board remounts and reconnects, while an explicit repeated choice starts a fresh attempt.
 
+Restored canonical coins take precedence before personal-default synchronization, including Standard after Undo. Fresh empty seats still take their personal default. Names, notes, covers and other metadata changes do not redress a live seat. A mat-only edit changes only the mat. Library loading completes before restored deck associations are baselined; explicit choices made during loading remain pending and apply afterward.
+
 ## Canonical player metadata
 
 Settings' first page exposes both player names. Solo can edit either, multiplayer only its own, and spectators/replays cannot change live names. `SetPlayerProfile` carries a bounded name and/or playmat through authority, events, projections, persistence and replay. The room resolves seat permissions before execution.

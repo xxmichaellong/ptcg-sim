@@ -291,12 +291,12 @@ export const DeckScreen = ({
           followOnSeats(id);
           for (const seat of ['main', 'alternate'] as const) {
             if (store.getSnapshot().slots[seat].label?.deckId !== id) continue;
-            onSeatDeck?.(seat);
-            if (options?.touch !== false)
-              onSeatLook?.(
-                seat,
-                (['coin', 'playmat'] as const).filter((field) => field in patch)
-              );
+            if ('cardBack' in patch) onSeatDeck?.(seat);
+            const fields = (['coin', 'playmat'] as const).filter(
+              (field) => field in patch
+            );
+            if (options?.touch !== false && fields.length > 0)
+              onSeatLook?.(seat, fields);
           }
         }
         return next;
