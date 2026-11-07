@@ -425,7 +425,7 @@ const start: TutorialLesson = {
 
 const cards: TutorialLesson = {
   id: 'cards',
-  version: 1,
+  version: 2,
   title: msg`Look at cards`,
   summary: msg`Read a card, and open its actions`,
   scenario: MIDGAME_SCENARIO,
@@ -435,27 +435,28 @@ const cards: TutorialLesson = {
       text: (world) =>
         world.mode === 'touch' ? (
           <Trans>
-            Tap <strong>{name('charmeleon')}</strong> in your hand, then{' '}
-            <strong>{controlLabel('read')}</strong>.
+            Tap <strong>{name('charmeleon')}</strong>, then{' '}
+            <strong>{controlLabel('read')}</strong> and{' '}
+            <strong>View card</strong>.
           </Trans>
         ) : (
           <Trans>
-            Double-click <strong>{name('charmeleon')}</strong> in your hand to
-            read it.
+            Double-click <strong>{name('charmeleon')}</strong>, then choose{' '}
+            <strong>View card</strong>.
           </Trans>
         ),
       targets: (world) =>
         present([cardIn(world, world.you, 'hand', 'charmeleon')]),
-      done: (world) => world.screen.preview,
+      done: (world) => world.screen.artwork,
     },
     {
       id: 'close',
       text: (world) =>
         world.mode === 'touch' ? (
-          <Trans>Tap outside the card to put it back.</Trans>
+          <Trans>Tap the card to go back, then close the window.</Trans>
         ) : (
           <Trans>
-            Click outside the card, or press <kbd>Esc</kbd>, to put it back.
+            Press <kbd>Esc</kbd> to go back, then <kbd>Esc</kbd> again to close.
           </Trans>
         ),
       done: (world) => !world.screen.preview,

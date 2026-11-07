@@ -189,15 +189,14 @@ test('in a pile viewer, a preview and a card menu open over its bars', async ({
   await expect(bar).toBeVisible();
 
   await bar.getByRole('button', { name: 'Actions' }).click();
-  const menu = page.locator('.ptcgsim-legacy-card-context-menu');
+  const menu = page.locator('[data-card-actions-window]');
   await expect(menu).toBeVisible();
-  expect(await paintedOnTop(page, '.ptcgsim-legacy-card-context-menu')).toBe(
-    true
-  );
+  expect(await paintedOnTop(page, '[data-card-actions-window]')).toBe(true);
   await page.keyboard.press('Escape');
   await expect(menu).toHaveCount(0);
 
   await browser.locator('[data-overlay-card-id]').nth(1).dblclick();
+  await page.locator('[data-card-window-view]').click();
   await expect(page.locator('[data-legacy-card-preview]')).toBeVisible();
   for (const under of [
     '[data-legacy-zone-browser] .ptcgsim-card-actions',

@@ -273,6 +273,11 @@ test('off-center grips stay exact; Escape, blur and resize cancel cleanly; idle 
   const hand = await cardIn(page, 'hand');
   await page.locator(`[data-card-id="${hand.id}"]`).click();
   await page.keyboard.press('a');
+  // Motion can already be idle before the server accepts this placement.
+  await expect(page.locator(`[data-card-id="${hand.id}"]`)).toHaveAttribute(
+    'data-card-role',
+    'stackEvolution'
+  );
   await page.mouse.move(15, 15);
   await idle(page);
   const card = page.locator(`[data-card-id="${hand.id}"]`);
@@ -348,6 +353,11 @@ test('reduced motion keeps physical piles and lifts a held card at once, without
   const hand = await cardIn(page, 'hand');
   await page.locator(`[data-card-id="${hand.id}"]`).click();
   await page.keyboard.press('a');
+  // Motion can already be idle before the server accepts this placement.
+  await expect(page.locator(`[data-card-id="${hand.id}"]`)).toHaveAttribute(
+    'data-card-role',
+    'stackEvolution'
+  );
   await page.mouse.move(15, 15);
   await idle(page);
   const card = page.locator(`[data-card-id="${hand.id}"]`);
@@ -362,7 +372,7 @@ test('reduced motion keeps physical piles and lifts a held card at once, without
   const width = (await scene(page)).cards.find((c) => c.id === hand.id)!.bounds
     .width;
   expect(Number(await card.getAttribute('data-elevation'))).toBeCloseTo(
-    Number(elevation) + 0.45 * width,
+    Number(elevation) + 0.45 * preferences.depth.strength * width,
     1
   );
   await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(

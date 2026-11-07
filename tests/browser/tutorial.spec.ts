@@ -208,10 +208,13 @@ test('walks every lesson with a mouse, each step done by the table', async ({
   // 2. Look at cards.
   await nextLesson(page, 'cards:read');
   await expect(coach(page)).toContainText(
-    'Double-click Charmeleon in your hand to read it.'
+    'Double-click Charmeleon, then choose View card.'
   );
   await inHand(page, 'Charmeleon').dblclick({ position: { x: 30, y: 20 } });
+  await page.locator('[data-card-window-view]').click();
   await atStep(page, 'cards:close');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('[data-card-actions-window]')).toBeVisible();
   await page.keyboard.press('Escape');
   await atStep(page, 'cards:menu');
   await inPlay(page, 'Charmander').click({ button: 'right' });
@@ -422,13 +425,18 @@ test.describe('on a phone', () => {
 
     await nextLesson(page, 'cards:read', true);
     await expect(coach(page)).toContainText(
-      'Tap Charmeleon in your hand, then Read.'
+      'Tap Charmeleon, then Read and View card.'
     );
     await inHand(page, 'Charmeleon').tap({ position: { x: 20, y: 15 } });
     await page.locator('#touchReadCardButton').tap();
+    await expect(page.locator('[data-card-actions-window]')).toBeVisible();
+    await page.locator('[data-card-window-view]').tap();
     await atStep(page, 'cards:close');
-    await expect(coach(page)).toContainText('Tap outside the card');
-    await page.touchscreen.tap(195, 420);
+    await expect(coach(page)).toContainText('Tap the card to go back');
+    await page.locator('.ptcgsim-card-preview-stage').tap();
+    await page
+      .locator('[data-card-actions-window] .ptcgsim-overlay-close')
+      .tap();
     await atStep(page, 'cards:menu');
     await expect(coach(page)).toContainText('then Actions');
     await inPlay(page, 'Charmander').tap();

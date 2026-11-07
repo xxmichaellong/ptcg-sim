@@ -2597,10 +2597,6 @@
     "message": "Click a shortcut to change it.",
     "translation": "انقر على اختصار لتغييره."
   },
-  "XZq2Yt": {
-    "message": "Click outside the card, or press <0>Esc</0>, to put it back.",
-    "translation": "انقر خارج البطاقة أو اضغط <0>Esc</0> لإعادتها."
-  },
   "e78sgl": {
     "message": "Click your deck to look through it.",
     "translation": "انقر على مجموعتك لتصفحها."
@@ -3259,9 +3255,9 @@
     "context": "sleeve pattern",
     "translation": "نقاط"
   },
-  "BDC29J": {
-    "message": "Double-click <0>{0}</0> in your hand to read it.",
-    "translation": "انقر مرتين على <0>{0}</0> في يدك لقراءتها."
+  "2tdLSN": {
+    "message": "Double-click <0>{0}</0>, then choose <1>View card</1>.",
+    "translation": "انقر مرتين على <0>{0}</0>، ثم اختر <1>عرض البطاقة</1>."
   },
   "O8KL2B": {
     "message": "Download list (.txt)",
@@ -5752,6 +5748,10 @@
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "اضغط <0>Esc</0> أو انقر خارجها لإغلاقها."
   },
+  "yjhob-": {
+    "message": "Press <0>Esc</0> to go back, then <1>Esc</1> again to close.",
+    "translation": "اضغط <0>Esc</0> للرجوع، ثم <1>Esc</1> مرة أخرى للإغلاق."
+  },
   "1-TFM2": {
     "message": "Press again to confirm",
     "translation": "اضغط مرة أخرى للتأكيد"
@@ -7355,9 +7355,9 @@
     ],
     "translation": "يتلقى ضررًا أقل"
   },
-  "O3tcf1": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
-    "translation": "اضغط <0>{0}</0> في يدك، ثم <1>{1}</1>."
+  "4cz2X2": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1> and <2>View card</2>.",
+    "translation": "اضغط على <0>{0}</0>، ثم <1>{1}</1> و<2>عرض البطاقة</2>."
   },
   "fU8msy": {
     "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
@@ -7371,13 +7371,13 @@
     "message": "Tap a card for actions; tap again to read it.",
     "translation": "اضغط على بطاقة لعرض الإجراءات، واضغط مرة أخرى لقراءتها."
   },
-  "muigTz": {
-    "message": "Tap outside the card to put it back.",
-    "translation": "المس خارج البطاقة لإعادتها."
-  },
   "AARI3J": {
     "message": "Tap outside the menu to close it.",
     "translation": "المس خارج القائمة لإغلاقها."
+  },
+  "wnDzcG": {
+    "message": "Tap the card to go back, then close the window.",
+    "translation": "اضغط على البطاقة للرجوع، ثم أغلق النافذة."
   },
   "oeltU5": {
     "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",

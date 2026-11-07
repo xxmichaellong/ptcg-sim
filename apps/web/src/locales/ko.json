@@ -2597,10 +2597,6 @@
     "message": "Click a shortcut to change it.",
     "translation": "단축키를 클릭하면 변경할 수 있습니다."
   },
-  "XZq2Yt": {
-    "message": "Click outside the card, or press <0>Esc</0>, to put it back.",
-    "translation": "카드 밖을 클릭하거나 <0>Esc</0>를 누르면 되돌립니다."
-  },
   "e78sgl": {
     "message": "Click your deck to look through it.",
     "translation": "덱을 클릭하면 덱을 살펴볼 수 있습니다."
@@ -3259,9 +3255,9 @@
     "context": "sleeve pattern",
     "translation": "물방울무늬"
   },
-  "BDC29J": {
-    "message": "Double-click <0>{0}</0> in your hand to read it.",
-    "translation": "패에 있는 <0>{0}</0>을(를) 더블클릭해서 읽어 보세요."
+  "2tdLSN": {
+    "message": "Double-click <0>{0}</0>, then choose <1>View card</1>.",
+    "translation": "<0>{0}</0>을(를) 더블 클릭한 다음 <1>카드 보기</1>를 선택하세요."
   },
   "O8KL2B": {
     "message": "Download list (.txt)",
@@ -5752,6 +5748,10 @@
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "<0>Esc</0>를 누르거나 바깥을 클릭하면 닫힙니다."
   },
+  "yjhob-": {
+    "message": "Press <0>Esc</0> to go back, then <1>Esc</1> again to close.",
+    "translation": "<0>Esc</0>로 돌아간 다음 <1>Esc</1>를 다시 눌러 닫으세요."
+  },
   "1-TFM2": {
     "message": "Press again to confirm",
     "translation": "한 번 더 누르면 확인됩니다"
@@ -7355,9 +7355,9 @@
     ],
     "translation": "받는 데미지 감소"
   },
-  "O3tcf1": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
-    "translation": "패에서 <0>{0}</0>을(를) 탭한 다음 <1>{1}</1>을(를) 탭하세요."
+  "4cz2X2": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1> and <2>View card</2>.",
+    "translation": "<0>{0}</0>을(를) 탭한 다음 <1>{1}</1>, <2>카드 보기</2>를 선택하세요."
   },
   "fU8msy": {
     "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
@@ -7371,13 +7371,13 @@
     "message": "Tap a card for actions; tap again to read it.",
     "translation": "카드를 탭하면 동작이 표시되고, 다시 탭하면 카드를 읽을 수 있습니다."
   },
-  "muigTz": {
-    "message": "Tap outside the card to put it back.",
-    "translation": "카드 바깥을 탭하면 되돌립니다."
-  },
   "AARI3J": {
     "message": "Tap outside the menu to close it.",
     "translation": "메뉴 바깥을 탭하면 닫힙니다."
+  },
+  "wnDzcG": {
+    "message": "Tap the card to go back, then close the window.",
+    "translation": "카드를 탭해 돌아간 다음 창을 닫으세요."
   },
   "oeltU5": {
     "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",

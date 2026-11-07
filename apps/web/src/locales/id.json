@@ -2597,10 +2597,6 @@
     "message": "Click a shortcut to change it.",
     "translation": "Klik pintasan untuk mengubahnya."
   },
-  "XZq2Yt": {
-    "message": "Click outside the card, or press <0>Esc</0>, to put it back.",
-    "translation": "Klik di luar kartu, atau tekan <0>Esc</0>, untuk mengembalikannya."
-  },
   "e78sgl": {
     "message": "Click your deck to look through it.",
     "translation": "Klik deck-mu untuk melihat isinya."
@@ -3259,9 +3255,9 @@
     "context": "sleeve pattern",
     "translation": "Titik-titik"
   },
-  "BDC29J": {
-    "message": "Double-click <0>{0}</0> in your hand to read it.",
-    "translation": "Klik dua kali <0>{0}</0> di Kartu Peganganmu untuk membacanya."
+  "2tdLSN": {
+    "message": "Double-click <0>{0}</0>, then choose <1>View card</1>.",
+    "translation": "Klik dua kali <0>{0}</0>, lalu pilih <1>Lihat kartu</1>."
   },
   "O8KL2B": {
     "message": "Download list (.txt)",
@@ -5752,6 +5748,10 @@
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "Tekan <0>Esc</0> atau klik di luar untuk menutupnya."
   },
+  "yjhob-": {
+    "message": "Press <0>Esc</0> to go back, then <1>Esc</1> again to close.",
+    "translation": "Tekan <0>Esc</0> untuk kembali, lalu <1>Esc</1> lagi untuk menutup."
+  },
   "1-TFM2": {
     "message": "Press again to confirm",
     "translation": "Tekan lagi untuk mengonfirmasi"
@@ -7355,9 +7355,9 @@
     ],
     "translation": "Menerima lebih sedikit kerusakan"
   },
-  "O3tcf1": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
-    "translation": "Ketuk <0>{0}</0> di Kartu Peganganmu, lalu <1>{1}</1>."
+  "4cz2X2": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1> and <2>View card</2>.",
+    "translation": "Ketuk <0>{0}</0>, lalu <1>{1}</1> dan <2>Lihat kartu</2>."
   },
   "fU8msy": {
     "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
@@ -7371,13 +7371,13 @@
     "message": "Tap a card for actions; tap again to read it.",
     "translation": "Ketuk kartu untuk melihat aksi; ketuk lagi untuk membacanya."
   },
-  "muigTz": {
-    "message": "Tap outside the card to put it back.",
-    "translation": "Ketuk di luar kartu untuk mengembalikannya."
-  },
   "AARI3J": {
     "message": "Tap outside the menu to close it.",
     "translation": "Ketuk di luar menu untuk menutupnya."
+  },
+  "wnDzcG": {
+    "message": "Tap the card to go back, then close the window.",
+    "translation": "Ketuk kartu untuk kembali, lalu tutup jendela."
   },
   "oeltU5": {
     "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",

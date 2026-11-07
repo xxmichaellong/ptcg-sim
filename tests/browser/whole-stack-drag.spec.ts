@@ -344,7 +344,9 @@ test('a long press lifts only the top card off its Pokémon', async ({
   await expect
     .poll(() => parentOf(page, energy.id))
     .not.toBe(await parentOf(page, active.id));
+  const staged = page.locator('[data-legacy-work-area="staged"]');
+  await expect(staged).toBeVisible();
   await expect(
-    page.locator('[data-zone-kind="attachmentResolution"]').first()
-  ).toBeAttached();
+    staged.locator(`[data-work-area-card-id="${energy.id}"]`)
+  ).toBeVisible();
 });

@@ -2597,10 +2597,6 @@
     "message": "Click a shortcut to change it.",
     "translation": "Klicke auf ein Kürzel, um es zu ändern."
   },
-  "XZq2Yt": {
-    "message": "Click outside the card, or press <0>Esc</0>, to put it back.",
-    "translation": "Klicke außerhalb der Karte oder drücke <0>Esc</0>, um sie zurückzulegen."
-  },
   "e78sgl": {
     "message": "Click your deck to look through it.",
     "translation": "Klicke auf dein Deck, um es durchzusehen."
@@ -3259,9 +3255,9 @@
     "context": "sleeve pattern",
     "translation": "Punkte"
   },
-  "BDC29J": {
-    "message": "Double-click <0>{0}</0> in your hand to read it.",
-    "translation": "Doppelklicke in deiner Hand auf <0>{0}</0>, um die Karte zu lesen."
+  "2tdLSN": {
+    "message": "Double-click <0>{0}</0>, then choose <1>View card</1>.",
+    "translation": "Doppelklicke auf <0>{0}</0> und wähle dann <1>Karte ansehen</1>."
   },
   "O8KL2B": {
     "message": "Download list (.txt)",
@@ -5752,6 +5748,10 @@
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "Drücke <0>Esc</0> oder klicke daneben, um es zu schließen."
   },
+  "yjhob-": {
+    "message": "Press <0>Esc</0> to go back, then <1>Esc</1> again to close.",
+    "translation": "Drücke <0>Esc</0>, um zurückzugehen, und noch einmal <1>Esc</1> zum Schließen."
+  },
   "1-TFM2": {
     "message": "Press again to confirm",
     "translation": "Zum Bestätigen erneut drücken"
@@ -7355,9 +7355,9 @@
     ],
     "translation": "Erleidet weniger Schaden"
   },
-  "O3tcf1": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
-    "translation": "Tippe auf <0>{0}</0> in deiner Hand, dann auf <1>{1}</1>."
+  "4cz2X2": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1> and <2>View card</2>.",
+    "translation": "Tippe auf <0>{0}</0>, dann auf <1>{1}</1> und <2>Karte ansehen</2>."
   },
   "fU8msy": {
     "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
@@ -7371,13 +7371,13 @@
     "message": "Tap a card for actions; tap again to read it.",
     "translation": "Tippe auf eine Karte für Aktionen; tippe erneut, um sie zu lesen."
   },
-  "muigTz": {
-    "message": "Tap outside the card to put it back.",
-    "translation": "Tippe außerhalb der Karte, um sie zurückzulegen."
-  },
   "AARI3J": {
     "message": "Tap outside the menu to close it.",
     "translation": "Tippe außerhalb des Menüs, um es zu schließen."
+  },
+  "wnDzcG": {
+    "message": "Tap the card to go back, then close the window.",
+    "translation": "Tippe auf die Karte, um zurückzugehen, und schließe dann das Fenster."
   },
   "oeltU5": {
     "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",

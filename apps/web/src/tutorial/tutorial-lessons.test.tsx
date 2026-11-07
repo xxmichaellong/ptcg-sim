@@ -31,6 +31,7 @@ import { resolveCardZoneMoveAction } from '../board/resolveCardZoneMoveAction.js
 
 const SCREEN: TutorialScreen = {
   preview: false,
+  artwork: false,
   cardMenu: null,
   markerControls: null,
   markerControlsCard: null,
@@ -184,8 +185,13 @@ describe('the tutorial’s lessons', () => {
     const [read, close, menu, menuClose] = cards.steps;
     expect(read!.done!(world())).toBe(false);
     expect(read!.done!(world({ screen: { ...SCREEN, preview: true } }))).toBe(
-      true
+      false
     );
+    expect(
+      read!.done!(
+        world({ screen: { ...SCREEN, preview: true, artwork: true } })
+      )
+    ).toBe(true);
     expect(close!.done!(world({ screen: { ...SCREEN, preview: true } }))).toBe(
       false
     );

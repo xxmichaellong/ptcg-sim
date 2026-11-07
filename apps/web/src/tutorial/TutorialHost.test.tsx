@@ -264,6 +264,55 @@ describe('the coach, round two', () => {
     expect(Number.parseFloat(coach()!.style.top)).toBeGreaterThanOrEqual(408);
   });
 
+  it('waits for artwork after options open before teaching how to close the card', async () => {
+    phone(false);
+    await render('cards');
+    await wait(1200);
+    const preview = document.createElement('div');
+    preview.dataset.legacyCardPreview = 'true';
+    preview.dataset.previewKind = 'actions';
+    await act(async () => document.body.append(preview));
+    await wait(800);
+    expect(stepOf()).toBe('cards:read');
+    expect(coach()?.getAttribute('data-done')).not.toBe('true');
+    await act(async () => {
+      preview.dataset.previewKind = 'card';
+    });
+    await wait(800);
+    expect(stepOf()).toBe('cards:close');
+    // Returning to options leaves the close step open until the window closes.
+    await act(async () => {
+      preview.dataset.previewKind = 'actions';
+    });
+    await wait(800);
+    expect(stepOf()).toBe('cards:close');
+    await act(async () => preview.remove());
+    await wait(800);
+    expect(stepOf()).toBe('cards:menu');
+  });
+
+  it('moves off View card when options open during a phone lesson', async () => {
+    phone(true);
+    await render('cards');
+    await wait(1200);
+    Object.defineProperties(coach()!, {
+      offsetWidth: { configurable: true, value: 366 },
+      offsetHeight: { configurable: true, value: 200 },
+    });
+    const options = document.createElement('div');
+    options.dataset.cardActionsWindow = 'true';
+    const view = document.createElement('button');
+    view.dataset.cardWindowView = 'true';
+    options.append(view);
+    placed.set(view, { x: 8, y: 100, width: 374, height: 44 });
+    await act(async () => {
+      document.body.append(options);
+      window.dispatchEvent(new Event('resize'));
+    });
+    await wait(100);
+    expect(Number.parseFloat(coach()!.style.top)).toBeGreaterThanOrEqual(144);
+  });
+
   it('keeps the focus when Back goes to the first step', async () => {
     phone(false);
     await render('cards');

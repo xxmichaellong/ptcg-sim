@@ -1,5 +1,6 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useEffect, useState } from 'react';
+import { isInputMethodKey } from '../ui/input-method.js';
 export interface PlayerNameChoice {
   readonly id: string;
   readonly name: string;
@@ -34,6 +35,7 @@ const NameField = ({
         onChange={(event) => setName(event.target.value)}
         onBlur={save}
         onKeyDown={(event) => {
+          if (isInputMethodKey(event.nativeEvent)) return;
           if (event.key === 'Enter') event.currentTarget.blur();
           if (event.key === 'Escape') {
             setName(player.name);

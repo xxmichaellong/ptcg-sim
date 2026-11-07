@@ -157,7 +157,7 @@ test("a deck's name finds its tournament finishes, and a finish's list goes on t
   );
   const tray = page.locator('#nativeDeckBuilderTargetMain');
   await expect(tray).toHaveAccessibleName(/Dragapult Dusknoir — 1st of 67/u);
-  await expect(tray.locator('.deck-tray__finish')).toHaveText('1st of 67');
+  await expect(tray.locator('.deck-tray__finish')).toHaveCount(0);
 
   // Esc clears the search before it would leave the screen.
   await page.locator('#deckPasteInput').press('Escape');

@@ -18,8 +18,10 @@ export type InputMode = 'mouse' | 'touch';
 
 /** What is open on screen, read from the page. */
 export interface TutorialScreen {
-  /** The card or stack being read in the large preview, if any. */
+  /** Card options, a stack window or artwork is open. */
   readonly preview: boolean;
+  /** Full artwork is shown, after choosing View card in its options. */
+  readonly artwork: boolean;
   /** The card whose actions menu is open (its table id), if any. */
   readonly cardMenu: string | null;
   /** The damage or condition controls, if open. */
@@ -152,6 +154,10 @@ export const readScreen = (document: Document): TutorialScreen => {
   return {
     preview:
       document.querySelector('[data-legacy-card-preview="true"]') !== null,
+    artwork:
+      document.querySelector(
+        '[data-legacy-card-preview="true"][data-preview-kind="card"], [data-legacy-card-preview="true"][data-preview-kind="composition"]'
+      ) !== null,
     cardMenu: menu?.dataset.contextCardId ?? null,
     markerControls:
       controls === 'damage' || controls === 'specialCondition'
@@ -175,6 +181,7 @@ export const sameScreen = (
   right: TutorialScreen
 ): boolean =>
   left.preview === right.preview &&
+  left.artwork === right.artwork &&
   left.cardMenu === right.cardMenu &&
   left.markerControls === right.markerControls &&
   left.markerControlsCard === right.markerControlsCard &&

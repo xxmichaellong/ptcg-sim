@@ -124,6 +124,7 @@ const useScreen = (): TutorialScreen => {
       attributes: true,
       attributeFilter: [
         'data-open',
+        'data-preview-kind',
         'data-context-card-id',
         'data-marker-controls',
         'data-zone-browser-kind',
@@ -479,10 +480,24 @@ export const TutorialHost = ({
   // Measured through a step's done moment too, so the coach stays put.
   const measuring = Boolean(playing && !hidden);
   const rects = useTargetRects(targets, measuring);
-  // Selecting a card with a finger opens its Read/Actions toolbar. Keep
-  // the coach clear of that next control as well as the card it names.
-  const touchActionRects = useTargetRects(
-    [{ selectors: ['[data-touch-card-bar]'] }],
+  // Keep the next action reachable as a card opens its toolbar, options
+  // or artwork. These controls can appear without changing the lesson step.
+  const cardActionRects = useTargetRects(
+    [
+      { selectors: ['[data-touch-card-bar]'] },
+      {
+        selectors: [
+          '[data-card-actions-window] [data-card-window-view]',
+          '[data-preview-kind="card"] [data-preview-back]',
+        ],
+      },
+      {
+        selectors: [
+          '[data-card-actions-window] .ptcgsim-overlay-close',
+          '[data-pokemon-window-close]',
+        ],
+      },
+    ],
     measuring
   );
   const dragRects = useTargetRects(
@@ -593,7 +608,7 @@ export const TutorialHost = ({
             paletteOpen={screen.palette}
             avoid={[
               ...rects,
-              ...touchActionRects,
+              ...cardActionRects,
               ...(dragShown ? [dragShown.from, dragShown.to] : []),
             ]}
             onBack={playing.step > 0 ? back : undefined}

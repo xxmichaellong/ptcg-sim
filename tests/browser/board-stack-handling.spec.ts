@@ -210,7 +210,7 @@ test('an attached Energy moves to another Pokémon by drag, as in v1', async ({
 });
 
 for (const depthMode of ['flat', 'depth', 'table'] as const) {
-  test(`a Pokémon's Energy stays behind it while the stack moves (${depthMode})`, async ({
+  test(`compact Energy handles stay selectable while their Pokémon moves (${depthMode})`, async ({
     page,
   }, testInfo) => {
     test.setTimeout(120_000);
@@ -245,9 +245,8 @@ for (const depthMode of ['flat', 'depth', 'table'] as const) {
       await exposedPoint(page, active.id)
     );
 
-    // Every frame of the move, wherever the two overlap, the Pokémon must be
-    // what paints on top. Sampling runs until the move has settled, however
-    // long the drag takes to perform.
+    // Compact handles stay reachable above the Pokémon; a full card stays
+    // behind it. Check every overlapping frame through the whole move.
     await page.evaluate(
       ({ pokemonId, energyId }) => {
         const samples: string[] = [];
@@ -276,7 +275,7 @@ for (const depthMode of ['flat', 'depth', 'table'] as const) {
                 card.hasAttribute('data-flying') ||
                 attached.hasAttribute('data-flying');
               samples.push(
-                `${moving ? 'moving' : 'still'}:${
+                `${moving ? 'moving' : 'still'}:${attached.hasAttribute('data-attachment-compact') ? 'compact' : 'full'}:${
                   hit?.dataset.cardId === energyId
                     ? 'energy-on-top'
                     : hit?.dataset.cardId === pokemonId
@@ -312,7 +311,10 @@ for (const depthMode of ['flat', 'depth', 'table'] as const) {
     });
     expect(samples.some((sample) => sample.startsWith('moving'))).toBe(true);
     expect(
-      samples.filter((sample) => sample.endsWith('energy-on-top'))
+      samples.some((sample) => sample.endsWith('compact:energy-on-top'))
+    ).toBe(true);
+    expect(
+      samples.filter((sample) => sample.endsWith('full:energy-on-top'))
     ).toEqual([]);
   });
 }

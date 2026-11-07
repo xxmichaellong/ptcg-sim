@@ -13,6 +13,7 @@ import { DECK_LOOK_THEMES, type DeckLook } from './deck-look-themes.js';
 import type { SavedDeck, DeckLibraryActions } from './deck-library.js';
 import '../../board/view/table-art-controls.css';
 import './deck-customize.css';
+import { isInputMethodKey } from '../../ui/input-method.js';
 const viewer = { own: true, opponentCustomBacks: true, ownDeckScreen: true };
 export const DeckCustomize = ({
   deck,
@@ -171,6 +172,7 @@ export const DeckCustomize = ({
             value={name}
             onChange={(event) => setName(event.target.value)}
             onKeyDown={(event) => {
+              if (isInputMethodKey(event.nativeEvent)) return;
               if (event.key === 'Enter') {
                 event.preventDefault();
                 saveTheme();

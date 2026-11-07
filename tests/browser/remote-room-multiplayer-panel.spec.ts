@@ -78,6 +78,10 @@ test('reading Play online leaves a live Solo table mounted', async ({
   // Acting on the panel is the real transition: Create room takes the
   // table into the new room, which offers its invites.
   await openPlayOnline(page);
+  await page
+    .locator('.lobby-flow')
+    .getByRole('button', { name: 'Host a room', exact: true })
+    .click();
   await page.locator('#generateIdButton').click();
   await expect(
     page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')

@@ -2597,10 +2597,6 @@
     "message": "Click a shortcut to change it.",
     "translation": "คลิกปุ่มลัดเพื่อเปลี่ยน"
   },
-  "XZq2Yt": {
-    "message": "Click outside the card, or press <0>Esc</0>, to put it back.",
-    "translation": "คลิกนอกการ์ดหรือกด <0>Esc</0> เพื่อวางกลับ"
-  },
   "e78sgl": {
     "message": "Click your deck to look through it.",
     "translation": "คลิกสำรับการ์ดของคุณเพื่อดูการ์ดข้างใน"
@@ -3259,9 +3255,9 @@
     "context": "sleeve pattern",
     "translation": "ลายจุด"
   },
-  "BDC29J": {
-    "message": "Double-click <0>{0}</0> in your hand to read it.",
-    "translation": "ดับเบิลคลิก <0>{0}</0> บนมือของคุณเพื่ออ่าน"
+  "2tdLSN": {
+    "message": "Double-click <0>{0}</0>, then choose <1>View card</1>.",
+    "translation": "ดับเบิลคลิก <0>{0}</0> แล้วเลือก <1>ดูการ์ด</1>"
   },
   "O8KL2B": {
     "message": "Download list (.txt)",
@@ -5752,6 +5748,10 @@
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "กด <0>Esc</0> หรือคลิกที่อื่นเพื่อปิด"
   },
+  "yjhob-": {
+    "message": "Press <0>Esc</0> to go back, then <1>Esc</1> again to close.",
+    "translation": "กด <0>Esc</0> เพื่อย้อนกลับ แล้วกด <1>Esc</1> อีกครั้งเพื่อปิด"
+  },
   "1-TFM2": {
     "message": "Press again to confirm",
     "translation": "กดอีกครั้งเพื่อยืนยัน"
@@ -7355,9 +7355,9 @@
     ],
     "translation": "รับแดเมจน้อยลง"
   },
-  "O3tcf1": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
-    "translation": "แตะ <0>{0}</0> บนมือของคุณ แล้ว <1>{1}</1>"
+  "4cz2X2": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1> and <2>View card</2>.",
+    "translation": "แตะ <0>{0}</0> จากนั้นเลือก <1>{1}</1> และ <2>ดูการ์ด</2>"
   },
   "fU8msy": {
     "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
@@ -7371,13 +7371,13 @@
     "message": "Tap a card for actions; tap again to read it.",
     "translation": "แตะการ์ดเพื่อดูการดำเนินการ แตะอีกครั้งเพื่ออ่าน"
   },
-  "muigTz": {
-    "message": "Tap outside the card to put it back.",
-    "translation": "แตะนอกการ์ดเพื่อวางกลับ"
-  },
   "AARI3J": {
     "message": "Tap outside the menu to close it.",
     "translation": "แตะนอกเมนูเพื่อปิด"
+  },
+  "wnDzcG": {
+    "message": "Tap the card to go back, then close the window.",
+    "translation": "แตะการ์ดเพื่อย้อนกลับ แล้วปิดหน้าต่าง"
   },
   "oeltU5": {
     "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",

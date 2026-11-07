@@ -198,24 +198,38 @@ export const card = (page: Page, cardId: string): Locator =>
  */
 export const selection = (page: Page): Promise<string[]> =>
   page.evaluate(() => {
-    const numbered = [
-      ...document.querySelectorAll<HTMLElement>(
-        '.ptcgsim-board-surface [data-select-order]'
+    const numbered = new Map<string, number>();
+    for (const node of document.querySelectorAll<HTMLElement>(
+      '.ptcgsim-board-surface [data-select-order]'
+    ))
+      numbered.set(node.dataset.cardId ?? '', Number(node.dataset.selectOrder));
+    // Modern work-area cards paint only in their actual window.
+    for (const badge of document.querySelectorAll<HTMLElement>(
+      'button[data-work-area-card-id] [data-zone-select-badge], button[data-overlay-card-id] [data-zone-select-badge]'
+    )) {
+      const tile = badge.closest<HTMLElement>('button')!;
+      const id = tile.dataset.workAreaCardId ?? tile.dataset.overlayCardId;
+      if (id) numbered.set(id, Number(badge.dataset.zoneSelectBadge));
+    }
+    if (numbered.size > 0)
+      return [...numbered]
+        .sort((left, right) => left[1] - right[1])
+        .map(([id]) => id);
+    return [
+      ...new Set(
+        [
+          ...document.querySelectorAll<HTMLElement>(
+            '.ptcgsim-board-surface [data-card-id][aria-pressed="true"], button[data-work-area-card-id][aria-pressed="true"], button[data-overlay-card-id][aria-pressed="true"]'
+          ),
+        ].map(
+          (node) =>
+            node.dataset.cardId ??
+            node.dataset.workAreaCardId ??
+            node.dataset.overlayCardId ??
+            ''
+        )
       ),
     ];
-    if (numbered.length > 0)
-      return numbered
-        .map((node) => ({
-          id: node.dataset.cardId ?? '',
-          order: Number(node.dataset.selectOrder),
-        }))
-        .sort((left, right) => left.order - right.order)
-        .map((entry) => entry.id);
-    return [
-      ...document.querySelectorAll<HTMLElement>(
-        '.ptcgsim-board-surface [data-card-id][aria-pressed="true"]'
-      ),
-    ].map((node) => node.dataset.cardId ?? '');
   });
 
 /** Shift-clicks cards on the table, one after another. */

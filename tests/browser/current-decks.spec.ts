@@ -80,7 +80,7 @@ test('the deck screen leads with current tournament lists and credits Limitless'
   const tray = page.locator('#nativeDeckBuilderTargetMain');
   await expect(tray).toHaveAccessibleName(/Dragapult — 1st of 285/u);
   await expect(tray.locator('.deck-screen__seat-name')).toHaveText('Dragapult');
-  await expect(tray.locator('.deck-tray__finish')).toHaveText('1st of 285');
+  await expect(tray.locator('.deck-tray__finish')).toHaveCount(0);
   await expect(first.getByRole('button', { name: /try it/u })).toHaveAttribute(
     'aria-pressed',
     'true'

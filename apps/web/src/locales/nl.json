@@ -2597,10 +2597,6 @@
     "message": "Click a shortcut to change it.",
     "translation": "Klik op een sneltoets om die te wijzigen."
   },
-  "XZq2Yt": {
-    "message": "Click outside the card, or press <0>Esc</0>, to put it back.",
-    "translation": "Klik buiten de kaart of druk op <0>Esc</0> om hem terug te leggen."
-  },
   "e78sgl": {
     "message": "Click your deck to look through it.",
     "translation": "Klik op je deck om het door te kijken."
@@ -3259,9 +3255,9 @@
     "context": "sleeve pattern",
     "translation": "Stippen"
   },
-  "BDC29J": {
-    "message": "Double-click <0>{0}</0> in your hand to read it.",
-    "translation": "Dubbelklik op <0>{0}</0> in je hand om de kaart te lezen."
+  "2tdLSN": {
+    "message": "Double-click <0>{0}</0>, then choose <1>View card</1>.",
+    "translation": "Dubbelklik op <0>{0}</0> en kies dan <1>Kaart bekijken</1>."
   },
   "O8KL2B": {
     "message": "Download list (.txt)",
@@ -5752,6 +5748,10 @@
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "Druk op <0>Esc</0> of klik ernaast om te sluiten."
   },
+  "yjhob-": {
+    "message": "Press <0>Esc</0> to go back, then <1>Esc</1> again to close.",
+    "translation": "Druk op <0>Esc</0> om terug te gaan en nogmaals op <1>Esc</1> om te sluiten."
+  },
   "1-TFM2": {
     "message": "Press again to confirm",
     "translation": "Druk nogmaals om te bevestigen"
@@ -7355,9 +7355,9 @@
     ],
     "translation": "Krijgt minder schade"
   },
-  "O3tcf1": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
-    "translation": "Tik op <0>{0}</0> in je hand, dan op <1>{1}</1>."
+  "4cz2X2": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1> and <2>View card</2>.",
+    "translation": "Tik op <0>{0}</0>, dan op <1>{1}</1> en <2>Kaart bekijken</2>."
   },
   "fU8msy": {
     "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
@@ -7371,13 +7371,13 @@
     "message": "Tap a card for actions; tap again to read it.",
     "translation": "Tik op een kaart voor acties; tik nogmaals om hem te lezen."
   },
-  "muigTz": {
-    "message": "Tap outside the card to put it back.",
-    "translation": "Tik naast de kaart om hem terug te leggen."
-  },
   "AARI3J": {
     "message": "Tap outside the menu to close it.",
     "translation": "Tik naast het menu om het te sluiten."
+  },
+  "wnDzcG": {
+    "message": "Tap the card to go back, then close the window.",
+    "translation": "Tik op de kaart om terug te gaan en sluit dan het venster."
   },
   "oeltU5": {
     "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",

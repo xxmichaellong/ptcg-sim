@@ -2597,10 +2597,6 @@
     "message": "Click a shortcut to change it.",
     "translation": "点击快捷键即可更改。"
   },
-  "XZq2Yt": {
-    "message": "Click outside the card, or press <0>Esc</0>, to put it back.",
-    "translation": "点击卡牌外部或按 <0>Esc</0> 放回。"
-  },
   "e78sgl": {
     "message": "Click your deck to look through it.",
     "translation": "点击你的牌库可查看其中的卡牌。"
@@ -3259,9 +3255,9 @@
     "context": "sleeve pattern",
     "translation": "圆点"
   },
-  "BDC29J": {
-    "message": "Double-click <0>{0}</0> in your hand to read it.",
-    "translation": "在手牌中双击<0>{0}</0>查看。"
+  "2tdLSN": {
+    "message": "Double-click <0>{0}</0>, then choose <1>View card</1>.",
+    "translation": "双击<0>{0}</0>，然后选择<1>查看卡牌</1>。"
   },
   "O8KL2B": {
     "message": "Download list (.txt)",
@@ -5752,6 +5748,10 @@
     "message": "Press <0>Esc</0> or click away to close it.",
     "translation": "按<0>Esc</0>或点击空白处关闭。"
   },
+  "yjhob-": {
+    "message": "Press <0>Esc</0> to go back, then <1>Esc</1> again to close.",
+    "translation": "按<0>Esc</0>返回，再按一次<1>Esc</1>关闭。"
+  },
   "1-TFM2": {
     "message": "Press again to confirm",
     "translation": "再按一次确认"
@@ -7355,9 +7355,9 @@
     ],
     "translation": "受到的伤害减少"
   },
-  "O3tcf1": {
-    "message": "Tap <0>{0}</0> in your hand, then <1>{1}</1>.",
-    "translation": "点按手牌中的<0>{0}</0>，然后<1>{1}</1>。"
+  "4cz2X2": {
+    "message": "Tap <0>{0}</0>, then <1>{1}</1> and <2>View card</2>.",
+    "translation": "点击<0>{0}</0>，然后选择<1>{1}</1>和<2>查看卡牌</2>。"
   },
   "fU8msy": {
     "message": "Tap <0>{0}</0>, then <1>{1}</1>: everything a card can do.",
@@ -7371,13 +7371,13 @@
     "message": "Tap a card for actions; tap again to read it.",
     "translation": "点按卡牌查看操作；再次点按查看卡面。"
   },
-  "muigTz": {
-    "message": "Tap outside the card to put it back.",
-    "translation": "点按卡牌外部即可放回。"
-  },
   "AARI3J": {
     "message": "Tap outside the menu to close it.",
     "translation": "点按菜单外部即可关闭。"
+  },
+  "wnDzcG": {
+    "message": "Tap the card to go back, then close the window.",
+    "translation": "点击卡牌返回，然后关闭窗口。"
   },
   "oeltU5": {
     "message": "Tap their <0>{0}</0>, then <1>{1}</1>.",
