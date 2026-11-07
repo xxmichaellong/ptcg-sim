@@ -498,69 +498,80 @@ describe('legacy board overlays', () => {
     expect(callbacks.dismiss).not.toHaveBeenCalled();
   });
 
-  it('names the way a card goes onto a Pokémon: attach, evolve or join its pieces', async () => {
-    const hand = `zone:${firstPlayer}:hand`;
-    const labelFor = async (
-      viewed: MatchViewState,
-      cardId: string
-    ): Promise<string | undefined> => {
-      const viewedScene = createBoardSceneForViewport(viewed, {
-        geometryVersion: 1,
-        viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
-        bottomPlayerId: firstPlayer,
-        splitRatio: 0.5,
-      });
-      await act(async () => {
-        root.render(
-          createElement(LegacyBoardOverlays, {
-            state: state({
-              view: viewed,
-              scene: viewedScene,
-              overlays: {
-                contextMenuCardId: cardId as never,
-                preview: null,
-                input: null,
-              },
-            }),
-            darkMode: false,
-            actions: { ...actions(), beginCardAssembly: vi.fn() },
-          })
-        );
-      });
-      return [
-        ...host.querySelectorAll<HTMLElement>(
-          '[data-legacy-card-context-menu] [role="menuitem"]'
-        ),
-      ][0]?.textContent?.trim();
-    };
-    const cards = view.zones[hand]!.cards;
-    const ofCategory = (category: string) =>
-      cards.find(
-        (card) => card.kind === 'known' && card.category === category
-      )!;
-    expect(await labelFor(view, ofCategory('Energy').id)).toBe(
-      'Attach to a Pokémon…'
-    );
-    const pokemon = ofCategory('Pokémon');
-    expect(await labelFor(view, pokemon.id)).toBe('Evolve a Pokémon…');
-    // A V-UNION's piece joins its others.
-    const definitionId =
-      pokemon.kind === 'known' ? pokemon.definitionId : undefined;
-    const pieces: MatchViewState = {
-      ...view,
-      definitions: {
-        ...view.definitions,
-        [definitionId!]: {
-          ...view.definitions[definitionId!]!,
-          presentation: {
-            readingQuarterTurns: 0,
-            join: { key: 'union', columns: 2, rows: 2, part: 1 },
+  it.each(['context', 'options'] as const)(
+    'names attach, evolve or join its pieces consistently in %s',
+    async (surface) => {
+      const hand = `zone:${firstPlayer}:hand`;
+      const labelFor = async (
+        viewed: MatchViewState,
+        cardId: string
+      ): Promise<string | undefined> => {
+        const viewedScene = createBoardSceneForViewport(viewed, {
+          geometryVersion: 1,
+          viewport: { width: 1280, height: 720, devicePixelRatio: 1 },
+          bottomPlayerId: firstPlayer,
+          splitRatio: 0.5,
+        });
+        await act(async () => {
+          root.render(
+            createElement(LegacyBoardOverlays, {
+              state: state({
+                view: viewed,
+                scene: viewedScene,
+                overlays: {
+                  contextMenuCardId:
+                    surface === 'context' ? (cardId as never) : null,
+                  preview:
+                    surface === 'options'
+                      ? { kind: 'card', cardId: cardId as never }
+                      : null,
+                  input: null,
+                },
+              }),
+              darkMode: false,
+              actions: { ...actions(), beginCardAssembly: vi.fn() },
+            })
+          );
+        });
+        if (surface === 'options')
+          return host
+            .querySelector('[data-card-window-assemble]')
+            ?.textContent?.trim();
+        return [
+          ...host.querySelectorAll<HTMLElement>(
+            '[data-legacy-card-context-menu] [role="menuitem"]'
+          ),
+        ][0]?.textContent?.trim();
+      };
+      const cards = view.zones[hand]!.cards;
+      const ofCategory = (category: string) =>
+        cards.find(
+          (card) => card.kind === 'known' && card.category === category
+        )!;
+      expect(await labelFor(view, ofCategory('Energy').id)).toBe(
+        'Attach to a Pokémon…'
+      );
+      const pokemon = ofCategory('Pokémon');
+      expect(await labelFor(view, pokemon.id)).toBe('Evolve a Pokémon…');
+      // A V-UNION's piece joins its others.
+      const definitionId =
+        pokemon.kind === 'known' ? pokemon.definitionId : undefined;
+      const pieces: MatchViewState = {
+        ...view,
+        definitions: {
+          ...view.definitions,
+          [definitionId!]: {
+            ...view.definitions[definitionId!]!,
+            presentation: {
+              readingQuarterTurns: 0,
+              join: { key: 'union', columns: 2, rows: 2, part: 1 },
+            },
           },
         },
-      },
-    };
-    expect(await labelFor(pieces, pokemon.id)).toBe('Join pieces…');
-  });
+      };
+      expect(await labelFor(pieces, pokemon.id)).toBe('Join pieces…');
+    }
+  );
 
   it('offers a card played as another kind its own way: as an Energy, or as a Pokémon', async () => {
     const hand = `zone:${firstPlayer}:hand`;

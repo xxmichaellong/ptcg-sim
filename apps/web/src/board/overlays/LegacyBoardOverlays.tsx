@@ -90,7 +90,10 @@ import {
   type RefObject,
 } from 'react';
 
-import { resolveAttachEvolveTargeting } from '../resolveAttachEvolveTargeting.js';
+import {
+  resolveAttachEvolveTargeting,
+  type AttachEvolvePlacementMode,
+} from '../resolveAttachEvolveTargeting.js';
 import type { GroupAction } from '../compile-group.js';
 import { groupMenuOf, playAsOneSelection } from '../group-menu-entries.js';
 import { visiblePieceSetOf } from '../piece-sets.js';
@@ -1119,6 +1122,22 @@ const isOwnLocation = (
   );
 };
 
+/** Joined prints share their placement label across menus and card options. */
+const cardAssemblyKind = (
+  view: MatchViewState | undefined,
+  cardId: string,
+  placement: AttachEvolvePlacementMode | null
+): AttachEvolvePlacementMode | 'join' | null => {
+  const located =
+    placement === 'evolution' && view
+      ? locateViewCardActionSource(view, cardId)
+      : null;
+  return located?.card.kind === 'known' &&
+    view?.definitions[located.card.definitionId]?.presentation?.join
+    ? 'join'
+    : placement;
+};
+
 const ContextMenu = ({
   state,
   depth,
@@ -1167,18 +1186,7 @@ const ContextMenu = ({
       ? resolveAttachEvolveTargeting(state.view, card.id)
       : null;
   const placement = targeting?.ok ? targeting.targeting.mode : null;
-  // A piece of a multi-piece card (V-UNION, LEGEND) joins its others as a
-  // Pokémon evolves.
-  const located =
-    placement === 'evolution' && state.view
-      ? locateViewCardActionSource(state.view, card.id)
-      : null;
-  const assembly =
-    placement === 'evolution' &&
-    located?.card.kind === 'known' &&
-    state.view?.definitions[located.card.definitionId]?.presentation?.join
-      ? 'join'
-      : placement;
+  const assembly = cardAssemblyKind(state.view, card.id, placement);
   // A card printed to be played as another kind offers that too: a Holon's
   // Pokémon attached as an Energy, a Fossil played as a Pokémon.
   const asEnergy =
@@ -1940,6 +1948,7 @@ const CardWindowContents = ({
       ? resolveAttachEvolveTargeting(state.view, card.id)
       : null;
   const placement = targeting?.ok ? targeting.targeting.mode : null;
+  const assembly = cardAssemblyKind(state.view, card.id, placement);
   const asEnergy =
     state.canSubmitCommands &&
     state.view &&
@@ -2078,9 +2087,11 @@ const CardWindowContents = ({
                       actions.beginCardAssembly?.(card.id);
                     }}
                   >
-                    {placement === 'evolution'
-                      ? t`Evolve a Pokémon…`
-                      : t`Attach to a Pokémon…`}
+                    {assembly === 'join'
+                      ? t`Join pieces…`
+                      : assembly === 'evolution'
+                        ? t`Evolve a Pokémon…`
+                        : t`Attach to a Pokémon…`}
                   </button>
                 ) : null}
                 {asEnergy ? (
