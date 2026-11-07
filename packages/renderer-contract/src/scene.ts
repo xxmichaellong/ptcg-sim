@@ -1479,7 +1479,6 @@ export const createBoardScene = (
           evolutionNodes.push(node);
         });
         const host = evolutionNodes.at(-1);
-        const far = side === 'opponent';
         const hostBounds = host
           ? host.rotationQuarterTurns % 2 === 1
             ? {
@@ -1525,7 +1524,8 @@ export const createBoardScene = (
                 role: 'stackAttachment',
                 bounds: copyRect(slot?.bounds ?? fullBounds),
                 zIndex: 450 + index,
-                rotationQuarterTurns: far ? 2 : 0,
+                // makeCardNode applies the seat's half-turn once.
+                rotationQuarterTurns: 0,
                 interactive: true,
                 ...(slot
                   ? {

@@ -1,7 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { ownRoomBudget } from './support/room-budget.js';
 import { view, submit, revision } from './support/public-pile.js';
-import { dismissWelcome } from './support/table-shell.js';
+import {
+  dismissWelcome,
+  chooseMoreAction,
+  openSettings,
+  closeSheet,
+} from './support/table-shell.js';
 
 for (const device of [
   { width: 1440, height: 900, touch: false },
@@ -130,6 +135,50 @@ for (const device of [
         page.locator('[data-pokemon-window] [data-stack-preview-card-id]')
       ).toHaveCount(attached.length + 1);
       await page.locator('[data-pokemon-window-close]').click();
+      // The far seat follows the same viewing preference, including while held.
+      const facing = page.locator(
+        `.ptcgsim-board-surface [data-card-id="${attached[0]!.id}"]`
+      );
+      const horizontalAxis = () =>
+        facing.evaluate(
+          (node) => new DOMMatrix(getComputedStyle(node).transform).m11
+        );
+      await chooseMoreAction(page, 'flipBoardButton');
+      await expect(facing).toHaveAttribute('data-card-side', 'opponent');
+      await expect.poll(horizontalAxis).toBeLessThan(0);
+      await openSettings(page, 'cards');
+      await page.locator('#opponentUprightCheckbox').check();
+      await closeSheet(page);
+      await expect.poll(horizontalAxis).toBeGreaterThan(0);
+      await facing.click({ trial: true });
+      const farBox = (await facing.boundingBox())!;
+      await page.mouse.move(
+        farBox.x + farBox.width / 2,
+        farBox.y + farBox.height / 2
+      );
+      await page.mouse.down();
+      await page.mouse.move(
+        farBox.x + farBox.width / 2 + 18,
+        farBox.y + farBox.height / 2 + 18,
+        { steps: 5 }
+      );
+      await expect(facing).toHaveAttribute('data-held', 'drag');
+      await expect(facing).not.toHaveAttribute('data-attachment-compact');
+      await expect.poll(horizontalAxis).toBeGreaterThan(0);
+      await page.keyboard.press('Escape');
+      await page.mouse.up();
+      await expect(facing).toHaveAttribute('data-attachment-compact');
+      await openSettings(page, 'cards');
+      await page.locator('#opponentUprightCheckbox').uncheck();
+      await closeSheet(page);
+      await chooseMoreAction(page, 'flipBoardButton');
+      await expect(facing).toHaveAttribute('data-card-side', 'local');
+      await expect.poll(horizontalAxis).toBeGreaterThan(0);
+      await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+        'data-board-motion',
+        'idle'
+      );
+      await hostNode.click({ trial: true });
       // Carrying the whole Pokémon keeps its compact handles together with it.
       const hostBox = (await hostNode.boundingBox())!;
       await page.mouse.move(

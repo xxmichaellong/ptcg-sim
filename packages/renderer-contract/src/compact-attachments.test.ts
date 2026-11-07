@@ -11,6 +11,7 @@ import {
   tableVerticalLayout,
 } from './layout-table.js';
 import { withHeldCards } from './held-cards.js';
+import { DEFAULT_BOARD_PRESENTATION } from './defaults.js';
 describe('compact attachments', () => {
   it.each([
     'Grass Energy',
@@ -36,6 +37,66 @@ describe('compact attachments', () => {
   ])('keeps special and other attachments as actual artwork: %s', (name) =>
     expect(basicAttachmentEnergyIndex(name)).toBeUndefined()
   );
+  it.each([
+    { width: 1440, height: 900 },
+    { width: 390, height: 844 },
+    { width: 844, height: 390 },
+  ])(
+    'faces compact and expanded attachments like their seat at $width x $height',
+    (viewport) => {
+      const base = createRendererSpikeView();
+      const view = {
+        ...base,
+        stacks: Object.fromEntries(
+          Object.entries(base.stacks).map(([id, stack]) => [
+            id,
+            {
+              ...stack,
+              attachmentCards: Array.from({ length: 30 }, (_, index) => ({
+                ...stack.attachmentCards[0]!,
+                id: asViewCardId(`facing-${id}-${index}`),
+              })),
+            },
+          ])
+        ),
+      };
+      for (const bottomPlayerId of base.playerOrder)
+        for (const farCardsUpright of [false, true]) {
+          const scene = createBoardScene(
+            view,
+            createTableLayoutSnapshot({
+              geometryVersion: 2,
+              shellMode: 'fullscreen',
+              viewport: { ...viewport, devicePixelRatio: 1 },
+              playerIds: [base.playerOrder[0]!, base.playerOrder[1]!],
+              bottomPlayerId,
+              vertical: tableVerticalLayout(0.5),
+              farCardsUpright,
+            })
+          );
+          const attachments = scene.cards.filter(
+            (card) => card.role === 'stackAttachment'
+          );
+          expect(attachments.length).toBeGreaterThan(0);
+          for (const card of attachments) {
+            const turns = card.side === 'opponent' && !farCardsUpright ? 2 : 0;
+            expect(card.rotationQuarterTurns).toBe(turns);
+            if (
+              card.compactAttachment?.overflow ||
+              card.id === attachments[0]!.id
+            ) {
+              const held = withHeldCards(scene, {
+                ...DEFAULT_BOARD_PRESENTATION,
+                drag: { cardId: card.id, x: 100, y: 200, targetId: null },
+              }).cards.find((entry) => entry.id === card.id)!;
+              expect(held.compactAttachment?.expanded).toBe(true);
+              expect(held.rotationQuarterTurns).toBe(turns);
+            }
+          }
+        }
+    }
+  );
+
   it('bounds large sets to two rows with an explicit overflow handle', () => {
     const host = { x: 10, y: 20, width: 120, height: 168 };
     const slots = compactAttachmentSlots(host, 30, false);

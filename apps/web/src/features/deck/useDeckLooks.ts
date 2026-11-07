@@ -9,8 +9,14 @@ export type DeckLookField = 'coin' | 'playmat';
 import type { DeckBuilderStore } from './deck-builder-store.js';
 import type { DeckLibrary } from './deck-library.js';
 import type { DeckInstallSession } from './deck-install-adapter.js';
+interface LookRetry {
+  readonly value: string;
+  readonly commandId: string | undefined;
+  readonly delay: number;
+}
 interface LookMemory {
   readonly attempted: Map<string, { value: string; commandId?: string }>;
+  readonly retryDelays: Map<string, LookRetry>;
   readonly observed: Map<
     string,
     { signature: string; revision: number; deckId: string | undefined }
@@ -37,6 +43,7 @@ const memoryFor = (
   if (!memory) {
     memory = {
       attempted: new Map(),
+      retryDelays: new Map(),
       observed: new Map(),
       active: new Set(),
       requested: new Map(),
@@ -61,9 +68,18 @@ export const useDeckLooks = (
   useEffect(() => {
     if (!session) return;
     const memory = memoryFor(session, store);
-    const { attempted } = memory;
-    const retryDelays = new Map<string, number>();
+    const { attempted, retryDelays } = memory;
     const retryTimers = new Map<string, ReturnType<typeof setTimeout>>();
+    const clearRetry = (key: string) => {
+      const timer = retryTimers.get(key);
+      if (timer !== undefined) clearTimeout(timer);
+      retryTimers.delete(key);
+    };
+    const forget = (key: string) => {
+      attempted.delete(key);
+      retryDelays.delete(key);
+      clearRetry(key);
+    };
     const sync = () => {
       const state = session.getSnapshot(),
         view = state.view;
@@ -150,7 +166,7 @@ export const useDeckLooks = (
             if (target === 'main' && field === 'coin')
               setDeckCoinSelection(session, deck?.coin);
             else
-              attempted.delete(
+              forget(
                 `${view.matchId}/${playerId}/${field === 'coin' ? 'SetCoin' : 'SetPlayerProfile'}`
               );
           }
@@ -180,7 +196,10 @@ export const useDeckLooks = (
             const result = state.completedCommands.find(
               (entry) => entry.commandId === previous.commandId
             );
-            if (result?.accepted) retryDelays.delete(key);
+            if (result?.accepted) {
+              retryDelays.delete(key);
+              clearRetry(key);
+            }
             if (
               result &&
               !result.accepted &&
@@ -194,20 +213,34 @@ export const useDeckLooks = (
               ].includes(result.code) &&
               !retryTimers.has(key)
             ) {
-              const delay = retryDelays.get(key) ?? 500;
-              retryDelays.set(key, Math.min(30_000, delay * 2));
-              retryTimers.set(
-                key,
-                setTimeout(() => {
-                  retryTimers.delete(key);
-                  if (attempted.get(key) === previous) attempted.delete(key);
-                  sync();
-                }, delay)
-              );
+              const retry = retryDelays.get(key);
+              // The same failed command can be observed again after remount.
+              // Increase only for another failure of this same chosen look.
+              const delay =
+                retry?.value === value
+                  ? retry.commandId === previous.commandId
+                    ? retry.delay
+                    : Math.min(30_000, retry.delay * 2)
+                  : 500;
+              retryDelays.set(key, {
+                value,
+                commandId: previous.commandId,
+                delay,
+              });
+              const timer = setTimeout(() => {
+                if (retryTimers.get(key) !== timer) return;
+                retryTimers.delete(key);
+                if (attempted.get(key) === previous) attempted.delete(key);
+                sync();
+              }, delay);
+              retryTimers.set(key, timer);
             }
             continue;
           }
-          retryDelays.delete(key);
+          if (retryDelays.get(key)?.value !== value) {
+            retryDelays.delete(key);
+            clearRetry(key);
+          }
           const queued = state.pendingCommands.findLast(
             (entry) =>
               entry.command.type === choice.type &&
@@ -234,7 +267,11 @@ export const useDeckLooks = (
             continue;
           }
           attempted.set(key, { value });
-          if (!queued && worn === wanted) continue;
+          if (!queued && worn === wanted) {
+            retryDelays.delete(key);
+            clearRetry(key);
+            continue;
+          }
           const result = session.submit({
             ...choice,
             targetPlayerId: playerId,
@@ -276,7 +313,7 @@ export const useDeckLooks = (
         if (target === 'main' && field === 'coin')
           setDeckCoinSelection(session, deck?.coin, true);
         else
-          attempted.delete(
+          forget(
             `${view.matchId}/${playerId}/${field === 'coin' ? 'SetCoin' : 'SetPlayerProfile'}`
           );
       }
