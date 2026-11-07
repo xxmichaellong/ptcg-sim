@@ -123,7 +123,11 @@ export interface BoardProjectionFrame {
 }
 
 export type BoardPreviewState =
-  | { readonly kind: 'card'; readonly cardId: ViewCardId }
+  | {
+      readonly kind: 'card';
+      readonly cardId: ViewCardId;
+      readonly artOnly?: true;
+    }
   | {
       readonly kind: 'stack';
       readonly stackId: string;
@@ -2018,7 +2022,11 @@ const handleIntent = (
               stackId: card.parentId,
               focusCardId: intent.cardId,
             }
-          : { kind: 'card', cardId: intent.cardId };
+          : {
+              kind: 'card',
+              cardId: intent.cardId,
+              ...(intent.single ? { artOnly: true as const } : {}),
+            };
       const next = nextState(state, {
         presentation: {
           ...state.presentation,

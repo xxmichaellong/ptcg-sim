@@ -1005,6 +1005,30 @@ describe('the deck screen from the keyboard', () => {
     }
   });
 
+  it.each([
+    { cardBack: 'preset:azure' },
+    { coin: 'preset:violet' },
+    { playmat: 'style:ocean' },
+    { notes: 'Keep this' },
+    { coverId: 'chosen' },
+    { format: 'expanded' as const },
+  ])(
+    'keeps an empty new deck after a real composition edit: %j',
+    async (patch) => {
+      const library = new DeckLibrary({ backend: null });
+      await render(vi.fn(), library);
+      await act(async () =>
+        host.querySelector<HTMLButtonElement>('#deckNewButton')!.click()
+      );
+      const draft = library.getSnapshot().decks[0]!;
+      await act(async () => library.update(draft.id, patch));
+      await act(async () =>
+        host.querySelector<HTMLButtonElement>('#deckEditorBackButton')!.click()
+      );
+      expect(library.get(draft.id)).toMatchObject(patch);
+    }
+  );
+
   it('keeps a name typed into a new deck just before the screen goes, and the deck with it', async () => {
     const library = new DeckLibrary({ backend: null });
     await render(vi.fn(), library);
@@ -1333,9 +1357,7 @@ describe('the seat trays', () => {
     expect(slot().querySelector('.deck-screen__seat-name')?.textContent).toBe(
       'Dragapult'
     );
-    expect(slot().querySelector('.deck-tray__finish')?.textContent).toBe(
-      '1st of 232'
-    );
+    expect(slot().querySelector('.deck-tray__finish')).toBeNull();
   });
 
   it('count a deck complete at its own format’s size', async () => {

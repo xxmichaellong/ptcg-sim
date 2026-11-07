@@ -220,7 +220,9 @@
   font-size: var(--text-md);
   text-align: start;
   white-space: nowrap;
-  transition: background-color var(--duration-instant, 90ms) ease;
+  transition:
+    background-color var(--duration-instant, 90ms) ease,
+    opacity var(--duration-fast) ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -501,7 +503,7 @@
   display: grid;
   place-items: center;
   box-sizing: border-box;
-  padding: 64px 32px 16px;
+  padding: 16px 32px 64px;
   background: var(--color-scrim);
   cursor: zoom-out;
   pointer-events: auto;
@@ -559,7 +561,7 @@
 }
 .ptcgsim-composition-caption {
   position: absolute;
-  bottom: 16px;
+  top: 16px;
   inset-inline: 24px;
   margin: 0;
   text-align: center;
@@ -884,7 +886,8 @@
   transition:
     background-color var(--duration-instant, 90ms) ease,
     border-color var(--duration-instant, 90ms) ease,
-    scale var(--control-press-timing);
+    scale var(--control-press-timing),
+    opacity var(--duration-fast) ease;
 }
 
 .ptcgsim-overlay-button:disabled {
@@ -1091,6 +1094,13 @@ button.ptcgsim-overlay-toggle:focus-visible {
   outline: none;
 }
 
+.ptcgsim-legacy-work-area[data-work-area-drop-target='true'] {
+  border-color: var(--color-accent);
+  box-shadow:
+    0 0 0 2px var(--color-accent),
+    var(--shadow-5);
+}
+
 /* Dragging a card out: the panel gets out of the way of the drop, fading
    and sinking a little as it goes. */
 .ptcgsim-legacy-zone-browser[data-zone-dragging-card] {
@@ -1214,7 +1224,8 @@ button.ptcgsim-overlay-toggle:focus-visible {
     gap: 0;
     font-size: 0;
   }
-  .is-showing-board .ptcgsim-legacy-zone-toolbar .ptcgsim-show-board-button {
+
+  .ptcgsim-show-board-button {
     gap: var(--space-1-5);
     padding: 0 var(--space-3);
     font-size: var(--text-md);
@@ -1260,10 +1271,7 @@ button.ptcgsim-overlay-toggle:focus-visible {
 
 .ptcgsim-legacy-zone-browser.is-showing-board .ptcgsim-legacy-zone-cards,
 .ptcgsim-legacy-zone-browser.is-showing-board .ptcgsim-browser-tools,
-.ptcgsim-legacy-zone-browser.is-showing-board .ptcgsim-overlay-heading,
-.ptcgsim-legacy-zone-browser.is-showing-board
-  .ptcgsim-overlay-actions
-  > :not(.ptcgsim-show-board-button) {
+.ptcgsim-legacy-zone-browser.is-showing-board .ptcgsim-overlay-heading {
   opacity: 0;
 }
 
@@ -1778,4 +1786,143 @@ button.ptcgsim-overlay-toggle:focus-visible {
   background-color: var(--color-danger-fill);
   background-image: none;
   color: var(--color-text-on-accent);
+}
+
+/* Common destinations stay out in the open; a narrow bar scrolls this row. */
+.ptcgsim-card-actions > .ptcgsim-card-moves {
+  flex: 1;
+  min-width: 64px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+.ptcgsim-card-moves {
+  display: flex;
+  gap: var(--space-1-5);
+  padding: 2px;
+}
+.ptcgsim-card-moves > button {
+  flex: none;
+}
+.ptcgsim-card-actions-label {
+  flex: 0 1 180px;
+}
+.ptcgsim-card-actions {
+  flex-wrap: nowrap;
+}
+.ptcgsim-card-moves.is-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  padding: 0;
+}
+.ptcgsim-card-moves.is-grid > button {
+  justify-content: flex-start;
+}
+
+@media (max-width: 600px) {
+  .ptcgsim-card-actions {
+    flex-wrap: wrap;
+  }
+  .ptcgsim-card-actions > .ptcgsim-card-moves {
+    flex-basis: 100%;
+    min-width: 0;
+    order: 2;
+  }
+}
+
+/* Card options use the same window frame as a Pokémon, with clear action groups. */
+.card-window__body {
+  display: grid;
+  grid-template-columns: minmax(140px, 230px) minmax(0, 1fr);
+  gap: var(--space-5);
+  padding: var(--space-4);
+  overflow-y: auto;
+  min-height: 0;
+}
+.card-window__picture {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+.card-window__card {
+  width: 100%;
+  max-width: 220px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: zoom-in;
+}
+.card-window__card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+.card-window__options {
+  display: grid;
+  align-content: start;
+  gap: var(--space-5);
+  min-width: 0;
+}
+.card-window__group h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-md);
+  color: var(--color-text-muted);
+}
+.card-window__action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--space-2);
+}
+.card-window__action-grid > button {
+  height: auto;
+  min-height: 40px;
+  justify-content: flex-start;
+  text-align: start;
+  white-space: normal;
+}
+.card-window__extra-moves {
+  margin-top: var(--space-2);
+}
+.ptcgsim-preview-controls {
+  top: auto;
+  right: auto;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  justify-content: center;
+  max-width: calc(100% - 2 * var(--space-4));
+}
+@media (max-width: 600px) {
+  .card-window__body {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+  .card-window__picture {
+    flex-direction: row;
+    justify-content: center;
+  }
+  .card-window__card {
+    width: 105px;
+  }
+  .card-window__action-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Keep the return action visible while every other header action fades out. */
+.is-showing-board .ptcgsim-overlay-actions > :not(.ptcgsim-show-board-button) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.card-window__advanced {
+  color: var(--color-text-muted);
+}
+.card-window__advanced summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-weight: 600;
 }

@@ -651,7 +651,7 @@ test('opened piles offer tap and keyboard movement, and cancel pen and touch ges
   await source.focus();
   await page.keyboard.press('Enter');
   await source.dblclick();
-  await expect(page.locator('[data-preview-kind="card"]')).toBeVisible();
+  await expect(page.locator('[data-card-actions-window]')).toBeVisible();
   await page.keyboard.press('Escape');
   const surface = page.locator('.ptcgsim-board-surface');
   const sourceId = await source.getAttribute('data-overlay-card-id');
@@ -692,15 +692,9 @@ test('opened piles offer tap and keyboard movement, and cancel pen and touch ges
   )!;
   await source.focus();
   await page.keyboard.press('Enter');
-  // Move asks where to: a menu, worked by the keyboard alone.
-  await browser.getByRole('button', { name: 'Move', exact: true }).focus();
+  // A direct destination is operable by keyboard without a second menu.
+  await browser.locator('[data-card-destination="hand"]').focus();
   await page.keyboard.press('Enter');
-  const destinations = page.getByRole('menu');
-  await expect(destinations).toBeVisible();
-  await destinations
-    .getByRole('menuitem', { name: 'Hand', exact: true })
-    .press('Enter');
-  await expect(destinations).toHaveCount(0);
   await expect
     .poll(
       async () =>

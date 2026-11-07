@@ -137,8 +137,9 @@ test('card browsing preserves order, offers readable density, and keeps keyboard
   // necessarily the first card.
   const opened = browser.locator('button[aria-label="Ember ex"]').first();
   await opened.dblclick();
+  await page.locator('[data-card-window-view]').click();
   const preview = page.locator('[data-preview-kind="card"]');
-  const close = preview.getByRole('button', { name: 'Close card preview' });
+  const close = preview.getByRole('button', { name: 'Back', exact: true });
   await expect(preview).toBeVisible();
   const material = preview.locator('.card-material');
   let lightSample = 0;
@@ -160,7 +161,7 @@ test('card browsing preserves order, offers readable density, and keeps keyboard
     .toBeGreaterThan(0.05);
   await page.keyboard.press('Tab');
   await expect(close).toBeFocused();
-  // Close is the preview's only control, so focus stays on it both ways.
+  // Back stays close to the artwork and is its only control.
   await page.keyboard.press('Shift+Tab');
   await expect(close).toBeFocused();
   // A resting pointer lets the card settle flat for reading.
@@ -174,6 +175,10 @@ test('card browsing preserves order, offers readable density, and keeps keyboard
     .toBe('0deg');
   await close.click();
   await expect(preview).toHaveCount(0);
+  await page
+    .locator('[data-card-actions-window]')
+    .getByRole('button', { name: 'Close', exact: true })
+    .click();
   await expect(opened).toBeFocused();
 
   // Narrow desktop: controls and card grid remain inside the table.
@@ -195,6 +200,7 @@ test('card browsing preserves order, offers readable density, and keeps keyboard
     })
     .toBe(true);
   await cards.first().dblclick();
+  await page.locator('[data-card-window-view]').click();
   await expect(preview).toBeVisible();
   await expect
     .poll(() =>
@@ -215,6 +221,10 @@ test('card browsing preserves order, offers readable density, and keeps keyboard
     )
     .toBe(true);
   await close.click();
+  await page
+    .locator('[data-card-actions-window]')
+    .getByRole('button', { name: 'Close', exact: true })
+    .click();
   await browser.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(page.locator('[data-legacy-zone-browser]')).toHaveCount(0);
 });
@@ -339,6 +349,7 @@ test('magnified desktop viewport keeps card reading and movement controls reacha
     await page.keyboard.press('Enter');
     // Reading is a double-click, as everywhere on the table.
     await source.dblclick();
+    await page.locator('[data-card-window-view]').click();
     const preview = page.locator('[data-preview-kind="card"]');
     await expect(preview).toBeVisible();
     const box = (await preview
@@ -349,8 +360,9 @@ test('magnified desktop viewport keeps card reading and movement controls reacha
     expect(box.x + box.width).toBeLessThanOrEqual(721);
     expect(box.y + box.height).toBeLessThanOrEqual(451);
     await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
     await expect(source).toBeFocused();
-    const move = browser.getByRole('button', { name: 'Move', exact: true });
+    const move = browser.locator('[data-card-destination="hand"]');
     await expect(move).toBeEnabled();
     await move.scrollIntoViewIfNeeded();
     const bounds = (await move.boundingBox())!;

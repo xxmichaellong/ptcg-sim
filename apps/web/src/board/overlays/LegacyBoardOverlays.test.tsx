@@ -1669,6 +1669,11 @@ describe('legacy board overlays', () => {
         })
       );
     });
+    await act(async () =>
+      [...host.querySelectorAll<HTMLButtonElement>('button')]
+        .find((button) => button.textContent === 'View whole card')!
+        .click()
+    );
     expect(
       host.querySelector('[data-preview-kind="composition"]')
     ).not.toBeNull();
@@ -1749,7 +1754,7 @@ describe('legacy board overlays', () => {
       host
         .querySelector('[data-legacy-card-preview]')
         ?.getAttribute('data-preview-kind')
-    ).toBe('card');
+    ).toBe('actions');
     expect(
       host
         .querySelector<HTMLImageElement>('[data-overlay-card-id]')
@@ -1999,7 +2004,7 @@ describe('legacy board overlays', () => {
       '[data-legacy-zone-browser]'
     )!;
     const preview = host.querySelector<HTMLElement>(
-      '[data-preview-kind="card"]'
+      '[data-preview-kind="actions"]'
     )!;
     expect(preview.getAttribute('aria-modal')).toBe('true');
     expect(browser.getAttribute('aria-modal')).toBeNull();
@@ -2016,8 +2021,8 @@ describe('legacy board overlays', () => {
     const controls = [
       ...preview.querySelectorAll<HTMLButtonElement>('[data-preview-tabbable]'),
     ];
-    expect(controls).toHaveLength(1);
-    controls[0]!.focus();
+    expect(controls.length).toBeGreaterThan(1);
+    controls.at(-1)!.focus();
     expect(controls[0]!.dispatchEvent(tab)).toBe(false);
     expect(tab.defaultPrevented).toBe(true);
     expect(document.activeElement).toBe(controls[0]);
@@ -2056,7 +2061,7 @@ describe('legacy board overlays', () => {
               },
               overlays: {
                 contextMenuCardId: null,
-                preview: { kind: 'card', cardId: card.id },
+                preview: { kind: 'card', cardId: card.id, artOnly: true },
                 input: null,
               },
             }),
@@ -2798,7 +2803,7 @@ describe('legacy board overlays', () => {
         input: null,
       },
     });
-    expect(dragStartIsCancelled('.ptcgsim-card-preview-stage')).toBe(true);
+    expect(dragStartIsCancelled('.card-window__card')).toBe(true);
   });
 
   it('keeps a viewer aside until the card dropped out of it has landed, and never longer than a few seconds', async () => {

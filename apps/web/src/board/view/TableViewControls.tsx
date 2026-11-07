@@ -1,5 +1,9 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { TABLE_SPLIT, TABLE_TILT_MAXIMUM } from '@ptcgsim/renderer-contract';
+import {
+  TABLE_SPLIT,
+  TABLE_TILT_MAXIMUM,
+  TABLE_THICKNESS_MAXIMUM,
+} from '@ptcgsim/renderer-contract';
 import { useSyncExternalStore } from 'react';
 
 import {
@@ -97,7 +101,7 @@ export const TableDepthControls = () => {
           label={t({ message: 'Thickness', context: "the cards' thickness" })}
           valueText={`${depth.strength.toFixed(1)}×`}
           min={0}
-          max={2}
+          max={TABLE_THICKNESS_MAXIMUM}
           step={0.1}
           value={depth.strength}
           onChange={(strength) => store.update({ strength })}

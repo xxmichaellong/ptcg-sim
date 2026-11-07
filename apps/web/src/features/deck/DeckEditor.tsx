@@ -1,3 +1,4 @@
+import { DeckCustomize } from './DeckCustomize.js';
 import { ArrowArcLeftIcon } from '@phosphor-icons/react/dist/csr/ArrowArcLeft';
 import { ArrowArcRightIcon } from '@phosphor-icons/react/dist/csr/ArrowArcRight';
 import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
@@ -172,6 +173,7 @@ export const DeckEditor = ({
   const loaded =
     catalogState.status === 'ready' ? catalogState.catalog : undefined;
   const [nameDraft, setNameDraft] = useState(deck.name);
+  const [section, setSection] = useState<'cards' | 'customize'>('cards');
   const [tab, setTab] = useState<'search' | 'deck'>('search');
   const [inspected, setInspected] = useState<InspectedCard>();
   const [customOpen, setCustomOpen] = useState(false);
@@ -435,7 +437,7 @@ export const DeckEditor = ({
     // A key already answered isn't answered twice: one from a window drawn
     // elsewhere (a card's details) reaches this handler twice through
     // React's portal, and its Ctrl+Z undid two steps.
-    if (event.defaultPrevented) return;
+    if (event.defaultPrevented || section !== 'cards') return;
     // A window of the editor's own open over it (a custom card's) keeps
     // its keys. One drawn elsewhere (a card's details, whose + and prints
     // change the deck) keeps only `/`: undo and redo still reach the deck.
@@ -534,6 +536,7 @@ export const DeckEditor = ({
       ref={editor}
       className="deck-editor"
       data-tab={tab}
+      data-section={section}
       // The deck on the seat being worked on wears its colour (its chip by
       // the name, its sheet's edge): whose deck this is, at a glance.
       data-on-seat={
@@ -745,77 +748,101 @@ export const DeckEditor = ({
           )}
         </div>
       </div>
-      <div
-        className="deck-editor__tabs"
-        role="tablist"
-        aria-label={t({ message: 'Show', context: 'which pane to show' })}
-      >
+      <div className="deck-editor__sections" role="group" aria-label={t`Deck`}>
         <button
           type="button"
-          role="tab"
-          aria-selected={tab === 'search'}
-          onClick={() => setTab('search')}
+          className="ds-button ds-button--ghost"
+          aria-pressed={section === 'cards'}
+          onClick={() => setSection('cards')}
         >
-          <MagnifyingGlassIcon
-            {...decorative}
-            weight={tab === 'search' ? 'bold' : 'regular'}
-          />
-          <Trans>Find cards</Trans>
+          <Trans>Deck list</Trans>
         </button>
         <button
           type="button"
-          role="tab"
-          aria-selected={tab === 'deck'}
-          onClick={() => setTab('deck')}
+          className="ds-button ds-button--ghost"
+          aria-pressed={section === 'customize'}
+          onClick={() => setSection('customize')}
         >
-          <CardsIcon
-            {...decorative}
-            weight={tab === 'deck' ? 'fill' : 'regular'}
-          />
-          <Trans context="the deck being built">Deck</Trans>{' '}
-          <span className="ds-number">{total}</span>
+          <Trans>Customize</Trans>
         </button>
       </div>
-      <div className="deck-editor__panes">
-        <div className="deck-editor__pane deck-editor__pane--search">
-          <CardSearchPanel
-            catalog={catalog}
-            deck={cards}
-            format={deck.format}
-            searchRef={searchRef}
-            onAdd={add}
-            onRemove={remove}
-            onInspect={(card) => setInspected({ kind: 'catalog', card })}
-            onCustomCard={() => {
-              customOpener.current =
-                document.activeElement instanceof HTMLElement
-                  ? document.activeElement
-                  : null;
-              setCustomOpen(true);
-            }}
-            onZoom={zoom.show}
-            onZoomEnd={zoom.release}
-            onZoomSourceGone={zoom.invalidate}
-            onScroll={zoom.hide}
-          />
-        </div>
-        <div className="deck-editor__pane deck-editor__pane--deck">
-          <DeckListPanel
-            cards={cards}
-            check={check}
-            coverId={deck.coverId}
-            missing={missing}
-            onDismissMissing={onDismissMissing}
-            onSearchFor={searchFor}
-            onAdd={add}
-            onRemove={remove}
-            onInspect={(card) => setInspected({ kind: 'deck', card })}
-            onZoom={zoom.show}
-            onZoomEnd={zoom.release}
-            onZoomSourceGone={zoom.invalidate}
-          />
-        </div>
-      </div>
+      {section === 'customize' ? (
+        <DeckCustomize deck={deck} library={library} />
+      ) : (
+        <>
+          <div
+            className="deck-editor__tabs"
+            role="tablist"
+            aria-label={t({ message: 'Show', context: 'which pane to show' })}
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'search'}
+              onClick={() => setTab('search')}
+            >
+              <MagnifyingGlassIcon
+                {...decorative}
+                weight={tab === 'search' ? 'bold' : 'regular'}
+              />
+              <Trans>Find cards</Trans>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'deck'}
+              onClick={() => setTab('deck')}
+            >
+              <CardsIcon
+                {...decorative}
+                weight={tab === 'deck' ? 'fill' : 'regular'}
+              />
+              <Trans context="the deck being built">Deck</Trans>{' '}
+              <span className="ds-number">{total}</span>
+            </button>
+          </div>
+          <div className="deck-editor__panes">
+            <div className="deck-editor__pane deck-editor__pane--search">
+              <CardSearchPanel
+                catalog={catalog}
+                deck={cards}
+                format={deck.format}
+                searchRef={searchRef}
+                onAdd={add}
+                onRemove={remove}
+                onInspect={(card) => setInspected({ kind: 'catalog', card })}
+                onCustomCard={() => {
+                  customOpener.current =
+                    document.activeElement instanceof HTMLElement
+                      ? document.activeElement
+                      : null;
+                  setCustomOpen(true);
+                }}
+                onZoom={zoom.show}
+                onZoomEnd={zoom.release}
+                onZoomSourceGone={zoom.invalidate}
+                onScroll={zoom.hide}
+              />
+            </div>
+            <div className="deck-editor__pane deck-editor__pane--deck">
+              <DeckListPanel
+                cards={cards}
+                check={check}
+                coverId={deck.coverId}
+                missing={missing}
+                onDismissMissing={onDismissMissing}
+                onSearchFor={searchFor}
+                onAdd={add}
+                onRemove={remove}
+                onInspect={(card) => setInspected({ kind: 'deck', card })}
+                onZoom={zoom.show}
+                onZoomEnd={zoom.release}
+                onZoomSourceGone={zoom.invalidate}
+              />
+            </div>
+          </div>
+        </>
+      )}
       {zoom.element}
       <CardDetails
         inspected={inspected}

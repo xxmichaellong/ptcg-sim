@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { MarkerControls } from './MarkerControls.js';
 import { GroupDamageControls } from './GroupDamageControls.js';
 import { GroupMenuView, type GroupMenuChoice } from './GroupMenu.js';
@@ -14,6 +15,7 @@ import { RevealedHandBadges } from './RevealedHandBadges.js';
 import { PokemonWindow, type PokemonWindowCardSize } from './PokemonWindow.js';
 import { visualCardBounds } from './card-bounds.js';
 import { OverlayCardActions } from './OverlayCardActions.js';
+import { CardMoveButtons } from './CardMoveButtons.js';
 import type {
   MatchViewState,
   PlayerId,
@@ -1692,7 +1694,7 @@ const WorkAreaUndoButton = ({
   const label = t`Undo`;
   const hint = shortcutHint(keymap, 'table.undo');
   return (
-    <Tooltip content={withKeyHint(label, hint)} side="bottom">
+    <Tooltip content={withKeyHint(label, hint)} side="bottom" disabled={inert}>
       <button
         type="button"
         className="ptcgsim-overlay-button is-quiet ptcgsim-overlay-undo"
@@ -1893,7 +1895,287 @@ const previewSourceOf = (event: MouseEvent): PreviewSource | null => {
  * tilting toward the pointer under a moving glare; the stack view lays the
  * stack's cards out upright over their player's half.
  */
+/** A card's context-specific options, before the separate artwork view. */
+const CardWindowContents = ({
+  state,
+  card,
+  actions,
+  image,
+  onView,
+  onClose,
+  onPlayAsOne,
+  soloOpponentHandHidden,
+}: {
+  readonly state: BoardSessionControllerState;
+  readonly card: CardSceneNode;
+  readonly actions: LegacyBoardOverlayActions;
+  readonly image: ReactNode;
+  readonly onView: () => void;
+  readonly onClose: () => void;
+  readonly onPlayAsOne?: (card: CardSceneNode) => void;
+  readonly soloOpponentHandHidden?: boolean;
+}) => {
+  const { t, i18n } = useLingui();
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const scene = state.scene!;
+  const entries = selectLegacyContextEntries(
+    state,
+    card,
+    soloOpponentHandHidden === undefined ? {} : { soloOpponentHandHidden }
+  );
+  const groups: { title: string; entries: ContextEntry[] }[] = [
+    { title: t`Card actions`, entries: [] },
+  ];
+  for (const entry of entries) {
+    if (entry.kind === 'header')
+      groups.push({ title: entry.label, entries: [] });
+    else if (
+      entry.kind !== 'action' ||
+      (entry.action !== 'moveCard' && entry.action !== 'changeCardType')
+    )
+      groups.at(-1)!.entries.push(entry);
+  }
+  const targeting =
+    state.canSubmitCommands && state.view && actions.beginCardAssembly
+      ? resolveAttachEvolveTargeting(state.view, card.id)
+      : null;
+  const placement = targeting?.ok ? targeting.targeting.mode : null;
+  const asEnergy =
+    state.canSubmitCommands &&
+    state.view &&
+    actions.beginCardAssembly &&
+    canAttachAsEnergy(state.view, card.id);
+  const asPokemon =
+    state.canSubmitCommands &&
+    state.view &&
+    actions.playCardAsPokemon &&
+    playsAsPokemon(state.view, card.id);
+  const emit = (intent: OpenedZoneCardIntent) =>
+    card.parentId === state.presentation.openedZoneId
+      ? actions.emitOpenedZoneCardIntent(intent)
+      : actions.emitCardIntent?.(intent);
+  const act = (
+    action: LegacyBoardContextActionId,
+    destination?: LegacyBoardMoveChoice
+  ) => {
+    if (actions.invokeWindowAction)
+      actions.invokeWindowAction({
+        kind: 'context',
+        cardId: card.id,
+        action,
+        ...(destination ? { destination } : {}),
+      });
+    else actions.invokeContextAction(action, card.id);
+  };
+  const special = placement || asEnergy || asPokemon;
+  const options = groups
+    .filter((group) => group.entries.length > 0)
+    .map((group, index) => (
+      <section key={`${group.title}/${index}`} className="card-window__group">
+        <h3>{group.title}</h3>
+        <div className="card-window__action-grid">
+          {group.entries.map((entry) => {
+            if (entry.kind === 'header') return null;
+            const Icon =
+              entry.kind === 'action'
+                ? CONTEXT_ACTION_DECOR[entry.action].icon
+                : entry.kind === 'playAsOne'
+                  ? PuzzlePieceIcon
+                  : EyeIcon;
+            return (
+              <button
+                key={entry.id}
+                type="button"
+                className="ptcgsim-overlay-button"
+                data-preview-tabbable="true"
+                data-context-action={entry.id}
+                onClick={() => {
+                  if (entry.kind === 'action') act(entry.action);
+                  else if (entry.kind === 'openPile') {
+                    onClose();
+                    actions.openZone?.(entry.zoneId);
+                  } else {
+                    onClose();
+                    onPlayAsOne?.(card);
+                  }
+                }}
+              >
+                <Icon aria-hidden="true" />
+                <span>{entry.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    ));
+  const moves = state.canSubmitCommands ? (
+    <section className="card-window__group">
+      <h3>{t`Move to`}</h3>
+      <CardMoveButtons
+        card={card}
+        scene={scene}
+        enabled={state.canSubmitCommands}
+        emit={emit}
+        inWindow
+      />
+      {scene.zones.some(
+        (zone) =>
+          zone.kind === 'deck' &&
+          zone.playerId === card.ownerId &&
+          zone.interactive
+      ) ? (
+        <div className="card-window__action-grid card-window__extra-moves">
+          {(['deckShuffle', 'deckSwitch'] as const).map((destination) => (
+            <button
+              key={destination}
+              type="button"
+              className="ptcgsim-overlay-button is-quiet"
+              data-preview-tabbable="true"
+              data-card-destination={destination}
+              onClick={() => act('moveCard', destination)}
+            >
+              {i18n._(MOVE_CHOICE_LABELS[destination])}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  ) : null;
+  return (
+    <>
+      <header className="ptcgsim-overlay-header">
+        <div className="ptcgsim-overlay-heading">
+          <h2 className="ptcgsim-overlay-title">{card.label}</h2>
+        </div>
+        <OverlayCloseButton data-preview-tabbable="true" onClick={onClose} />
+      </header>
+      <div className="card-window__body">
+        <div className="card-window__picture">
+          {image}
+          <button
+            type="button"
+            className="ptcgsim-overlay-button"
+            data-preview-tabbable="true"
+            data-card-window-view="true"
+            onClick={onView}
+          >
+            <EyeIcon aria-hidden="true" />
+            {t`View card`}
+          </button>
+        </div>
+        <div className="card-window__options">
+          {special ? (
+            <section className="card-window__group">
+              <div className="card-window__action-grid">
+                {placement ? (
+                  <button
+                    type="button"
+                    className="ptcgsim-overlay-button is-primary"
+                    data-preview-tabbable="true"
+                    data-card-window-assemble="true"
+                    onClick={() => {
+                      onClose();
+                      actions.beginCardAssembly?.(card.id);
+                    }}
+                  >
+                    {placement === 'evolution'
+                      ? t`Evolve a Pokémon…`
+                      : t`Attach to a Pokémon…`}
+                  </button>
+                ) : null}
+                {asEnergy ? (
+                  <button
+                    type="button"
+                    className="ptcgsim-overlay-button"
+                    data-preview-tabbable="true"
+                    onClick={() => {
+                      onClose();
+                      actions.beginCardAssembly?.(card.id, {
+                        asCategory: 'Energy',
+                      });
+                    }}
+                  >
+                    {t({
+                      message: 'Attach as an Energy…',
+                      comment:
+                        "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
+                    })}
+                  </button>
+                ) : null}
+                {asPokemon ? (
+                  <button
+                    type="button"
+                    className="ptcgsim-overlay-button"
+                    data-preview-tabbable="true"
+                    onClick={() => {
+                      onClose();
+                      actions.playCardAsPokemon?.(card.id);
+                    }}
+                  >
+                    {t({
+                      message: 'Play as a Pokémon',
+                      comment:
+                        'Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.',
+                    })}
+                  </button>
+                ) : null}
+              </div>
+            </section>
+          ) : null}
+          {zoneForCard(state, card)?.kind === 'prizes' ? (
+            <>
+              {options}
+              {moves}
+            </>
+          ) : (
+            <>
+              {moves}
+              {options}
+            </>
+          )}
+          {state.canSubmitCommands &&
+          entries.some(
+            (entry) =>
+              entry.kind === 'action' && entry.action === 'changeCardType'
+          ) ? (
+            <details
+              className="card-window__group card-window__advanced"
+              onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}
+            >
+              <summary
+                tabIndex={0}
+                data-preview-tabbable="true"
+              >{t`Change card type`}</summary>
+              {advancedOpen ? (
+                <div className="card-window__action-grid">
+                  {CATEGORY_SUBMENU_CHOICES.map((choice) => (
+                    <button
+                      key={choice.value}
+                      type="button"
+                      className="ptcgsim-overlay-button is-quiet"
+                      data-preview-tabbable="true"
+                      onClick={() =>
+                        actions.submitCategoryChoice(card.id, choice.value)
+                      }
+                    >
+                      {i18n._(choice.label)}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </details>
+          ) : null}
+        </div>
+      </div>
+    </>
+  );
+};
+
 const Preview = ({
+  state,
+  artOnly = false,
+  onPlayAsOne,
+  soloOpponentHandHidden,
   cards,
   canModify,
   kind,
@@ -1908,6 +2190,10 @@ const Preview = ({
   openedZoneId = null,
   pokemon,
 }: {
+  readonly state: BoardSessionControllerState;
+  readonly artOnly?: boolean;
+  readonly onPlayAsOne?: (card: CardSceneNode) => void;
+  readonly soloOpponentHandHidden?: boolean;
   readonly cards: readonly CardSceneNode[];
   readonly kind: 'card' | 'stack';
   readonly canModify: boolean;
@@ -1936,6 +2222,7 @@ const Preview = ({
   const tiltTarget = useRef<HTMLSpanElement>(null);
   const tilt = useMemo(() => createTiltHandlers(tiltTarget), []);
   const [showPieces, setShowPieces] = useState(false);
+  const [showArtwork, setShowArtwork] = useState(artOnly);
   // A card in pieces in play is shown whole first; Details opens its
   // Pokémon window.
   const [showDetails, setShowDetails] = useState(false);
@@ -1961,7 +2248,7 @@ const Preview = ({
     container,
     '[data-preview-focus]',
     // Each view it shows (Details and Back included) takes the focus in.
-    `${identity}:${showPieces}:${showDetails}:${individualCardId ?? ''}`
+    `${identity}:${showPieces}:${showDetails}:${showArtwork}:${individualCardId ?? ''}`
   );
   useOutsideDismiss(container, commitAndDismiss);
   useOverlayExit(container, 'preview');
@@ -1974,15 +2261,23 @@ const Preview = ({
   // A card read large from the window itself (not from a card in pieces'
   // list) goes back to the window.
   const [zoomedFromWindow, setZoomedFromWindow] = useState(false);
+  const actionWindow = kind === 'card' && !artOnly;
   const backToWindow =
-    pokemonWindow && individualCardId !== null && zoomedFromWindow;
+    (pokemonWindow &&
+      ((individualCardId !== null && zoomedFromWindow) ||
+        (showArtwork && !showPieces && individualCardId === null))) ||
+    (actionWindow && showArtwork);
+  const returnToWindow = (): void => {
+    setIndividualCardId(null);
+    setShowArtwork(false);
+  };
   const readingFromWindow = useRef(false);
   readingFromWindow.current = backToWindow;
   // One Esc puts it away (or goes back to it from a card read large), even
   // with a control's tooltip showing, which would take the first one: it is
   // heard before the tooltip does, as the marker controls hear theirs.
   useEffect(() => {
-    if (!pokemonWindow) return;
+    if (!pokemonWindow && !actionWindow) return;
     const onKey = (event: KeyboardEvent): void => {
       if (event.key !== 'Escape' || isInputMethodKey(event)) return;
       // Only a key pressed in it: the table's own Esc hears the rest.
@@ -1991,12 +2286,14 @@ const Preview = ({
         return;
       event.preventDefault();
       event.stopPropagation();
-      if (readingFromWindow.current) setIndividualCardId(null);
-      else dismiss();
+      if (readingFromWindow.current) {
+        setIndividualCardId(null);
+        setShowArtwork(false);
+      } else dismiss();
     };
     document.addEventListener('keydown', onKey, true);
     return () => document.removeEventListener('keydown', onKey, true);
-  }, [pokemonWindow, dismiss]);
+  }, [pokemonWindow, actionWindow, dismiss]);
   // Any card shown here can be picked up and put on the table, exactly as
   // from the table itself; the preview steps aside while it is held and has
   // done its job once the card is dropped somewhere.
@@ -2059,15 +2356,76 @@ const Preview = ({
     ) {
       event.preventDefault();
       if (backToWindow) {
-        setIndividualCardId(null);
+        returnToWindow();
         return;
       }
       dismiss();
     }
   };
 
+  if (actionWindow && !showArtwork && readingCard) {
+    return (
+      <>
+        <div
+          key="card-window-scrim"
+          ref={windowScrim}
+          className={`ptcgsim-overlay-scrim pokemon-window-scrim${draggingCardId ? ' is-hidden' : ''}`}
+          aria-hidden="true"
+        />
+        <div
+          key="card-window"
+          ref={container}
+          className="pokemon-window card-actions-window"
+          dir={direction}
+          data-legacy-card-preview="true"
+          data-card-actions-window="true"
+          data-preview-kind="actions"
+          data-preview-dragging-card={draggingCardId}
+          role="dialog"
+          aria-modal="true"
+          aria-label={readingCard.label}
+          tabIndex={-1}
+          data-preview-focus="true"
+          onKeyDown={onKeyDown}
+        >
+          <CardWindowContents
+            state={state}
+            card={readingCard}
+            actions={actions}
+            onView={() => setShowArtwork(true)}
+            onClose={dismiss}
+            {...(onPlayAsOne ? { onPlayAsOne } : {})}
+            {...(soloOpponentHandHidden === undefined
+              ? {}
+              : { soloOpponentHandHidden })}
+            image={
+              <button
+                type="button"
+                className="card-window__card"
+                draggable={false}
+                onDragStart={drag.onDragStart}
+                data-preview-tabbable="true"
+                aria-label={t`View card`}
+                data-motion-origin={readingCard.id}
+                onPointerDown={(event) =>
+                  drag.onPointerDown(event, readingCard)
+                }
+                onClick={(event) => {
+                  if (!drag.consumeClick(readingCard.id) || event.detail === 0)
+                    setShowArtwork(true);
+                }}
+              >
+                <OverlayCardImage card={readingCard} variant="stack" />
+              </button>
+            }
+          />
+        </div>
+      </>
+    );
+  }
   if (
     composition &&
+    (!pokemonWindow || showArtwork) &&
     cards.length > 1 &&
     !showPieces &&
     !individualCardId &&
@@ -2099,13 +2457,12 @@ const Preview = ({
         tabIndex={-1}
         data-preview-focus="true"
         onKeyDown={onKeyDown}
-        onClick={dismiss}
+        onClick={backToWindow ? returnToWindow : dismiss}
       >
         <div
           className="ptcgsim-preview-controls"
           onClick={(event) => event.stopPropagation()}
         >
-          <OverlayCloseButton data-preview-tabbable="true" onClick={dismiss} />
           <button
             type="button"
             className="ptcgsim-overlay-button"
@@ -2295,18 +2652,13 @@ const Preview = ({
           ? 'true'
           : undefined
       }
-      onClick={backToWindow ? () => setIndividualCardId(null) : dismiss}
+      onClick={backToWindow ? returnToWindow : dismiss}
       onKeyDown={onKeyDown}
     >
       <div
         className="ptcgsim-preview-controls"
         onClick={(event) => event.stopPropagation()}
       >
-        <OverlayCloseButton
-          data-preview-tabbable="true"
-          aria-label={t`Close card preview`}
-          onClick={dismiss}
-        />
         {canModify &&
         readingCard &&
         actions.separateCard &&
@@ -2322,14 +2674,18 @@ const Preview = ({
             <Trans>Move to hand</Trans>
           </button>
         ) : null}
-        {individualCardId ? (
+        {individualCardId || backToWindow ? (
           <button
             type="button"
             className="ptcgsim-overlay-button"
             data-preview-tabbable="true"
             data-preview-back="true"
             onClick={() => {
-              setIndividualCardId(null);
+              if (backToWindow) returnToWindow();
+              else {
+                setIndividualCardId(null);
+                setShowArtwork(true);
+              }
               setShowPieces(false);
             }}
           >
@@ -2405,6 +2761,16 @@ const Preview = ({
           canMark={canModify && pokemon.canMark}
           canUseMoves={canModify && pokemon.canUseMoves}
           renderCard={stackCard}
+          {...(composition
+            ? {
+                onViewWhole: () => {
+                  setShowArtwork(true);
+                  setShowDetails(false);
+                  setShowPieces(false);
+                  setIndividualCardId(null);
+                },
+              }
+            : {})}
           closeButton={
             <OverlayCloseButton
               data-preview-tabbable="true"
@@ -3321,6 +3687,14 @@ const WorkAreaPanel = ({
       className={`ptcgsim-legacy-work-area is-${seatToneOf(state.view, zone.playerId) ?? zone.side}${showingBoard ? ' is-showing-board' : ''}`}
       data-legacy-work-area={source}
       data-work-area-id={zone.id}
+      data-work-area-drop-active={
+        !showingBoard && asideCardId === null ? 'true' : 'false'
+      }
+      data-work-area-drop-target={
+        !showingBoard && state.presentation.drag?.targetId === zone.id
+          ? 'true'
+          : undefined
+      }
       data-overlay-side={zone.side}
       data-work-area-dragging-card={asideCardId ?? undefined}
       aria-label={heading}
@@ -4078,6 +4452,17 @@ export const LegacyBoardOverlays = memo(function LegacyBoardOverlays({
       ) : null}
       {preview ? (
         <Preview
+          state={state}
+          artOnly={preview.kind === 'card' && preview.artOnly === true}
+          {...(soloOpponentHandHidden === undefined
+            ? {}
+            : { soloOpponentHandHidden })}
+          {...(actions.emitSelectionIntent
+            ? {
+                onPlayAsOne: (card: CardSceneNode) =>
+                  playAsOne(card.id, visualCardBounds(card, depth)),
+              }
+            : {})}
           cards={previewCards}
           canModify={state.canSubmitCommands}
           kind={preview.kind}

@@ -3,7 +3,12 @@ import type {
   ClientSessionState,
   RemoteGameSession,
 } from '@ptcgsim/client-session';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
+import {
+  deckCoinRevision,
+  deckCoinSelection,
+  subscribeDeckCoin,
+} from './deck-coin-selection.js';
 import { COIN_PREFERENCES } from '../card-backs/coin-preferences.js';
 import { usePreference } from '../preferences/usePreference.js';
 
@@ -41,7 +46,12 @@ const RETRYABLE = new Set([
 export const useCoinCustomization = (
   session: Pick<RemoteGameSession, 'subscribe' | 'getSnapshot' | 'submit'>
 ): void => {
-  const { coin } = usePreference(COIN_PREFERENCES);
+  const { coin: personalCoin } = usePreference(COIN_PREFERENCES);
+  const deckRevision = useSyncExternalStore(
+    useCallback((listener) => subscribeDeckCoin(session, listener), [session]),
+    useCallback(() => deckCoinRevision(session), [session])
+  );
+  const coin = deckCoinSelection(session) ?? personalCoin;
   useEffect(() => {
     let attempted: CoinAttempt | undefined;
     let retry: number | undefined;
@@ -117,5 +127,5 @@ export const useCoinCustomization = (
       clearRetry();
       unsubscribe();
     };
-  }, [coin, session]);
+  }, [coin, session, deckRevision]);
 };

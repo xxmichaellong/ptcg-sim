@@ -674,7 +674,6 @@ export interface DeckHomeProps {
   ) => Promise<boolean>;
   readonly onNewDeck: () => void;
   readonly onImportText: (text: string) => Promise<boolean>;
-  readonly onImportClipboard: () => Promise<void>;
   readonly onOpenFile: () => void;
   readonly onTryList: (
     name: string,
@@ -721,7 +720,6 @@ export const DeckHome = ({
   onViewList,
   onNewDeck,
   onImportText,
-  onImportClipboard,
   onOpenFile,
   onTryList,
   onSurprise,
@@ -981,18 +979,6 @@ export const DeckHome = ({
                     </button>
                   </Tooltip>
                 ) : null}
-                <Tooltip content={t`Paste a list from the clipboard`}>
-                  <button
-                    id="deckClipboardButton"
-                    type="button"
-                    className="deck-icon-button"
-                    aria-label={t`Paste a list from the clipboard`}
-                    disabled={importing}
-                    onClick={() => void onImportClipboard()}
-                  >
-                    <ClipboardTextIcon {...decorative} weight="bold" />
-                  </button>
-                </Tooltip>
                 <Tooltip content={t`Open a deck file (.txt or .csv)`}>
                   <button
                     id="nativeDeckBuilderImportCsvLabel"

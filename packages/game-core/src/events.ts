@@ -70,6 +70,12 @@ export type DomainEvent =
       readonly cardBackUrl: string;
     }
   | {
+      readonly type: 'PlayerProfileSet';
+      readonly playerId: PlayerId;
+      readonly displayName?: string;
+      readonly playmat?: string;
+    }
+  | {
       readonly type: 'PlayerCoinSet';
       readonly playerId: PlayerId;
       readonly coin: string;

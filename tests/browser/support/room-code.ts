@@ -27,6 +27,10 @@ export const joinByCode = async (
     role = 'player',
   }: { readonly name: string; readonly role?: 'player' | 'spectator' }
 ): Promise<void> => {
+  await page
+    .locator('.lobby-flow')
+    .getByRole('button', { name: 'Join a room', exact: true })
+    .click();
   await page.locator('#nameInput').fill(name);
   await page.locator('#roomIdInput').fill(code);
   // Each choice's radio lies over its label, as the segmented control has

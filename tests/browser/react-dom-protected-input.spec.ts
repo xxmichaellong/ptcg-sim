@@ -608,6 +608,7 @@ test('native DOM input reaches protected controller state, lower-stack departure
   await expect(sourceCard).toHaveAttribute('aria-pressed', 'true');
 
   await page.mouse.dblclick(sourcePoint.x, sourcePoint.y);
+  await host.locator('[data-card-window-view]').click();
   await expect
     .poll(() => evidence(page))
     .toMatchObject({
@@ -751,6 +752,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
 
   await clearEvidence(page);
   await page.mouse.dblclick(sourcePoint.x, sourcePoint.y);
+  await host.locator('[data-card-window-view]').click();
   const preview = host.locator(
     '[data-legacy-card-preview][data-preview-kind="card"]'
   );
@@ -771,12 +773,21 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   expect(scrimAlpha).toBeLessThan(0.95);
   await page.keyboard.press('v');
   await expect(preview).toHaveCount(0);
+  await host
+    .locator('[data-card-actions-window]')
+    .getByRole('button', { name: 'Close', exact: true })
+    .click();
   await expect(sourceCard).toBeFocused();
 
   await page.mouse.dblclick(sourcePoint.x, sourcePoint.y);
+  await host.locator('[data-card-window-view]').click();
   await expect(preview).toBeVisible();
   await preview.locator('img').click();
   await expect(preview).toHaveCount(0);
+  await host
+    .locator('[data-card-actions-window]')
+    .getByRole('button', { name: 'Close', exact: true })
+    .click();
   await expect(sourceCard).toBeFocused();
 
   const unsupportedPoint = await exposedCardPoint(unsupportedCard);
@@ -839,6 +850,7 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   const zoneCardBounds = await zoneCard.boundingBox();
   if (!zoneCardBounds) throw new Error('Opened-zone card has no bounds');
   await zoneCard.dblclick();
+  await host.locator('[data-card-window-view]').click();
   const zoneCardPreview = host.locator(
     '[data-legacy-card-preview][data-preview-kind="card"]'
   );
@@ -850,6 +862,10 @@ test('route-owned legacy overlays preserve native menu, preview, zone, keyboard,
   );
   await zoneCardPreview.click();
   await expect(zoneCardPreview).toHaveCount(0);
+  await host
+    .locator('[data-card-actions-window]')
+    .getByRole('button', { name: 'Close', exact: true })
+    .click();
   await expect(zoneBrowser).toBeVisible();
   await expect(zoneCard).toBeFocused();
   await zoneCard.click({ button: 'right' });

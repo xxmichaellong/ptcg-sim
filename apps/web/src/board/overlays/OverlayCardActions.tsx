@@ -4,35 +4,12 @@ import { ArrowLineDownIcon } from '@phosphor-icons/react/dist/csr/ArrowLineDown'
 import { Trans, useLingui } from '@lingui/react/macro';
 import type {
   BoardScene,
-  BoardZoneKind,
   CardSceneNode,
   ZoneSceneNode,
 } from '@ptcgsim/renderer-contract';
 import type { OpenedZoneCardIntent } from '../BoardSessionController.js';
-import { ActionMenu } from '../../ui/ActionMenu.js';
 import { Tooltip } from '../../ui/Tooltip.js';
-import { ZONE_NAMES } from './zone-names.js';
-
-/**
- * Where a card can be moved, in the order play reaches them. Every place
- * offered is the card owner's or shared, so the owner's name would only
- * repeat itself.
- */
-const DESTINATIONS: readonly BoardZoneKind[] = [
-  'hand',
-  'active',
-  'bench',
-  'board',
-  'stadium',
-  'discard',
-  'lostZone',
-  'prizes',
-  'deck',
-];
-const destinationOrder = (kind: BoardZoneKind): number => {
-  const index = DESTINATIONS.indexOf(kind);
-  return index === -1 ? DESTINATIONS.length : index;
-};
+import { CardMoveButtons } from './CardMoveButtons.js';
 
 /**
  * Select all, worded for what it does: every card of the pile into the
@@ -72,8 +49,8 @@ const SelectAllButton = ({
 
 /**
  * The selected card's actions without a drag or a right-click, for touch and
- * keyboards: its menu, and Move, which asks where to. Reading is a double
- * click or tap (or V), as everywhere else.
+ * keyboards: direct destinations and the same action window as a double
+ * click. Wide panels show more destinations; narrow ones scroll the row.
  */
 export const OverlayCardActions = ({
   card,
@@ -112,7 +89,7 @@ export const OverlayCardActions = ({
     readonly onDone: () => void;
   };
 }) => {
-  const { t, i18n } = useLingui();
+  const { t } = useLingui();
   if (selection && (selection.count >= 2 || selection.selectionMode))
     return (
       <div
@@ -161,21 +138,6 @@ export const OverlayCardActions = ({
         ) : null}
       </div>
     );
-  const targets = scene.zones
-    .filter(
-      (zone) =>
-        zone.interactive &&
-        zone.id !== card?.parentId &&
-        zone.kind !== 'inspection' &&
-        zone.kind !== 'attachmentResolution' &&
-        (zone.playerId === card?.ownerId || zone.playerId === null)
-    )
-    .sort(
-      (left, right) =>
-        destinationOrder(left.kind) - destinationOrder(right.kind)
-    );
-  const movable = Boolean(card) && enabled && targets.length > 0;
-  const cardName = card?.label;
   const orderedPile =
     pile &&
     (pile.zone.kind === 'discard' || pile.zone.kind === 'lostZone') &&
@@ -248,55 +210,23 @@ export const OverlayCardActions = ({
             </Tooltip>
           ))
         : null}
+      <CardMoveButtons
+        card={card}
+        scene={scene}
+        enabled={enabled}
+        emit={emit}
+      />
       <button
         type="button"
-        className="ptcgsim-overlay-button"
+        className="ptcgsim-overlay-button is-quiet"
+        data-card-action="actions"
         disabled={!card || !enabled}
         onClick={() =>
-          card && emit({ kind: 'CardContextRequested', cardId: card.id })
+          card && emit({ kind: 'CardPreviewRequested', cardId: card.id })
         }
       >
         <Trans context="open the selected card's menu">Actions</Trans>
       </button>
-      <ActionMenu
-        label={
-          cardName
-            ? t({
-                message: `Move ${cardName} to`,
-                comment: '{cardName} is a card; a list of places follows.',
-              })
-            : t`Move to`
-        }
-        side="top"
-        align="end"
-        entries={targets.map((zone) => {
-          const name = ZONE_NAMES[zone.kind];
-          return {
-            label: name ? i18n._(name) : zone.label,
-            onSelect: () => {
-              if (!card) return;
-              emit({
-                kind: 'CardDropRequested',
-                cardId: card.id,
-                targetId: zone.id,
-                x: zone.bounds.x + zone.bounds.width / 2,
-                y: zone.bounds.y + zone.bounds.height / 2,
-              });
-            },
-          };
-        })}
-        trigger={
-          <button
-            type="button"
-            className="ptcgsim-overlay-button is-primary"
-            data-card-action="move"
-            disabled={!movable}
-          >
-            <Trans context="move the selected card">Move</Trans>
-            <CaretUpIcon aria-hidden="true" weight="bold" />
-          </button>
-        }
-      />
     </div>
   );
 };

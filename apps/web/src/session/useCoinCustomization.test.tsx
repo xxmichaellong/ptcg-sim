@@ -10,6 +10,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { COIN_PREFERENCES } from '../card-backs/coin-preferences.js';
 import { preferences } from '../preferences/preference-store.js';
+import { setDeckCoinSelection } from './deck-coin-selection.js';
 import { useCoinCustomization } from './useCoinCustomization.js';
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const base = createRendererSpikeView();
@@ -204,4 +205,29 @@ it.each([
     type: 'SetCoin',
     coin: 'preset:azure',
   });
+});
+
+it('reapplies an unchanged deck coin explicitly after Undo, without duplicating an already worn choice', async () => {
+  const session = new Session();
+  const matching = {
+    ...base,
+    players: {
+      ...base.players,
+      [own]: { ...base.players[own]!, coin: 'preset:violet' },
+    },
+  };
+  session.state = { ...session.state, view: matching };
+  setDeckCoinSelection(session, 'preset:violet');
+  await mount(session);
+  expect(session.commands).toHaveLength(0);
+  await act(async () => session.publish({ view: base }));
+  expect(session.commands).toHaveLength(0);
+  await act(async () => setDeckCoinSelection(session, 'preset:violet', true));
+  expect(session.commands).toHaveLength(1);
+  expect(session.commands[0]).toMatchObject({ coin: 'preset:violet' });
+  await act(async () =>
+    session.publish({ view: matching, pendingCommands: [] })
+  );
+  await act(async () => setDeckCoinSelection(session, 'preset:violet', true));
+  expect(session.commands).toHaveLength(1);
 });

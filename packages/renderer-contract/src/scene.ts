@@ -1,3 +1,7 @@
+import {
+  compactAttachmentSlots,
+  basicAttachmentEnergyIndex,
+} from './compact-attachments.js';
 import { plural, t } from '@lingui/core/macro';
 import type {
   MatchViewState,
@@ -1409,18 +1413,31 @@ export const createBoardScene = (
       });
       // Composed rows already fit their painted silhouettes to the whole
       // region: don't shrink them first by their portrait pieces' widths.
-      const composedRow = layoutComposedPlayRow(slotRegions[slot], stackInputs);
+      const compactAttachments =
+        layout.geometryVersion === TABLE_LAYOUT_GEOMETRY_VERSION;
+      const layoutInputs = compactAttachments
+        ? stackInputs.map((input) => ({
+            ...input,
+            attachments: [],
+            attachmentIds: [],
+            attachmentRotations: [],
+          }))
+        : stackInputs;
+      const composedRow = layoutComposedPlayRow(
+        slotRegions[slot],
+        layoutInputs
+      );
       // On the play-mat table a crowded row keeps every card in its zone (a
       // Bench of six to eight, Pokémon carrying Energy, an upright phone's
       // narrow row): its cards stand no taller than lets it fit across.
       const rowRegion =
         layout.geometryVersion === TABLE_LAYOUT_GEOMETRY_VERSION && !composedRow
-          ? fitPlayRow(slotRegions[slot], stackInputs)
+          ? fitPlayRow(slotRegions[slot], layoutInputs)
           : slotRegions[slot];
       const rowLayout = layoutLegacyPlayRow(
         rowRegion,
         CARD_ASPECT_RATIO,
-        stackInputs
+        layoutInputs
       );
       rowStackIds.forEach((stackId, rowIndex) => {
         const stack = view.stacks[stackId]!;
@@ -1461,7 +1478,69 @@ export const createBoardScene = (
           registerCard(node, card, false);
           evolutionNodes.push(node);
         });
+        const host = evolutionNodes.at(-1);
+        const far = side === 'opponent';
+        const hostBounds = host
+          ? host.rotationQuarterTurns % 2 === 1
+            ? {
+                x: host.bounds.x + (host.bounds.width - host.bounds.height) / 2,
+                y: host.bounds.y + (host.bounds.height - host.bounds.width) / 2,
+                width: host.bounds.height,
+                height: host.bounds.width,
+              }
+            : host.bounds
+          : undefined;
+        const compactSlots =
+          compactAttachments && hostBounds
+            ? compactAttachmentSlots(
+                hostBounds,
+                stack.attachmentCards.length,
+                side === 'opponent'
+              )
+            : undefined;
         stack.attachmentCards.forEach((card, index) => {
+          if (compactSlots && host) {
+            const slot = compactSlots[index];
+            const fullBounds = {
+              x: host.bounds.x,
+              y: host.bounds.y,
+              width: host.bounds.height * CARD_ASPECT_RATIO,
+              height: host.bounds.height,
+            };
+            const definition =
+              card.kind === 'known'
+                ? view.definitions[card.definitionId]
+                : undefined;
+            const energyIndex =
+              card.kind === 'known' &&
+              card.face === 'up' &&
+              card.category === 'Energy' &&
+              definition?.category === 'Energy'
+                ? basicAttachmentEnergyIndex(definition.name)
+                : undefined;
+            registerCard(
+              makeCardNode(view, card, {
+                parentId: stack.id,
+                side,
+                role: 'stackAttachment',
+                bounds: copyRect(slot?.bounds ?? fullBounds),
+                zIndex: 450 + index,
+                rotationQuarterTurns: far ? 2 : 0,
+                interactive: true,
+                ...(slot
+                  ? {
+                      compactAttachment: {
+                        fullBounds,
+                        ...(energyIndex === undefined ? {} : { energyIndex }),
+                        ...(slot.overflow ? { overflow: slot.overflow } : {}),
+                      },
+                    }
+                  : { renderKey: null }),
+              }),
+              card
+            );
+            return;
+          }
           const cardLayout = stackLayout.attachmentCards[index]!;
           const placed = composedCard(card.id);
           // v1 never rotates Energy/Tool images with their host; a Tool keeps
@@ -1542,7 +1621,8 @@ export const createBoardScene = (
           kind === 'inspection'
             ? t`Cards being inspected`
             : t`Attached cards being moved`,
-        interactive: true,
+        // The modern table receives drops through the actual visible window.
+        interactive: layout.geometryVersion !== TABLE_LAYOUT_GEOMETRY_VERSION,
       });
       const rects = layoutLegacyWorkAreaCards(
         panel,
@@ -1561,6 +1641,9 @@ export const createBoardScene = (
             bounds,
             zIndex: 1000 + index,
             interactive: true,
+            ...(layout.geometryVersion === TABLE_LAYOUT_GEOMETRY_VERSION
+              ? { renderKey: null }
+              : {}),
           }),
           card
         );
@@ -1598,12 +1681,25 @@ export const createBoardScene = (
     ? turnFarCardsToViewer(shownCards, markers, layout.bottomPlayerId)
     : { cards: shownCards, markers };
 
+  const sceneLayout = createBoardSceneLayout(layout, ownPlayerId);
+  const withMat = (frame: BoardSceneLayout['players'][number]) => ({
+    ...frame,
+    ...(view.players[frame.playerId]?.playmat
+      ? { playmat: view.players[frame.playerId]!.playmat }
+      : {}),
+  });
   return {
     matchId: view.matchId,
     revision: view.revision,
     viewport,
     bottomPlayerId: layout.bottomPlayerId,
-    layout: createBoardSceneLayout(layout, ownPlayerId),
+    layout: {
+      ...sceneLayout,
+      players: [
+        withMat(sceneLayout.players[0]),
+        withMat(sceneLayout.players[1]),
+      ],
+    },
     zones: zones
       .filter(
         (zone) => !hiddenSides.has(zone.side) && !absentZoneIds.has(zone.id)

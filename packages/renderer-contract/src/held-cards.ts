@@ -36,16 +36,26 @@ const asHeldCard = (
     clipBounds: _clip,
     ...rest
   } = card;
+  const bounds = card.compactAttachment?.fullBounds ?? card.bounds;
   return {
     ...rest,
+    ...(card.compactAttachment
+      ? {
+          bounds: card.compactAttachment.fullBounds,
+          compactAttachment: {
+            ...card.compactAttachment,
+            expanded: true as const,
+          },
+        }
+      : {}),
     renderKey: `card:${String(card.id)}`,
     interactive: true,
     ...(droppedAt
       ? {
           bounds: {
-            ...card.bounds,
-            x: droppedAt.x - card.bounds.width / 2,
-            y: droppedAt.y - card.bounds.height / 2,
+            ...bounds,
+            x: droppedAt.x - bounds.width / 2,
+            y: droppedAt.y - bounds.height / 2,
           },
         }
       : {}),
@@ -71,17 +81,22 @@ export const withHeldCards = (
   presentation: Pick<BoardPresentation, 'drag' | 'settling' | 'openedZoneId'>
 ): BoardScene => {
   const held = new Set<string>();
+  const individual = new Set<string>();
   const drag = presentation.drag;
   if (drag) {
     held.add(String(drag.cardId));
+    individual.add(String(drag.cardId));
     if (drag.groupCardIds)
-      for (const item of carriedGroup(scene, drag))
+      for (const item of carriedGroup(scene, drag)) {
+        individual.add(String(item.itemId));
         for (const cardId of selectionItemCardIds(scene, item.itemId))
           held.add(String(cardId));
+      }
   }
   const dropped = new Map<string, { readonly x: number; readonly y: number }>();
   for (const entry of presentation.settling) {
     held.add(String(entry.cardId));
+    individual.add(String(entry.cardId));
     if (String(entry.cardId) !== String(presentation.drag?.cardId))
       dropped.set(String(entry.cardId), entry);
   }
@@ -90,8 +105,15 @@ export const withHeldCards = (
   let changed = false;
   const cards = scene.cards.map((card) => {
     if (!held.has(String(card.id))) return card;
+    // Carried with their Pokémon, tokens stay compact and overflow stays hidden.
+    if (
+      scene.layout.geometryVersion === 2 &&
+      card.role === 'stackAttachment' &&
+      !individual.has(String(card.id))
+    )
+      return card;
     const droppedAt = dropped.get(String(card.id));
-    if (card.renderKey === null) {
+    if (card.renderKey === null || card.compactAttachment) {
       changed = true;
       return asHeldCard(card, droppedAt);
     }

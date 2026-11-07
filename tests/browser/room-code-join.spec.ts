@@ -48,9 +48,12 @@ test('hosts a room by its code, joins it to play or to watch, and changes the co
     await dismissWelcome(host.page);
     await openPlayOnline(host.page);
     // Host a room -- or -- join one: no numbered steps, no Deck here.
-    await expect(host.page.locator('#playOnlineSheet .lobby-or')).toHaveText(
-      'or'
+    await expect(host.page.locator('#playOnlineSheet .lobby-or')).toHaveCount(
+      0
     );
+    await expect(
+      host.page.locator('.lobby-flow button[aria-pressed="true"]')
+    ).toHaveText('Host a room');
     await expect(host.page.locator('#onlineDeckButton')).toHaveCount(0);
     await host.page.locator('#nameInput').fill('Blue');
     await host.page.locator('#generateIdButton').click();

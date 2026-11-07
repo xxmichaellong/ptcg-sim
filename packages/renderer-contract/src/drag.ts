@@ -204,6 +204,7 @@ export const joinedCardTargetAt = (
       candidate.id !== sourceCardId &&
       !exclude?.has(candidate.id) &&
       candidate.interactive &&
+      candidate.renderKey !== null &&
       candidate.role === 'stackEvolution' &&
       candidate.composition?.kind === 'joined' &&
       !(
@@ -246,6 +247,7 @@ export const heldCentreCardTarget = (
       candidate.id !== sourceCardId &&
       !exclude?.has(candidate.id) &&
       candidate.interactive &&
+      candidate.renderKey !== null &&
       !(
         source?.role === 'stackEvolution' &&
         !detached &&
@@ -296,6 +298,7 @@ export const resolveBoardDropTarget = (
       candidate.id !== sourceCardId &&
       !exclude?.has(candidate.id) &&
       candidate.interactive &&
+      candidate.renderKey !== null &&
       containsPointInRotatedRect(
         candidate.bounds,
         candidate.rotationQuarterTurns,

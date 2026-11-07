@@ -1301,6 +1301,10 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, one {#장 초과입니다 ({count}/{required}).} other {#장 초과입니다 ({count}/{required}).}}"
   },
+  "uDVdkR": {
+    "message": "{overflow} more attached cards",
+    "translation": "부착된 카드 {overflow}장 더 보기"
+  },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
     "comments": [
@@ -2018,6 +2022,7 @@
     "message": "Attach as an Energy…",
     "comments": [
       "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
+      "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
       "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on."
     ],
     "translation": "에너지로 붙이기…"
@@ -2340,10 +2345,6 @@
     "message": "Can't move these together",
     "translation": "함께 이동할 수 없습니다"
   },
-  "Sq35G-": {
-    "message": "Can't read the clipboard",
-    "translation": "클립보드를 읽을 수 없음"
-  },
   "JRqWr0": {
     "message": "Can't retreat",
     "comments": [
@@ -2616,10 +2617,6 @@
     "context": "shortcut key caption",
     "translation": "닫기"
   },
-  "aVo9NM": {
-    "message": "Close card preview",
-    "translation": "카드 미리보기 닫기"
-  },
   "aYX0za": {
     "message": "Close keyboard shortcuts",
     "translation": "키보드 단축키 닫기"
@@ -2802,10 +2799,6 @@
     "message": "Couldn't read that list",
     "translation": "목록을 읽을 수 없음"
   },
-  "cU_nca": {
-    "message": "Couldn't read the clipboard. Paste with the keyboard.",
-    "translation": "클립보드를 읽을 수 없습니다. 키보드로 붙여넣으세요."
-  },
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "게임을 재개할 수 없음"
@@ -2928,6 +2921,10 @@
     "message": "Custom image…",
     "translation": "사용자 지정 이미지…"
   },
+  "srRMnJ": {
+    "message": "Customize",
+    "translation": "꾸미기"
+  },
   "3Vkuiz": {
     "message": "Damage",
     "comments": [
@@ -2980,6 +2977,10 @@
     "message": "Deal again",
     "translation": "다시 뽑기"
   },
+  "3AAg85": {
+    "message": "Deck",
+    "translation": "덱"
+  },
   "9uxaX9": {
     "message": "Deck",
     "context": "shortcut group",
@@ -3010,6 +3011,14 @@
     "context": "zone on the table",
     "translation": "덱"
   },
+  "9LJRNk": {
+    "message": "Deck (bottom)",
+    "translation": "덱 (아래)"
+  },
+  "sjqzOD": {
+    "message": "Deck (top)",
+    "translation": "덱 (위)"
+  },
   "UJSJZe": {
     "message": "Deck and hand",
     "comments": [
@@ -3029,6 +3038,10 @@
   "kemNRk": {
     "message": "Deck for each seat",
     "translation": "자리별 덱"
+  },
+  "0KSYxL": {
+    "message": "Deck list",
+    "translation": "덱 목록"
   },
   "pX2_XZ": {
     "message": "Deck name",
@@ -3060,6 +3073,10 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "덱, 온라인 플레이, 로그, 설정"
   },
+  "cnGeoo": {
+    "message": "Delete",
+    "translation": "삭제"
+  },
   "gblLhJ": {
     "message": "Delete",
     "context": "keyboard key",
@@ -3069,6 +3086,10 @@
     "message": "Delete",
     "context": "menu item",
     "translation": "삭제"
+  },
+  "Y2tU6I": {
+    "message": "Delete {0}",
+    "translation": "{0} 삭제"
   },
   "oC8v9i": {
     "message": "Delete {label} {number}",
@@ -4750,24 +4771,12 @@
     "context": "settings page",
     "translation": "모션"
   },
-  "CFLOVi": {
-    "message": "Move",
-    "context": "move the selected card",
-    "translation": "이동"
-  },
   "2kUZvq": {
     "message": "Move {0}…",
     "comments": [
       "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
     ],
     "translation": "{0}장 이동…"
-  },
-  "B8Y72Z": {
-    "message": "Move {cardName} to",
-    "comments": [
-      "{cardName} is a card; a list of places follows."
-    ],
-    "translation": "{cardName} 이동 위치"
   },
   "MnxTQZ": {
     "message": "Move all on playboard to hand",
@@ -4872,6 +4881,10 @@
   "VJISiI": {
     "message": "Name every Ability and attack.",
     "translation": "모든 특성과 기술의 이름을 입력하세요."
+  },
+  "fdwra1": {
+    "message": "Name for {seat}",
+    "translation": "{seat} 이름"
   },
   "nkyXf5": {
     "message": "Name or number",
@@ -5409,11 +5422,6 @@
     "message": "Opponents' custom backs",
     "translation": "상대의 커스텀 카드 뒷면"
   },
-  "_iG1gb": {
-    "message": "or",
-    "context": "host a room, or join one",
-    "translation": "또는"
-  },
   "ONM3W_": {
     "message": "or a link",
     "translation": "또는 링크"
@@ -5492,11 +5500,6 @@
     "message": "Pass the turn",
     "translation": "패스: 차례 넘기기"
   },
-  "L3kYdG": {
-    "message": "Paste",
-    "context": "paste from the clipboard",
-    "translation": "붙여넣기"
-  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "먼저 덱 리스트를 붙여넣으세요."
@@ -5505,17 +5508,9 @@
     "message": "Paste a link to an image.",
     "translation": "이미지 링크를 붙여넣으세요."
   },
-  "aGL2ob": {
-    "message": "Paste a list from the clipboard",
-    "translation": "클립보드에서 목록 붙여넣기"
-  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "상세 정보를 신고 내용에 붙여넣으세요. 문제를 찾는 데 도움이 됩니다."
-  },
-  "MfH2NF": {
-    "message": "Paste with Ctrl+V (⌘V) instead",
-    "translation": "대신 Ctrl+V(⌘V)로 붙여넣으세요"
   },
   "X1Ni8e": {
     "message": "Pattern",
@@ -5594,6 +5589,7 @@
     "message": "Play as a Pokémon",
     "comments": [
       "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.",
+      "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.",
       "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench."
     ],
     "translation": "포켓몬으로 내기"
@@ -5641,6 +5637,14 @@
     "message": "Player",
     "context": "unnamed seat",
     "translation": "플레이어"
+  },
+  "gfFbl3": {
+    "message": "Player names",
+    "translation": "플레이어 이름"
+  },
+  "5Y1AnD": {
+    "message": "Playmat",
+    "translation": "플레이매트"
   },
   "2H5TkX": {
     "message": "Plum",
@@ -6503,6 +6507,10 @@
   "4XBjuA": {
     "message": "Save game",
     "translation": "게임 저장"
+  },
+  "EsJdRp": {
+    "message": "Save theme",
+    "translation": "테마 저장"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -7598,6 +7606,14 @@
     ],
     "translation": "상대 {theirs}% · 내 쪽 {percent}%"
   },
+  "HZ7fEu": {
+    "message": "Theme name",
+    "translation": "테마 이름"
+  },
+  "fJ3EbT": {
+    "message": "Themes",
+    "translation": "테마"
+  },
   "WVrKZx": {
     "message": "Then draw",
     "translation": "그다음 뽑기"
@@ -8066,6 +8082,10 @@
   "vS8WGc": {
     "message": "Use this coin",
     "translation": "이 동전 사용"
+  },
+  "UnzTr_": {
+    "message": "Use this playmat",
+    "translation": "이 플레이매트 사용"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",

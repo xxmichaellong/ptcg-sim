@@ -127,9 +127,9 @@ const tapFlow = async (page: Page): Promise<void> => {
     await card.tap({ position: { x: 20, y: 20 } });
   }
   await page.locator('#touchReadCardButton').tap();
-  await expect(page.locator('[data-preview-kind="card"]')).toBeVisible();
+  await expect(page.locator('[data-preview-kind="actions"]')).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(page.locator('[data-preview-kind="card"]')).toHaveCount(0);
+  await expect(page.locator('[data-preview-kind="actions"]')).toHaveCount(0);
 };
 
 const expectNoSideScroll = async (page: Page): Promise<void> => {

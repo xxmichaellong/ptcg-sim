@@ -1,4 +1,5 @@
 import { i18n } from '@lingui/core';
+import { workAreaDropTargetAt } from './work-area-drop-target.js';
 import type { MatchViewState } from '@ptcgsim/game-core';
 import {
   createLayoutSnapshotFor,
@@ -225,6 +226,17 @@ export class BoardSessionRuntime {
     this.host = host;
     try {
       this.renderer = this.createRenderer({
+        overlayDropTarget: (point, sourceId) => {
+          const box = this.host?.getBoundingClientRect();
+          const scene = this.desiredScene;
+          if (!box || !scene) return null;
+          return workAreaDropTargetAt(
+            this.host?.parentElement ?? null,
+            box.left + (point.x * box.width) / scene.viewport.width,
+            box.top + (point.y * box.height) / scene.viewport.height,
+            scene.cards.find((card) => card.id === sourceId)?.parentId
+          );
+        },
         emitIntent: (intent) => {
           try {
             this.options.onIntent?.(intent);

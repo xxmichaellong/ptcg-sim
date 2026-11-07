@@ -589,3 +589,10 @@
     scrollbar-width: none;
   }
 }
+
+.card-back-chooser[data-shape='mat']
+  :is(.card-back-chooser__card, .card-back-crop, .card-back-tile > img) {
+  aspect-ratio: 5 / 3;
+  border-radius: 8px;
+  object-fit: cover;
+}

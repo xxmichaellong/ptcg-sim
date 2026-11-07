@@ -585,11 +585,12 @@ describe('the Pokémon window', () => {
       stateFor(blue, { view: pieced, scene: piecedScene }),
       actions()
     );
-    // Shown whole first; Details opens its window.
-    const details = [...host.querySelectorAll('button')].find(
-      (button) => button.textContent === 'Details'
-    )!;
-    await act(async () => details.click());
+    // The options window opens first, with an explicit whole-artwork action.
+    expect(
+      [...host.querySelectorAll('button')].some(
+        (button) => button.textContent === 'View whole card'
+      )
+    ).toBe(true);
     const window = host.querySelector<HTMLElement>('[data-pokemon-window]')!;
     expect(
       window.querySelectorAll('.pokemon-window__move.is-attack')

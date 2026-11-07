@@ -17,7 +17,7 @@ interface PileTestWindow extends Window {
   };
 }
 
-const view = async (page: Page): Promise<MatchViewState> =>
+export const view = async (page: Page): Promise<MatchViewState> =>
   page.evaluate(() => {
     const current = (
       window as PileTestWindow
@@ -30,7 +30,10 @@ export const revision = async (page: Page): Promise<number> =>
   (await view(page)).revision;
 
 /** Arrange through the real authority; the actions under test use the UI. */
-const submit = async (page: Page, command: WireGameCommand): Promise<void> => {
+export const submit = async (
+  page: Page,
+  command: WireGameCommand
+): Promise<void> => {
   const before = await revision(page);
   const queued = await page.evaluate((command) => {
     const session = (window as PileTestWindow).__ptcgsimDevRoom?.runtime

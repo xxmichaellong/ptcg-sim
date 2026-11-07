@@ -1065,6 +1065,29 @@ export const RemoteRoomRoute = ({
               menu={menu}
               darkMode={effectivePreferences.darkMode}
               onDarkModeChange={setDarkMode}
+              playerNames={(state.view?.playerOrder ?? []).flatMap((id) => {
+                const player = state.view?.players[id];
+                return player
+                  ? [
+                      {
+                        id,
+                        name: player.displayName,
+                        editable:
+                          !replaying &&
+                          runtime.session.getSnapshot().phase === 'ready' &&
+                          state.view?.viewer.kind === 'player' &&
+                          (solo || state.view.viewer.playerId === id),
+                        onChange: (displayName: string) => {
+                          runtime.session.submit({
+                            type: 'SetPlayerProfile',
+                            targetPlayerId: id,
+                            displayName,
+                          });
+                        },
+                      },
+                    ]
+                  : [];
+              })}
               onEditCoin={() => {
                 if (boardCommands.current) boardCommands.current.editCoin();
                 else void editBrowserCoin();

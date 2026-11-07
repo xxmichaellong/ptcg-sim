@@ -1,3 +1,4 @@
+import { sessionWithPlayerName } from './session-profile.js';
 import {
   applyEventBatch,
   assertMatchInvariants,
@@ -1638,17 +1639,23 @@ const collectCommandSessionTransitionProblems = (
   }
 
   for (const id of currentSessionIds) {
+    const original = current.sessions[id]!;
+    const expected = sessionWithPlayerName(
+      original,
+      candidate.state,
+      current.state
+    );
     if (
       id !== sessionId &&
-      (requireExactReferences
-        ? candidate.sessions[id] !== current.sessions[id]
-        : !structurallyEqual(candidate.sessions[id], current.sessions[id]))
+      (requireExactReferences && expected === original
+        ? candidate.sessions[id] !== original
+        : !structurallyEqual(candidate.sessions[id], expected))
     ) {
       problems.push('command candidate changed an unrelated session');
     }
   }
   const expectedSession = {
-    ...currentSession,
+    ...sessionWithPlayerName(currentSession, candidate.state, current.state),
     nextClientSequence: currentSession.nextClientSequence + 1,
     recentOutcomes: expectedOutcomes,
   };

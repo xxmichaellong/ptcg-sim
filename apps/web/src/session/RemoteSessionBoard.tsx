@@ -1,3 +1,7 @@
+import {
+  deckCoinSelection,
+  setDeckCoinSelection,
+} from './deck-coin-selection.js';
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 
@@ -441,6 +445,8 @@ export const RemoteSessionBoard = ({
         playerId === viewerId
       ).then((coin) => {
         if (!coin || controller.signal.aborted) return;
+        if (playerId === viewerId && deckCoinSelection(session) !== undefined)
+          setDeckCoinSelection(session, coin);
         const state = session.getSnapshot();
         const latest = state.view;
         const pending = pendingCoinChange(state, playerId);
@@ -1159,6 +1165,16 @@ export const RemoteSessionBoard = ({
         runtimeRef.current?.dismissLocalPresentation(scope);
       },
       invokeWindowAction: (request) => {
+        if (
+          request.kind === 'context' &&
+          request.action === 'toggleOpponentHand' &&
+          liveSoloRef.current
+        ) {
+          boardViewStore.update({
+            hideOpponentHand: !boardViewStore.getSnapshot().hideOpponentHand,
+          });
+          return;
+        }
         runtimeRef.current?.emitLegacyOverlayAction(request, 'window');
       },
       invokeContextAction: (action, cardId) => {

@@ -76,6 +76,7 @@ export interface PlayerState {
   readonly cardBackUrl: string;
   /** Absent in older games: the standard Poké Ball coin. */
   readonly coin?: string;
+  readonly playmat?: string;
   readonly coachingConsent: boolean;
   readonly oncePerGame: OncePerGameMarkers;
 }

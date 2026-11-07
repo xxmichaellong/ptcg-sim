@@ -118,7 +118,7 @@ const patternTile = (pattern: CardBackPattern, accent: string): string => {
 export const cardBackDesignSvg = (
   design: CardBackDesign,
   emblem?: string,
-  shape: 'card' | 'coin' = 'card'
+  shape: 'card' | 'coin' | 'mat' = 'card'
 ): string => {
   const base = CARD_BACK_COLOUR_HEX[design.base];
   const accent = CARD_BACK_COLOUR_HEX[design.accent];
@@ -133,6 +133,17 @@ export const cardBackDesignSvg = (
   const cx = WIDTH / 2;
   const cy = HEIGHT / 2;
   const art = MEDALLION * 1.5;
+  if (shape === 'mat')
+    return [
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600">',
+      `<defs>${tile}</defs><rect width="1000" height="600" rx="24" fill="${base}"/>`,
+      tile ? '<rect width="1000" height="600" rx="24" fill="url(#p)"/>' : '',
+      `<rect x="16" y="16" width="968" height="568" rx="16" fill="none" stroke="${accent}" stroke-width="8"/>`,
+      withEmblem && emblem
+        ? `<image href="${emblem}" x="350" y="150" width="300" height="300" preserveAspectRatio="xMidYMid meet"/>`
+        : '',
+      '</svg>',
+    ].join('');
   if (shape === 'coin') {
     return [
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 125 630 630">',
@@ -177,7 +188,7 @@ export const cardBackDesignSvg = (
  */
 export const cardBackDesignImage = (
   design: CardBackDesign,
-  shape: 'card' | 'coin' = 'card'
+  shape: 'card' | 'coin' | 'mat' = 'card'
 ): string =>
   `data:image/svg+xml,${encodeURIComponent(
     cardBackDesignSvg(design, emblemImage(design.emblem), shape)

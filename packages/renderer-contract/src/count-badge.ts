@@ -7,9 +7,9 @@ import type { Rect } from './model.js';
  * wide (one digit) and `heightPx` tall.
  */
 export const TABLE_COUNT_BADGE = {
-  outsetPx: 9,
-  minWidthPx: 26,
-  heightPx: 22,
+  outsetPx: 2,
+  minWidthPx: 22,
+  heightPx: 18,
 } as const;
 
 /** The least room a pile's count badge keeps from the table's edge. */

@@ -144,3 +144,45 @@
 .legacy-lobby-sidebox .lobby-status {
   flex: none;
 }
+
+.legacy-lobby-sidebox .lobby-choice[hidden] {
+  display: none;
+}
+.legacy-lobby-sidebox .lobby-flow {
+  display: flex;
+  padding: 4px;
+  gap: 4px;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+.legacy-lobby-sidebox .lobby-flow button {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background 150ms,
+    color 150ms;
+}
+.legacy-lobby-sidebox .lobby-flow button[aria-pressed='true'] {
+  background: var(--color-surface-3);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+}
+.legacy-lobby-sidebox .lobby-choice {
+  border: 0;
+  padding: var(--space-3) 0 0;
+  background: transparent;
+}
+.legacy-lobby-sidebox .lobby-choice-title {
+  display: none;
+}
+.legacy-lobby-sidebox #joinRoomButton {
+  min-width: 112px;
+}

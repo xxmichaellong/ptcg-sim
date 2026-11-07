@@ -3326,6 +3326,7 @@ describe('headless board session controller', () => {
     expect(single.state.overlays.preview).toEqual({
       kind: 'card',
       cardId: attachment.id,
+      artOnly: true,
     });
     expect(single.effects.map((effect) => effect.kind)).not.toContain(
       'IntentRejected'

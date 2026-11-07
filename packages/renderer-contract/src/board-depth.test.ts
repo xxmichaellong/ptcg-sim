@@ -58,8 +58,11 @@ describe('live board depth', () => {
       parallax: false,
       scatter: true,
     });
-    expect(parseBoardDepth({ tilt: NaN, strength: Infinity }).strength).toBe(1);
+    expect(parseBoardDepth({ tilt: NaN, strength: Infinity }).strength).toBe(
+      0.6
+    );
     expect(parseBoardDepth({ scatter: false }).scatter).toBe(false);
+    expect(parseBoardDepth({ strength: 2 }).strength).toBe(1);
   });
   it('lays resting table cards a touch askew, the same every time, and keeps piles, hands and the tidy table square', () => {
     const scene = fixture();
@@ -604,13 +607,13 @@ describe('live board depth', () => {
     expect(edges.lines.match(/M/g)).toHaveLength(8 * faces.length);
     // A held card rises about half its width; with reduced motion it is
     // still raised (an instant change is not motion), and off is off.
-    expect(small.liftFor(100)).toBeCloseTo(45, 7);
+    expect(small.liftFor(100)).toBeCloseTo(27, 7);
     expect(
       new BoardDepthProjection(make(12), {
         ...preferences,
         reducedMotion: true,
       }).liftFor(100)
-    ).toBeCloseTo(45, 7);
+    ).toBeCloseTo(27, 7);
     expect(
       new BoardDepthProjection(make(12), {
         ...preferences,

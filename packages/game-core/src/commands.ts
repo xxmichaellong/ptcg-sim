@@ -53,6 +53,12 @@ export type BaseGameCommand =
       readonly playerId: PlayerId;
       readonly coin: string;
     }
+  | {
+      readonly type: 'SetPlayerProfile';
+      readonly playerId: PlayerId;
+      readonly displayName?: string;
+      readonly playmat?: string;
+    }
   | { readonly type: 'ResetPlayer'; readonly playerId: PlayerId }
   | { readonly type: 'SetupPlayer'; readonly playerId: PlayerId }
   | {

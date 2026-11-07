@@ -1,6 +1,8 @@
 import {
   isCardBackValue,
   isCoinValue,
+  isPlaymatValue,
+  isPlayerDisplayName,
   MAX_COIN_FLIP_COUNT,
   MAX_UNTIL_TAILS_FLIPS,
   isCardPrint,
@@ -617,6 +619,22 @@ export const WireGameCommandSchema = v.variant('type', [
     cardBackUrl: CardBackSchema,
   }),
   v.object({
+    type: v.literal('SetPlayerProfile'),
+    targetPlayerId: v.optional(IdentifierSchema),
+    displayName: v.optional(
+      v.pipe(
+        boundedString(64),
+        v.check((value: string) => isPlayerDisplayName(value), 'Invalid name')
+      )
+    ),
+    playmat: v.optional(
+      v.pipe(
+        UrlSchema,
+        v.check((value: string) => isPlaymatValue(value), 'Invalid playmat')
+      )
+    ),
+  }),
+  v.object({
     type: v.literal('SetCoin'),
     targetPlayerId: v.optional(IdentifierSchema),
     coin: CoinSchema,
@@ -1017,6 +1035,7 @@ const PlayerViewSchema = v.object({
   displayName: boundedString(64),
   cardBackUrl: UrlSchema,
   coin: v.optional(CoinSchema),
+  playmat: v.optional(boundedString(MAX_IMAGE_URL_CODE_UNITS)),
   coachingConsent: v.boolean(),
   oncePerGame: v.object({ gxUsed: v.boolean(), vstarUsed: v.boolean() }),
 });

@@ -1,4 +1,10 @@
 // @vitest-environment happy-dom
+import {
+  deckCoinRevision,
+  deckCoinSelection,
+} from '../../session/deck-coin-selection.js';
+import { preferences } from '../../preferences/preference-store.js';
+import { DECK_LOOK_THEMES } from './deck-look-themes.js';
 
 import type {
   ClientSessionState,
@@ -114,6 +120,7 @@ class FakeSession implements DeckInstallSession {
           commandId,
           clientSequence,
           commandType: command.type,
+          command,
           state: 'in_flight',
         },
       ],
@@ -251,7 +258,6 @@ const renderSession = async (options: {
   readonly requestCardBack?: BrowserCardBackRequest;
   /** A legacy URL back's import; none succeeds unless a test says so. */
   readonly importCardBack?: (url: string) => Promise<string | null>;
-  readonly readClipboard?: () => Promise<string>;
   readonly beforeUnloadTarget?: DeckBeforeUnloadTarget;
   readonly onInstallFailure?: (failure: DeckInstallCoordinatorFailure) => void;
   readonly onCardBackInstallFailure?: (failure: CardBackInstallFailure) => void;
@@ -288,9 +294,6 @@ const renderSession = async (options: {
           ? { requestCardBack: options.requestCardBack }
           : {})}
         importCardBack={options.importCardBack ?? (async () => null)}
-        {...(options.readClipboard
-          ? { readClipboard: options.readClipboard }
-          : {})}
         {...(options.beforeUnloadTarget
           ? { beforeUnloadTarget: options.beforeUnloadTarget }
           : {})}
@@ -314,6 +317,21 @@ const renderSession = async (options: {
 const click = async (selector: string): Promise<void> => {
   await act(async () =>
     (host.querySelector(selector) as HTMLButtonElement).click()
+  );
+};
+
+/** Browser file reads are asynchronous, just as native pastes can trigger catalog reads. */
+const startDeferredFile = async (reads: ((text: string) => void)[]) => {
+  const input = host.querySelector<HTMLInputElement>(
+    '#nativeDeckBuilderCsvImport'
+  )!;
+  const file = new File([''], 'deck.csv', { type: 'text/csv' });
+  Object.defineProperty(file, 'text', {
+    value: () => new Promise<string>((resolve) => reads.push(resolve)),
+  });
+  Object.defineProperty(input, 'files', { value: [file], configurable: true });
+  await act(async () =>
+    input.dispatchEvent(new Event('change', { bubbles: true }))
   );
 };
 
@@ -527,19 +545,139 @@ describe('DeckBuilderSession', () => {
     expect(store.getSnapshot().slots.main.revision).toBe(0);
   });
 
-  it('lets the newest clipboard import win, whichever read comes back last', async () => {
+  it('keeps the live coin when a saved deck is deleted, until a different deck replaces its cards', async () => {
+    const session = new FakeSession();
+    const store = new DeckBuilderStore();
+    const deck = library.create({
+      name: 'Themed',
+      format: 'standard',
+      cards: [{ card: card('Theme mon'), count: 1 }],
+      coin: 'preset:violet',
+    });
+    store.replaceDeck('main', deck.cards, {
+      deckId: deck.id,
+      name: deck.name,
+      format: deck.format,
+    });
+    await renderSession({ session, store, open: true });
+    expect(deckCoinSelection(session)).toBe('preset:violet');
+    await act(async () => {
+      library.remove(deck.id);
+      store.replaceDeck('main', deck.cards, { name: deck.name });
+    });
+    expect(deckCoinSelection(session)).toBe('preset:violet');
+    await act(async () => store.replaceDeck('main', [], null));
+    expect(deckCoinSelection(session)).toBeUndefined();
+  });
+
+  it('reapplies an unchanged named theme explicitly after Undo', async () => {
+    const session = new FakeSession();
+    const store = new DeckBuilderStore();
+    const look = { coin: 'preset:violet', playmat: 'style:frost' };
+    const deck = library.create({
+      name: 'Themed',
+      format: 'standard',
+      cards: [{ card: card('Theme mon'), count: 1 }],
+      ...look,
+    });
+    store.replaceDeck('main', deck.cards, {
+      deckId: deck.id,
+      name: deck.name,
+      format: deck.format,
+    });
+    const before = preferences().get(DECK_LOOK_THEMES);
+    preferences().set(DECK_LOOK_THEMES, {
+      themes: [{ id: 'theme', name: 'Chosen theme', ...look }],
+    });
+    try {
+      await renderSession({ session, store, open: true });
+      await act(async () => {
+        session.completeLatest(true);
+        session.showTable(view);
+      });
+      const count = () =>
+        session.commands.filter(
+          (command) => command.type === 'SetPlayerProfile'
+        ).length;
+      expect(count()).toBe(1);
+      const coinRevision = deckCoinRevision(session);
+      await click(`[data-edit-deck="${deck.id}"]`);
+      await click('.deck-editor__sections button:nth-child(2)');
+      await click('.deck-customize__themes .ds-button');
+      expect(count()).toBe(2);
+      expect(
+        session.commands
+          .filter((command) => command.type === 'SetPlayerProfile')
+          .at(-1)
+      ).toMatchObject({ playmat: 'style:frost' });
+      expect(deckCoinRevision(session)).toBeGreaterThan(coinRevision);
+    } finally {
+      preferences().set(DECK_LOOK_THEMES, before);
+    }
+  });
+
+  it('applies the latest P2 deck theme and holds accepted choices through Undo', async () => {
+    const session = new FakeSession();
+    const store = new DeckBuilderStore();
+    const deck = library.create({
+      name: 'Themed',
+      format: 'standard',
+      cards: [{ card: card('Theme mon'), count: 1 }],
+      coin: 'preset:violet',
+      playmat: 'style:frost',
+    });
+    store.replaceDeck('alternate', deck.cards, {
+      deckId: deck.id,
+      name: deck.name,
+      format: deck.format,
+    });
+    await renderSession({ session, store, open: true, alternateEnabled: true });
+    expect(
+      session.commands.filter((command) => command.type === 'SetCoin').at(-1)
+    ).toMatchObject({
+      targetPlayerId: alternatePlayerId,
+      coin: 'preset:violet',
+    });
+    expect(
+      session.commands
+        .filter((command) => command.type === 'SetPlayerProfile')
+        .at(-1)
+    ).toMatchObject({
+      targetPlayerId: alternatePlayerId,
+      playmat: 'style:frost',
+    });
+    await act(async () =>
+      library.update(deck.id, {
+        coin: 'preset:jade',
+        playmat: 'style:midnight',
+      })
+    );
+    expect(
+      session.commands.filter((command) => command.type === 'SetCoin').at(-1)
+    ).toMatchObject({ coin: 'preset:jade' });
+    expect(
+      session.commands
+        .filter((command) => command.type === 'SetPlayerProfile')
+        .at(-1)
+    ).toMatchObject({ playmat: 'style:midnight' });
+    await act(async () => {
+      session.completeLatest(true);
+      session.completeLatest(true);
+    });
+    const count = session.commands.length;
+    await act(async () => session.showTable(view));
+    expect(session.commands).toHaveLength(count);
+  });
+
+  it('lets the newest file import win, whichever read comes back last', async () => {
     const store = new DeckBuilderStore();
     const reads: ((text: string) => void)[] = [];
     await renderSession({
       store,
       open: true,
-      readClipboard: () =>
-        new Promise<string>((resolve) => {
-          reads.push(resolve);
-        }),
     });
-    await click('#deckClipboardButton');
-    await click('#deckClipboardButton');
+    await startDeferredFile(reads);
+    await startDeferredFile(reads);
     const list = (name: string) =>
       `QTY,Name,Type,URL\n4,${name},Pokémon,custom+unsafe://player-host/${name}`;
     await act(async () => {
@@ -558,7 +696,7 @@ describe('DeckBuilderSession', () => {
     ]);
   });
 
-  it('keeps a quick-view deck choice when an older clipboard read resolves', async () => {
+  it('keeps a quick-view deck choice when an older file read resolves', async () => {
     const store = new DeckBuilderStore();
     const chosen = library.create({
       name: 'Chosen deck',
@@ -570,12 +708,10 @@ describe('DeckBuilderSession', () => {
     await renderSession({
       store,
       open: true,
-      readClipboard: () =>
-        new Promise<string>((resolve) => {
-          finishRead = resolve;
-        }),
     });
-    await click('#deckClipboardButton');
+    const reads: ((value: string) => void)[] = [];
+    await startDeferredFile(reads);
+    finishRead = reads[0]!;
     await click(`[data-view-deck]`);
     const request = dialogRequestsSnapshot().at(-1)!;
     await act(async () => {
@@ -657,12 +793,14 @@ describe('DeckBuilderSession', () => {
     await renderSession({
       store: new DeckBuilderStore(),
       open: true,
-      // A list waits for the catalog, so this import is still running.
-      readClipboard: () => Promise.resolve('4 Dreepy TWM 128'),
     });
     const button = () =>
-      host.querySelector<HTMLButtonElement>('#deckClipboardButton')!;
-    await click('#deckClipboardButton');
+      host.querySelector<HTMLButtonElement>(
+        '#nativeDeckBuilderImportCsvLabel'
+      )!;
+    const reads: ((value: string) => void)[] = [];
+    await startDeferredFile(reads);
+    await act(async () => reads[0]!('4 Dreepy TWM 128'));
     await vi.waitFor(() => expect(button().disabled).toBe(true));
     // A file opened meanwhile takes over, and doesn't open.
     const input = host.querySelector<HTMLInputElement>(
@@ -2344,7 +2482,7 @@ describe('DeckBuilderSession', () => {
     });
     // The deck and card-back installs, and the trays showing each seat's
     // card back.
-    expect(session.listenerCount()).toBe(3);
+    expect(session.listenerCount()).toBe(4);
     const clean = new Event('beforeunload', { cancelable: true });
     listener?.(clean as BeforeUnloadEvent);
     expect(clean.defaultPrevented).toBe(false);

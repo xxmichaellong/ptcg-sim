@@ -60,6 +60,32 @@ afterEach(() => {
 });
 
 describe('the deck library', () => {
+  it('keeps deck looks through storage, copies, edits and draft promotion', async () => {
+    const { backend, records } = memoryBackend();
+    const library = new DeckLibrary({ backend });
+    await settle();
+    const draft = library.create(
+      { name: 'Look', format: 'standard', cards },
+      { deferSave: true }
+    );
+    const look = {
+      cardBack: 'preset:azure',
+      coin: 'preset:violet',
+      playmat: 'style:ocean',
+    };
+    const edited = library.update(draft.id, look)!;
+    await library.flush();
+    expect(library.isDraft(draft.id)).toBe(false);
+    expect(decodeSavedDeck(records.get(draft.id))).toMatchObject(look);
+    expect(library.duplicate(edited.id)).toMatchObject(look);
+    const cleared = library.update(edited.id, {
+      coin: undefined,
+      playmat: undefined,
+    })!;
+    expect(cleared.coin).toBeUndefined();
+    expect(cleared.playmat).toBeUndefined();
+    library.dispose();
+  });
   it('keeps an opened list out of storage and Your decks until a real player edit', async () => {
     const { backend, writes, records } = memoryBackend();
     const library = new DeckLibrary({ backend });

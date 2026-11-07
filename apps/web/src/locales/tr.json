@@ -1301,6 +1301,10 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, one {# kart fazla ({count}/{required}).} other {# kart fazla ({count}/{required}).}}"
   },
+  "uDVdkR": {
+    "message": "{overflow} more attached cards",
+    "translation": "{overflow} bağlı kart daha"
+  },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
     "comments": [
@@ -2018,6 +2022,7 @@
     "message": "Attach as an Energy…",
     "comments": [
       "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
+      "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
       "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on."
     ],
     "translation": "Enerji olarak bağla…"
@@ -2340,10 +2345,6 @@
     "message": "Can't move these together",
     "translation": "Bunlar birlikte taşınamaz"
   },
-  "Sq35G-": {
-    "message": "Can't read the clipboard",
-    "translation": "Pano okunamıyor"
-  },
   "JRqWr0": {
     "message": "Can't retreat",
     "comments": [
@@ -2616,10 +2617,6 @@
     "context": "shortcut key caption",
     "translation": "Kapat"
   },
-  "aVo9NM": {
-    "message": "Close card preview",
-    "translation": "Kart önizlemesini kapat"
-  },
   "aYX0za": {
     "message": "Close keyboard shortcuts",
     "translation": "Klavye kısayollarını kapat"
@@ -2802,10 +2799,6 @@
     "message": "Couldn't read that list",
     "translation": "Bu liste okunamadı"
   },
-  "cU_nca": {
-    "message": "Couldn't read the clipboard. Paste with the keyboard.",
-    "translation": "Pano okunamadı. Klavyeyle yapıştır."
-  },
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "Oyuna devam edilemedi"
@@ -2928,6 +2921,10 @@
     "message": "Custom image…",
     "translation": "Özel resim…"
   },
+  "srRMnJ": {
+    "message": "Customize",
+    "translation": "Özelleştir"
+  },
   "3Vkuiz": {
     "message": "Damage",
     "comments": [
@@ -2980,6 +2977,10 @@
     "message": "Deal again",
     "translation": "Tekrar dağıt"
   },
+  "3AAg85": {
+    "message": "Deck",
+    "translation": "Deste"
+  },
   "9uxaX9": {
     "message": "Deck",
     "context": "shortcut group",
@@ -3010,6 +3011,14 @@
     "context": "zone on the table",
     "translation": "Deste"
   },
+  "9LJRNk": {
+    "message": "Deck (bottom)",
+    "translation": "Deste (alt)"
+  },
+  "sjqzOD": {
+    "message": "Deck (top)",
+    "translation": "Deste (üst)"
+  },
   "UJSJZe": {
     "message": "Deck and hand",
     "comments": [
@@ -3029,6 +3038,10 @@
   "kemNRk": {
     "message": "Deck for each seat",
     "translation": "Her koltuk için deste"
+  },
+  "0KSYxL": {
+    "message": "Deck list",
+    "translation": "Deste listesi"
   },
   "pX2_XZ": {
     "message": "Deck name",
@@ -3060,6 +3073,10 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "Desteler, çevrimiçi oyun, kayıt ve Ayarlar"
   },
+  "cnGeoo": {
+    "message": "Delete",
+    "translation": "Sil"
+  },
   "gblLhJ": {
     "message": "Delete",
     "context": "keyboard key",
@@ -3069,6 +3086,10 @@
     "message": "Delete",
     "context": "menu item",
     "translation": "Sil"
+  },
+  "Y2tU6I": {
+    "message": "Delete {0}",
+    "translation": "{0} sil"
   },
   "oC8v9i": {
     "message": "Delete {label} {number}",
@@ -4750,24 +4771,12 @@
     "context": "settings page",
     "translation": "Hareket"
   },
-  "CFLOVi": {
-    "message": "Move",
-    "context": "move the selected card",
-    "translation": "Taşı"
-  },
   "2kUZvq": {
     "message": "Move {0}…",
     "comments": [
       "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
     ],
     "translation": "{0} kartı taşı…"
-  },
-  "B8Y72Z": {
-    "message": "Move {cardName} to",
-    "comments": [
-      "{cardName} is a card; a list of places follows."
-    ],
-    "translation": "{cardName} kartını şuraya taşı"
   },
   "MnxTQZ": {
     "message": "Move all on playboard to hand",
@@ -4872,6 +4881,10 @@
   "VJISiI": {
     "message": "Name every Ability and attack.",
     "translation": "Her Yeteneğe ve saldırıya ad ver."
+  },
+  "fdwra1": {
+    "message": "Name for {seat}",
+    "translation": "{seat} için ad"
   },
   "nkyXf5": {
     "message": "Name or number",
@@ -5409,11 +5422,6 @@
     "message": "Opponents' custom backs",
     "translation": "Rakiplerin özel arka yüzleri"
   },
-  "_iG1gb": {
-    "message": "or",
-    "context": "host a room, or join one",
-    "translation": "veya"
-  },
   "ONM3W_": {
     "message": "or a link",
     "translation": "veya bir bağlantı"
@@ -5492,11 +5500,6 @@
     "message": "Pass the turn",
     "translation": "Sırayı pas geç"
   },
-  "L3kYdG": {
-    "message": "Paste",
-    "context": "paste from the clipboard",
-    "translation": "Yapıştır"
-  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "Önce bir deste listesi yapıştır."
@@ -5505,17 +5508,9 @@
     "message": "Paste a link to an image.",
     "translation": "Bir görsel bağlantısı yapıştır."
   },
-  "aGL2ob": {
-    "message": "Paste a list from the clipboard",
-    "translation": "Panodan bir liste yapıştır"
-  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "Ayrıntıları raporuna yapıştır: sorunu bulmaya yardımcı olur."
-  },
-  "MfH2NF": {
-    "message": "Paste with Ctrl+V (⌘V) instead",
-    "translation": "Bunun yerine Ctrl+V (⌘V) ile yapıştır"
   },
   "X1Ni8e": {
     "message": "Pattern",
@@ -5594,6 +5589,7 @@
     "message": "Play as a Pokémon",
     "comments": [
       "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.",
+      "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.",
       "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench."
     ],
     "translation": "Pokémon olarak oyna"
@@ -5641,6 +5637,14 @@
     "message": "Player",
     "context": "unnamed seat",
     "translation": "Oyuncu"
+  },
+  "gfFbl3": {
+    "message": "Player names",
+    "translation": "Oyuncu adları"
+  },
+  "5Y1AnD": {
+    "message": "Playmat",
+    "translation": "Oyun matı"
   },
   "2H5TkX": {
     "message": "Plum",
@@ -6503,6 +6507,10 @@
   "4XBjuA": {
     "message": "Save game",
     "translation": "Oyunu kaydet"
+  },
+  "EsJdRp": {
+    "message": "Save theme",
+    "translation": "Temayı kaydet"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -7598,6 +7606,14 @@
     ],
     "translation": "Rakip %{theirs} · Benim %{percent}"
   },
+  "HZ7fEu": {
+    "message": "Theme name",
+    "translation": "Tema adı"
+  },
+  "fJ3EbT": {
+    "message": "Themes",
+    "translation": "Temalar"
+  },
   "WVrKZx": {
     "message": "Then draw",
     "translation": "Sonra çek"
@@ -8066,6 +8082,10 @@
   "vS8WGc": {
     "message": "Use this coin",
     "translation": "Bu parayı kullan"
+  },
+  "UnzTr_": {
+    "message": "Use this playmat",
+    "translation": "Bu oyun matını kullan"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",

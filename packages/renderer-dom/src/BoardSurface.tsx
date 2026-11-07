@@ -307,6 +307,11 @@ const PlayerFrameNode = memo(function PlayerFrameNode({
       <div
         className="ptcgsim-player-frame"
         data-player-frame-id={frame.playerId}
+        data-table-art-swatch={
+          frame.playmat?.startsWith('style:')
+            ? frame.playmat.slice(6)
+            : undefined
+        }
         data-player-frame-side={frame.side}
         data-player-frame-tone={frame.tone}
         data-player-physical-side={frame.physicalSide}
@@ -316,6 +321,15 @@ const PlayerFrameNode = memo(function PlayerFrameNode({
           {
             ...absoluteRect(frame.bounds, -10),
             pointerEvents: 'none',
+            ...(frame.playmat
+              ? frame.playmat.startsWith('style:')
+                ? { background: 'var(--color-felt)' }
+                : {
+                    backgroundImage: `url("${frame.playmat.replaceAll('"', '%22')}")`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }
+              : {}),
             ...gap,
           } as CSSProperties
         }
@@ -500,8 +514,10 @@ const ZoneNode = memo(function ZoneNode({
   scrollZone,
   table,
   depth,
+  playmat,
 }: {
   readonly zone: ZoneSceneNode;
+  readonly playmat: string | undefined;
   readonly showOutline: boolean;
   /** Primitives, so the memoized node is not repainted every render. */
   readonly handDividerEdge: HandDivider['edge'] | undefined;
@@ -548,6 +564,13 @@ const ZoneNode = memo(function ZoneNode({
     <div
       ref={scrollRef}
       className={`ptcgsim-zone ptcgsim-zone-${zone.kind}`}
+      data-table-art-swatch={
+        playmat && playmat !== 'style:default'
+          ? playmat.startsWith('style:')
+            ? playmat.slice(6)
+            : 'charcoal'
+          : undefined
+      }
       data-zone-id={zone.id}
       data-zone-side={zone.side}
       data-zone-outline={table && showOutline ? 'true' : undefined}
@@ -759,6 +782,9 @@ const CardNode = memo(
     // A card that was just dropped stays centred on its drop point until the
     // authoritative move lands, exactly as it was painted while dragging.
     const held = drag ?? settle;
+    const compact =
+      card.compactAttachment !== undefined && !card.compactAttachment.expanded;
+    const overflow = compact ? card.compactAttachment?.overflow : undefined;
     const bounds = held
       ? {
           ...card.bounds,
@@ -814,9 +840,16 @@ const CardNode = memo(
     const [shadowX, shadowY] = SHADOW_DIRECTION[card.rotationQuarterTurns];
     const context = (event: ReactMouseEvent) => {
       event.preventDefault();
-      emitIntent({ kind: 'CardContextRequested', cardId: card.id });
+      emitIntent({
+        kind: overflow ? 'CardPreviewRequested' : 'CardContextRequested',
+        cardId: card.id,
+      });
     };
     const activate = (clicks: number, adds: boolean) => {
+      if (overflow) {
+        emitIntent({ kind: 'CardPreviewRequested', cardId: card.id });
+        return;
+      }
       if (card.primaryAction?.kind === 'openZone') {
         emitIntent({ kind: 'ZoneOpened', zoneId: card.primaryAction.zoneId });
         return;
@@ -838,7 +871,11 @@ const CardNode = memo(
         ...(clicks > 2 ? {} : { mode: 'toggle' as const }),
       });
     };
-    const name = paintsBack(card) ? faceDownLabel() : card.label;
+    const name = overflow
+      ? t`${overflow} more attached cards`
+      : paintsBack(card)
+        ? faceDownLabel()
+        : card.label;
     useLayoutEffect(() => {
       const image = imageRef.current;
       if (!image) return;
@@ -937,6 +974,21 @@ const CardNode = memo(
           } as CSSProperties
         }
         disabled={!card.interactive}
+        data-compact-attachment-card={
+          card.compactAttachment ? 'true' : undefined
+        }
+        data-attachment-compact={
+          compact
+            ? overflow
+              ? 'overflow'
+              : card.compactAttachment?.energyIndex === undefined
+                ? 'art'
+                : 'energy'
+            : undefined
+        }
+        onPointerDown={
+          overflow ? (event) => event.stopPropagation() : undefined
+        }
         onClick={(event) => {
           if (
             !consumeSuppressedClick(card.id, card.renderKey) ||
@@ -976,6 +1028,23 @@ const CardNode = memo(
               paintsBack(card) ? undefined : card.presentation?.foilRegion
             }
           >
+            {card.compactAttachment?.energyIndex !== undefined ? (
+              <span
+                className="ptcgsim-attachment-energy"
+                aria-hidden="true"
+                style={
+                  {
+                    '--attachment-energy-index':
+                      card.compactAttachment.energyIndex,
+                  } as CSSProperties
+                }
+              />
+            ) : null}
+            {card.compactAttachment?.overflow ? (
+              <span className="ptcgsim-attachment-overflow" aria-hidden="true">
+                +{card.compactAttachment.overflow}
+              </span>
+            ) : null}
             <img
               ref={imageRef}
               src={card.tableImageUrl ?? card.imageUrl}
@@ -2051,6 +2120,10 @@ export const BoardSurface = ({
       (grabbed.current &&
         (scene.cards.find((card) => card.id === grabbed.current?.id) ??
           grabbed.current));
+    const overlayTarget =
+      source && !starting
+        ? adapters.overlayDropTarget?.(point, source.id)
+        : undefined;
     if (depth && source) {
       const base = depth.pose(source);
       let grabPoint;
@@ -2149,7 +2222,7 @@ export const BoardSurface = ({
         y: grabPoint.y,
         screenPoint: point,
         dropPoint: centre,
-        targetId: hit.targetId,
+        targetId: overlayTarget ?? hit.targetId,
         arrangementIndex: arrangementIndexAt(
           scene,
           source.id,
@@ -2166,6 +2239,7 @@ export const BoardSurface = ({
       x: ((event.clientX - bounds.left) * scene.viewport.width) / bounds.width,
       y: ((event.clientY - bounds.top) * scene.viewport.height) / bounds.height,
       button: event.button,
+      ...(overlayTarget ? { targetId: overlayTarget } : {}),
     };
   };
   /**
@@ -3083,33 +3157,45 @@ export const BoardSurface = ({
         <BoardControlsAnchorNode
           anchor={scene.layout.shared.boardControlsAnchor}
         />
-        {scene.zones.map((zone) => {
-          const divider = handDividerFor(zone, scene.layout.players);
-          return (
-            <ZoneNode
-              key={zone.id}
-              zone={zone}
-              showOutline={
-                preferences.showZoneOutlines &&
-                OUTLINED_ZONE_KINDS.has(zone.kind) &&
-                // On the table, a zone holding cards needs no line round
-                // it, unless the viewer keeps them all or a card is carried
-                // (its places light up as hit targets) (ADR-046).
-                (!table ||
-                  preferences.outlineFilledZones === true ||
-                  zone.count === 0 ||
-                  presentation.drag !== null)
-              }
-              handDividerEdge={divider?.edge}
-              handDividerColor={divider?.color}
-              dropTarget={dragTargetId === zone.id}
-              emitIntent={adapters.emitIntent}
-              scrollZone={adapters.scrollZone}
-              table={table}
-              {...(depth ? { depth } : {})}
-            />
-          );
-        })}
+        {scene.zones
+          .filter(
+            (zone) =>
+              !table ||
+              (zone.kind !== 'inspection' &&
+                zone.kind !== 'attachmentResolution')
+          )
+          .map((zone) => {
+            const divider = handDividerFor(zone, scene.layout.players);
+            return (
+              <ZoneNode
+                key={zone.id}
+                zone={zone}
+                playmat={
+                  scene.layout.players.find(
+                    (frame) => frame.playerId === zone.playerId
+                  )?.playmat
+                }
+                showOutline={
+                  preferences.showZoneOutlines &&
+                  OUTLINED_ZONE_KINDS.has(zone.kind) &&
+                  // On the table, a zone holding cards needs no line round
+                  // it, unless the viewer keeps them all or a card is carried
+                  // (its places light up as hit targets) (ADR-046).
+                  (!table ||
+                    preferences.outlineFilledZones === true ||
+                    zone.count === 0 ||
+                    presentation.drag !== null)
+                }
+                handDividerEdge={divider?.edge}
+                handDividerColor={divider?.color}
+                dropTarget={dragTargetId === zone.id}
+                emitIntent={adapters.emitIntent}
+                scrollZone={adapters.scrollZone}
+                table={table}
+                {...(depth ? { depth } : {})}
+              />
+            );
+          })}
         {scene.cards
           .filter((card) => card.renderKey !== null)
           .map((card) => (

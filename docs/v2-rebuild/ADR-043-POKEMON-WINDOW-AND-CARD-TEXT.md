@@ -228,3 +228,7 @@ card itself. Using an Ability was the card menu's "ability used" marker
   no smaller than v1's, every card upright.
 - Card text is English, as the catalog is; the window's own words are
   translated.
+
+## 2026-11-07: Options before artwork
+
+ADR-049 extends this window pattern to hand, Prize, Stadium and loose cards. Joined Pokémon now open their options window first, with View whole card as an explicit action. Artwork returns to its window with tap/Escape; the corner close icon is removed. Compact attachment handles retain the complete individual-card list here.

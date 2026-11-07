@@ -1301,6 +1301,10 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, one {# Karte zu viel ({count}/{required}).} other {# Karten zu viel ({count}/{required}).}}"
   },
+  "uDVdkR": {
+    "message": "{overflow} more attached cards",
+    "translation": "{overflow} weitere angelegte Karten"
+  },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
     "comments": [
@@ -2018,6 +2022,7 @@
     "message": "Attach as an Energy…",
     "comments": [
       "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
+      "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
       "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on."
     ],
     "translation": "Als Energie anlegen…"
@@ -2340,10 +2345,6 @@
     "message": "Can't move these together",
     "translation": "Diese lassen sich nicht zusammen bewegen"
   },
-  "Sq35G-": {
-    "message": "Can't read the clipboard",
-    "translation": "Zwischenablage kann nicht gelesen werden"
-  },
   "JRqWr0": {
     "message": "Can't retreat",
     "comments": [
@@ -2616,10 +2617,6 @@
     "context": "shortcut key caption",
     "translation": "Schließen"
   },
-  "aVo9NM": {
-    "message": "Close card preview",
-    "translation": "Kartenvorschau schließen"
-  },
   "aYX0za": {
     "message": "Close keyboard shortcuts",
     "translation": "Tastenkürzel schließen"
@@ -2802,10 +2799,6 @@
     "message": "Couldn't read that list",
     "translation": "Liste konnte nicht gelesen werden"
   },
-  "cU_nca": {
-    "message": "Couldn't read the clipboard. Paste with the keyboard.",
-    "translation": "Zwischenablage konnte nicht gelesen werden. Füge mit der Tastatur ein."
-  },
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "Spiel konnte nicht fortgesetzt werden"
@@ -2928,6 +2921,10 @@
     "message": "Custom image…",
     "translation": "Eigenes Bild…"
   },
+  "srRMnJ": {
+    "message": "Customize",
+    "translation": "Anpassen"
+  },
   "3Vkuiz": {
     "message": "Damage",
     "comments": [
@@ -2980,6 +2977,10 @@
     "message": "Deal again",
     "translation": "Erneut austeilen"
   },
+  "3AAg85": {
+    "message": "Deck",
+    "translation": "Deck"
+  },
   "9uxaX9": {
     "message": "Deck",
     "context": "shortcut group",
@@ -3010,6 +3011,14 @@
     "context": "zone on the table",
     "translation": "Deck"
   },
+  "9LJRNk": {
+    "message": "Deck (bottom)",
+    "translation": "Deck (unten)"
+  },
+  "sjqzOD": {
+    "message": "Deck (top)",
+    "translation": "Deck (oben)"
+  },
   "UJSJZe": {
     "message": "Deck and hand",
     "comments": [
@@ -3029,6 +3038,10 @@
   "kemNRk": {
     "message": "Deck for each seat",
     "translation": "Deck für jeden Platz"
+  },
+  "0KSYxL": {
+    "message": "Deck list",
+    "translation": "Deckliste"
   },
   "pX2_XZ": {
     "message": "Deck name",
@@ -3060,6 +3073,10 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "Decks, Online-Spiel, Protokoll und Einstellungen"
   },
+  "cnGeoo": {
+    "message": "Delete",
+    "translation": "Löschen"
+  },
   "gblLhJ": {
     "message": "Delete",
     "context": "keyboard key",
@@ -3069,6 +3086,10 @@
     "message": "Delete",
     "context": "menu item",
     "translation": "Löschen"
+  },
+  "Y2tU6I": {
+    "message": "Delete {0}",
+    "translation": "{0} löschen"
   },
   "oC8v9i": {
     "message": "Delete {label} {number}",
@@ -4750,24 +4771,12 @@
     "context": "settings page",
     "translation": "Bewegung"
   },
-  "CFLOVi": {
-    "message": "Move",
-    "context": "move the selected card",
-    "translation": "Bewegen"
-  },
   "2kUZvq": {
     "message": "Move {0}…",
     "comments": [
       "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
     ],
     "translation": "{0} verschieben…"
-  },
-  "B8Y72Z": {
-    "message": "Move {cardName} to",
-    "comments": [
-      "{cardName} is a card; a list of places follows."
-    ],
-    "translation": "{cardName} verschieben nach"
   },
   "MnxTQZ": {
     "message": "Move all on playboard to hand",
@@ -4872,6 +4881,10 @@
   "VJISiI": {
     "message": "Name every Ability and attack.",
     "translation": "Gib jeder Fähigkeit und Attacke einen Namen."
+  },
+  "fdwra1": {
+    "message": "Name for {seat}",
+    "translation": "Name für {seat}"
   },
   "nkyXf5": {
     "message": "Name or number",
@@ -5409,11 +5422,6 @@
     "message": "Opponents' custom backs",
     "translation": "Eigene Rückseiten der Gegner"
   },
-  "_iG1gb": {
-    "message": "or",
-    "context": "host a room, or join one",
-    "translation": "oder"
-  },
   "ONM3W_": {
     "message": "or a link",
     "translation": "oder ein Link"
@@ -5492,11 +5500,6 @@
     "message": "Pass the turn",
     "translation": "Passen: Zug beenden"
   },
-  "L3kYdG": {
-    "message": "Paste",
-    "context": "paste from the clipboard",
-    "translation": "Einfügen"
-  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "Füge zuerst eine Deckliste ein."
@@ -5505,17 +5508,9 @@
     "message": "Paste a link to an image.",
     "translation": "Füge einen Link zu einem Bild ein."
   },
-  "aGL2ob": {
-    "message": "Paste a list from the clipboard",
-    "translation": "Liste aus der Zwischenablage einfügen"
-  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "Füge die Details in deine Meldung ein: Sie helfen, das Problem zu finden."
-  },
-  "MfH2NF": {
-    "message": "Paste with Ctrl+V (⌘V) instead",
-    "translation": "Füge stattdessen mit Strg+V (⌘V) ein"
   },
   "X1Ni8e": {
     "message": "Pattern",
@@ -5594,6 +5589,7 @@
     "message": "Play as a Pokémon",
     "comments": [
       "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.",
+      "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.",
       "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench."
     ],
     "translation": "Als Pokémon spielen"
@@ -5641,6 +5637,14 @@
     "message": "Player",
     "context": "unnamed seat",
     "translation": "Spieler"
+  },
+  "gfFbl3": {
+    "message": "Player names",
+    "translation": "Spielernamen"
+  },
+  "5Y1AnD": {
+    "message": "Playmat",
+    "translation": "Spielmatte"
   },
   "2H5TkX": {
     "message": "Plum",
@@ -6503,6 +6507,10 @@
   "4XBjuA": {
     "message": "Save game",
     "translation": "Spiel speichern"
+  },
+  "EsJdRp": {
+    "message": "Save theme",
+    "translation": "Design speichern"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -7598,6 +7606,14 @@
     ],
     "translation": "Gegner {theirs} % · Ich {percent} %"
   },
+  "HZ7fEu": {
+    "message": "Theme name",
+    "translation": "Designname"
+  },
+  "fJ3EbT": {
+    "message": "Themes",
+    "translation": "Designs"
+  },
   "WVrKZx": {
     "message": "Then draw",
     "translation": "Dann ziehen"
@@ -8066,6 +8082,10 @@
   "vS8WGc": {
     "message": "Use this coin",
     "translation": "Diese Münze verwenden"
+  },
+  "UnzTr_": {
+    "message": "Use this playmat",
+    "translation": "Diese Spielmatte verwenden"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",

@@ -806,6 +806,7 @@ test('route-owned context and card-preview keep real-v1 structure in the ADR-027
 
   await page.keyboard.press('Escape');
   await card.dblclick();
+  await host.locator('[data-card-window-view]').click();
   const preview = host.locator(
     '[data-legacy-card-preview][data-preview-kind="card"]'
   );
@@ -840,8 +841,8 @@ test('route-owned context and card-preview keep real-v1 structure in the ADR-027
   ).toBeLessThanOrEqual(8);
   expect(
     Math.abs(
-      // The reading area reserves 64px above for controls and 16px below.
-      candidatePreviewMetrics.image.centerY - (scrim.y + scrim.height / 2 + 24)
+      // The reading area reserves 16px above and 64px below for Back.
+      candidatePreviewMetrics.image.centerY - (scrim.y + scrim.height / 2 - 24)
     )
   ).toBeLessThanOrEqual(8);
   expect(candidatePreviewMetrics.image.height).toBeGreaterThanOrEqual(

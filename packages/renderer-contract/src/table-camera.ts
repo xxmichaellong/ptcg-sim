@@ -23,6 +23,8 @@ export interface TableCamera {
 
 /** The steepest a player may tilt the table, in degrees. */
 export const TABLE_TILT_MAXIMUM = 35;
+/** The upper bound for the thickness control: a sleeved-card stack. */
+export const TABLE_THICKNESS_MAXIMUM = 1;
 /**
  * How far the eye sits from the table, as a multiple of the window's
  * diagonal: about a 37° lens, like looking down at a mat on a desk.
@@ -335,6 +337,6 @@ export const tablePileHeight = (
     layers *
     Math.max(0, finite(cardWidth, 0)) *
     TABLE_CARD_THICKNESS *
-    bounded(finite(strength, 1), 0, 2)
+    bounded(finite(strength, 0.6), 0, TABLE_THICKNESS_MAXIMUM)
   );
 };

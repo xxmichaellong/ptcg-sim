@@ -19,6 +19,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 
+import { workAreaDropTargetAt } from '../work-area-drop-target.js';
 import type { TableMotionStore } from '../table-motion.js';
 import { isSelectionModifier } from './group-context.js';
 
@@ -245,7 +246,15 @@ export const useOverlayCardDrag = (options: Options) => {
         point.y >= 0 &&
         point.x <= scene.viewport.width &&
         point.y <= scene.viewport.height;
-      return inside ? value : { ...value, targetId: null };
+      if (!inside) return { ...value, targetId: null };
+      const overlayTarget = workAreaDropTargetAt(
+        current.target.closest('[data-legacy-board-overlays]')?.parentElement ??
+          null,
+        event.clientX,
+        event.clientY,
+        current.card.parentId
+      );
+      return overlayTarget ? { ...value, targetId: overlayTarget } : value;
     };
     const move = (event: PointerEvent) => {
       const current = grip.current;

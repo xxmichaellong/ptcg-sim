@@ -221,6 +221,14 @@ export interface CardSceneNode {
   /** Effective physical rotation, including any opponent-frame half-turn. */
   readonly rotationQuarterTurns: QuarterTurns;
   readonly imageUrl: string;
+  /** A selectable attachment handle; carried cards expand to their normal art. */
+  readonly compactAttachment?: {
+    readonly fullBounds: Rect;
+    readonly expanded?: true;
+    readonly energyIndex?: number;
+    /** This handle opens all attachments; it never moves an unspecified card. */
+    readonly overflow?: number;
+  };
   /** Cosmetic finish for a disclosed face; hidden faces never carry one. */
   readonly finish?: import('./card-material.js').CardFinish;
   readonly presentation?: import('@ptcgsim/game-core').CardPresentation;
@@ -308,6 +316,7 @@ export interface ZoneCountSceneNode {
 }
 
 export interface BoardScenePlayerFrame {
+  readonly playmat?: string;
   readonly playerId: PlayerId;
   /** Where the seat sits on screen: the bottom half is `local`. */
   readonly side: BoardSide;
@@ -516,6 +525,11 @@ export interface BoardCardHover {
 }
 
 export interface BoardRendererAdapters {
+  /** A visible app-owned window under a drag, in scene viewport coordinates. */
+  readonly overlayDropTarget?: (
+    point: { readonly x: number; readonly y: number },
+    sourceCardId: ViewCardId
+  ) => string | null;
   readonly emitIntent: (intent: BoardIntent) => void;
   readonly emitPresentationUpdate: (update: BoardPresentationUpdate) => void;
   readonly reportError: (error: unknown) => void;

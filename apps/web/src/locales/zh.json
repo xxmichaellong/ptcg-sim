@@ -1301,6 +1301,10 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, one {多了 # 张牌（{count}/{required}）。} other {多了 # 张牌（{count}/{required}）。}}"
   },
+  "uDVdkR": {
+    "message": "{overflow} more attached cards",
+    "translation": "另有{overflow}张附着卡牌"
+  },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
     "comments": [
@@ -2018,6 +2022,7 @@
     "message": "Attach as an Energy…",
     "comments": [
       "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
+      "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
       "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on."
     ],
     "translation": "作为能量附着…"
@@ -2340,10 +2345,6 @@
     "message": "Can't move these together",
     "translation": "这些卡牌不能一起移动"
   },
-  "Sq35G-": {
-    "message": "Can't read the clipboard",
-    "translation": "无法读取剪贴板"
-  },
   "JRqWr0": {
     "message": "Can't retreat",
     "comments": [
@@ -2616,10 +2617,6 @@
     "context": "shortcut key caption",
     "translation": "关闭"
   },
-  "aVo9NM": {
-    "message": "Close card preview",
-    "translation": "关闭卡牌预览"
-  },
   "aYX0za": {
     "message": "Close keyboard shortcuts",
     "translation": "关闭键盘快捷键"
@@ -2802,10 +2799,6 @@
     "message": "Couldn't read that list",
     "translation": "无法读取该列表"
   },
-  "cU_nca": {
-    "message": "Couldn't read the clipboard. Paste with the keyboard.",
-    "translation": "无法读取剪贴板，请用键盘粘贴。"
-  },
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "无法继续游戏"
@@ -2928,6 +2921,10 @@
     "message": "Custom image…",
     "translation": "自定义图片…"
   },
+  "srRMnJ": {
+    "message": "Customize",
+    "translation": "自定义"
+  },
   "3Vkuiz": {
     "message": "Damage",
     "comments": [
@@ -2980,6 +2977,10 @@
     "message": "Deal again",
     "translation": "重新发牌"
   },
+  "3AAg85": {
+    "message": "Deck",
+    "translation": "牌组"
+  },
   "9uxaX9": {
     "message": "Deck",
     "context": "shortcut group",
@@ -3010,6 +3011,14 @@
     "context": "zone on the table",
     "translation": "牌库"
   },
+  "9LJRNk": {
+    "message": "Deck (bottom)",
+    "translation": "牌组（底部）"
+  },
+  "sjqzOD": {
+    "message": "Deck (top)",
+    "translation": "牌组（顶部）"
+  },
   "UJSJZe": {
     "message": "Deck and hand",
     "comments": [
@@ -3029,6 +3038,10 @@
   "kemNRk": {
     "message": "Deck for each seat",
     "translation": "每个座位的卡组"
+  },
+  "0KSYxL": {
+    "message": "Deck list",
+    "translation": "牌组列表"
   },
   "pX2_XZ": {
     "message": "Deck name",
@@ -3060,6 +3073,10 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "卡组、在线对战、日志和设置"
   },
+  "cnGeoo": {
+    "message": "Delete",
+    "translation": "删除"
+  },
   "gblLhJ": {
     "message": "Delete",
     "context": "keyboard key",
@@ -3069,6 +3086,10 @@
     "message": "Delete",
     "context": "menu item",
     "translation": "删除"
+  },
+  "Y2tU6I": {
+    "message": "Delete {0}",
+    "translation": "删除{0}"
   },
   "oC8v9i": {
     "message": "Delete {label} {number}",
@@ -4750,24 +4771,12 @@
     "context": "settings page",
     "translation": "动效"
   },
-  "CFLOVi": {
-    "message": "Move",
-    "context": "move the selected card",
-    "translation": "移动"
-  },
   "2kUZvq": {
     "message": "Move {0}…",
     "comments": [
       "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
     ],
     "translation": "移动 {0} 张…"
-  },
-  "B8Y72Z": {
-    "message": "Move {cardName} to",
-    "comments": [
-      "{cardName} is a card; a list of places follows."
-    ],
-    "translation": "将{cardName}移至"
   },
   "MnxTQZ": {
     "message": "Move all on playboard to hand",
@@ -4872,6 +4881,10 @@
   "VJISiI": {
     "message": "Name every Ability and attack.",
     "translation": "请为每个特性和招式命名。"
+  },
+  "fdwra1": {
+    "message": "Name for {seat}",
+    "translation": "{seat}的名称"
   },
   "nkyXf5": {
     "message": "Name or number",
@@ -5409,11 +5422,6 @@
     "message": "Opponents' custom backs",
     "translation": "对手的自定义卡背"
   },
-  "_iG1gb": {
-    "message": "or",
-    "context": "host a room, or join one",
-    "translation": "或"
-  },
   "ONM3W_": {
     "message": "or a link",
     "translation": "或使用链接"
@@ -5492,11 +5500,6 @@
     "message": "Pass the turn",
     "translation": "结束回合"
   },
-  "L3kYdG": {
-    "message": "Paste",
-    "context": "paste from the clipboard",
-    "translation": "粘贴"
-  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "请先粘贴卡组列表。"
@@ -5505,17 +5508,9 @@
     "message": "Paste a link to an image.",
     "translation": "粘贴图片链接。"
   },
-  "aGL2ob": {
-    "message": "Paste a list from the clipboard",
-    "translation": "从剪贴板粘贴卡组列表"
-  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "请将详情粘贴到你的反馈中，有助于定位问题。"
-  },
-  "MfH2NF": {
-    "message": "Paste with Ctrl+V (⌘V) instead",
-    "translation": "请改用 Ctrl+V（⌘V）粘贴"
   },
   "X1Ni8e": {
     "message": "Pattern",
@@ -5594,6 +5589,7 @@
     "message": "Play as a Pokémon",
     "comments": [
       "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.",
+      "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.",
       "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench."
     ],
     "translation": "作为宝可梦使用"
@@ -5641,6 +5637,14 @@
     "message": "Player",
     "context": "unnamed seat",
     "translation": "玩家"
+  },
+  "gfFbl3": {
+    "message": "Player names",
+    "translation": "玩家名称"
+  },
+  "5Y1AnD": {
+    "message": "Playmat",
+    "translation": "对战垫"
   },
   "2H5TkX": {
     "message": "Plum",
@@ -6503,6 +6507,10 @@
   "4XBjuA": {
     "message": "Save game",
     "translation": "保存对局"
+  },
+  "EsJdRp": {
+    "message": "Save theme",
+    "translation": "保存主题"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -7598,6 +7606,14 @@
     ],
     "translation": "对方 {theirs}% · 我方 {percent}%"
   },
+  "HZ7fEu": {
+    "message": "Theme name",
+    "translation": "主题名称"
+  },
+  "fJ3EbT": {
+    "message": "Themes",
+    "translation": "主题"
+  },
   "WVrKZx": {
     "message": "Then draw",
     "translation": "然后抽牌"
@@ -8066,6 +8082,10 @@
   "vS8WGc": {
     "message": "Use this coin",
     "translation": "使用此硬币"
+  },
+  "UnzTr_": {
+    "message": "Use this playmat",
+    "translation": "使用此对战垫"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",

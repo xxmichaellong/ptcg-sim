@@ -31,7 +31,7 @@ export const CENTRED_CROP: CardBackCropFocus = Object.freeze({
 export type CardBackEncoder = (
   picture: Blob,
   focus?: CardBackCropFocus,
-  shape?: 'card' | 'coin'
+  shape?: 'card' | 'coin' | 'mat'
 ) => Promise<Blob | null>;
 
 export interface CardBackImportOptions {
@@ -89,9 +89,13 @@ export const encodeCardBackImage: CardBackEncoder = async (
     return null;
   }
   const canvas = document.createElement('canvas');
-  canvas.width = CARD_BACK_IMAGE_WIDTH;
+  canvas.width = shape === 'mat' ? 1000 : CARD_BACK_IMAGE_WIDTH;
   canvas.height =
-    shape === 'coin' ? CARD_BACK_IMAGE_WIDTH : CARD_BACK_IMAGE_HEIGHT;
+    shape === 'coin'
+      ? CARD_BACK_IMAGE_WIDTH
+      : shape === 'mat'
+        ? 600
+        : CARD_BACK_IMAGE_HEIGHT;
   // A canvas in memory, never the GPU's: encoding reads it back whole, and
   // where the GPU is emulated (a machine without one) a GPU canvas stalled
   // the page for seconds before its first picture (CI run 40848329715).

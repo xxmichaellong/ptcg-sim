@@ -579,17 +579,17 @@ export const BOARD_SURFACE_CSS = `
   );
 }
 .ptcgsim-zone-count--badge {
-  min-width: 26px;
-  height: 22px;
-  margin: -9px;
-  padding: 0 7px;
+  min-width: 22px;
+  height: 18px;
+  margin: -2px;
+  padding: 0 5px;
   display: grid;
   place-items: center;
   border: 1px solid var(--color-border-strong, rgb(255 255 255 / 0.2));
   border-radius: 999px;
   background: var(--color-surface-2, rgb(30 34 44 / 0.94));
   color: var(--color-text, #fff);
-  font: 700 13px/1 var(--font-display, sans-serif);
+  font: 700 12px/1 var(--font-display, sans-serif);
   font-variant-numeric: tabular-nums;
   box-shadow: var(--shadow-2, 0 2px 6px rgb(0 0 0 / 0.4));
 }
@@ -612,4 +612,28 @@ export const BOARD_SURFACE_CSS = `
     center / contain no-repeat;
   mask-mode: luminance;
 }
+
+/* Attachments remain individual cards, shown as compact handles until lifted. */
+.ptcgsim-card[data-compact-attachment-card] .ptcgsim-card__face,
+.ptcgsim-card[data-compact-attachment-card] .ptcgsim-card__face img {
+  transition: border-radius 150ms ease, opacity 150ms ease;
+}
+.ptcgsim-card[data-attachment-compact] .ptcgsim-card__face {
+  border-radius: 5px;
+  box-shadow: 0 1px 4px rgb(0 0 0 / .6), 0 0 0 1px rgb(255 255 255 / .45);
+}
+.ptcgsim-card[data-attachment-compact='energy'] .ptcgsim-card__face,
+.ptcgsim-card[data-attachment-compact='overflow'] .ptcgsim-card__face { border-radius: 50%; }
+.ptcgsim-card[data-compact-attachment-card='true'] { transition: width 150ms ease, height 150ms ease, border-radius 150ms ease; }
+.ptcgsim-card[data-attachment-compact='art'] .ptcgsim-card__face img { object-fit: cover; object-position: center 29%; }
+.ptcgsim-attachment-energy,
+.ptcgsim-attachment-overflow { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity 150ms ease; }
+.ptcgsim-attachment-energy { background: url('/v2/assets/energy/types.eb5656aeac.webp') no-repeat calc(var(--attachment-energy-index) * 10%) 0 / 1100% 100%; }
+.ptcgsim-attachment-overflow { display: grid; place-items: center; background: var(--color-surface-2, #28241f); color: var(--color-text, #fff); font: bold 12px var(--font-ui, sans-serif); }
+.ptcgsim-card[data-attachment-compact='energy'] .ptcgsim-attachment-energy,
+.ptcgsim-card[data-attachment-compact='overflow'] .ptcgsim-attachment-overflow { opacity: 1; }
+.ptcgsim-card[data-attachment-compact='energy'] .ptcgsim-card__face img,
+.ptcgsim-card[data-attachment-compact='overflow'] .ptcgsim-card__face img { opacity: 0; }
+:is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-reduced-motion='true'] .ptcgsim-card[data-compact-attachment-card], :is(.ptcgsim-board-surface, .ptcgsim-board-lift)[data-reduced-motion='true'] .ptcgsim-card[data-compact-attachment-card] * { transition: none; }
+@media (prefers-reduced-motion: reduce) { .ptcgsim-card[data-compact-attachment-card], .ptcgsim-card[data-compact-attachment-card] * { transition: none; } }
 `;

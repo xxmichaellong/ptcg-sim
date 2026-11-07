@@ -36,6 +36,7 @@ export const MODEL_COMMAND_REGISTRY = {
   LoadDeck: { coverage: 'generated', family: 'lifecycle' },
   SetCardBack: { coverage: 'generated', family: 'lifecycle' },
   SetCoin: { coverage: 'generated', family: 'lifecycle' },
+  SetPlayerProfile: { coverage: 'generated', family: 'lifecycle' },
   ResetPlayer: { coverage: 'generated', family: 'lifecycle' },
   SetupPlayer: { coverage: 'generated', family: 'lifecycle' },
   MoveCard: { coverage: 'generated', family: 'movement' },

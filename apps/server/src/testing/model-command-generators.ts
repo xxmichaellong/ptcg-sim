@@ -209,6 +209,7 @@ export const MODEL_COMMAND_GENERATORS = {
     ...(context.random.boolean() ? { targetPlayerId: actorId(context) } : {}),
     cardBackUrl: `https://model-player-images.invalid/${context.seed}.png`,
   }),
+  SetPlayerProfile: (context) => ({ type: 'SetPlayerProfile', targetPlayerId: actorId(context), displayName: `Player ${context.seed}`, playmat: context.random.boolean() ? 'style:ocean' : 'design:1.gold.rays.ink.ball-poke' }),
   SetCoin: (context) => ({
     type: 'SetCoin',
     targetPlayerId: actorId(context),

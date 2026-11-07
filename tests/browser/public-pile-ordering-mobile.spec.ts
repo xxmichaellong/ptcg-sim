@@ -18,43 +18,26 @@ test.describe('a phone turned on its side and back', () => {
     viewport: { width: 390, height: 844 },
     hasTouch: true,
   });
-  test("keeps a pile card's Move menu beside its button", async ({ page }) => {
+  test('keeps direct move buttons reachable when the phone turns', async ({
+    page,
+  }) => {
     await fillPile(page, 'discard');
     const browser = await openPile(page, 'discard');
     await browser.locator('[data-overlay-card-id]').first().tap();
-    const move = browser.locator('[data-card-action="move"]');
-    await move.tap();
-    const menu = page.getByRole('menu');
-    await expect(menu).toBeVisible();
-    // On the screen and just above Move (it opens upward), soon after each
-    // turn: the pile's window slides to its new place, Move with it, and
-    // the menu goes along rather than staying behind for a second.
-    const besideMove = () =>
-      page.evaluate(() => {
-        const popup = [...document.querySelectorAll('[role="menu"]')].find(
-          (element) => !element.hasAttribute('data-ending-style')
-        );
-        const button = document.querySelector('[data-card-action="move"]');
-        if (!popup || !button) return false;
-        const box = popup.getBoundingClientRect();
-        const anchor = button.getBoundingClientRect();
-        return (
-          box.left >= 0 &&
-          box.top >= 0 &&
-          box.right <= innerWidth &&
-          box.bottom <= innerHeight &&
-          Math.abs(anchor.top - box.bottom) <= 12
-        );
-      });
     for (const [width, height] of [
       [844, 390],
       [390, 844],
     ] as const) {
       await page.setViewportSize({ width, height });
-      await expect
-        .poll(besideMove, { timeout: 600, intervals: [50] })
-        .toBe(true);
+      const move = browser.locator('[data-card-destination="hand"]');
+      await move.scrollIntoViewIfNeeded();
+      await expect(move).toBeVisible();
+      const box = (await move.boundingBox())!;
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(width);
     }
+    await browser.locator('[data-card-destination="hand"]').tap();
+    await expect(browser.locator('[data-overlay-card-id]')).toHaveCount(3);
   });
 });
 
@@ -77,7 +60,7 @@ for (const locale of ['ru', 'ar']) {
       const bottom = browser.locator('[data-card-action="pile-bottom"]');
       await expect(bottom).toBeEnabled();
       for (const button of await browser
-        .locator('.ptcgsim-card-actions button')
+        .locator('.ptcgsim-card-actions button:not([data-card-destination])')
         .all()) {
         await expect(button).toBeInViewport({ ratio: 1 });
         const box = (await button.boundingBox())!;

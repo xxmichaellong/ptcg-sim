@@ -1,3 +1,4 @@
+import { sessionWithPlayerName } from './session-profile.js';
 import {
   executeCommand,
   type EventBatch,
@@ -593,7 +594,12 @@ export const processAuthorityCommand = async (
         replayHistory = replayTransition.replayHistory;
       }
 
-      const sessions = { ...current.sessions };
+      const sessions = Object.fromEntries(
+        Object.entries(current.sessions).map(([id, each]) => [
+          id,
+          sessionWithPlayerName(each, candidateState, current.state),
+        ])
+      );
       sessions[session.id] = appendOutcome(
         sessions[session.id]!,
         outcome,

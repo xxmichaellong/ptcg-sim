@@ -1,3 +1,4 @@
+import { isPlaymatValue, isPlayerDisplayName } from './player-profile.js';
 import { STACK_REMINDERS, type StackReminder } from './stack-reminders.js';
 import { isCardBackValue } from './card-back.js';
 import { isCoinValue } from './coin.js';
@@ -821,6 +822,30 @@ const applyEventInternal = (
         players: {
           ...state.players,
           [event.playerId]: { ...player, cardBackUrl: event.cardBackUrl },
+        },
+      };
+    }
+    case 'PlayerProfileSet': {
+      const player = state.players[event.playerId];
+      if (
+        !player ||
+        (event.displayName === undefined && event.playmat === undefined) ||
+        (event.displayName !== undefined &&
+          !isPlayerDisplayName(event.displayName)) ||
+        (event.playmat !== undefined && !isPlaymatValue(event.playmat))
+      )
+        throw new Error('Player profile event is malformed');
+      return {
+        ...state,
+        players: {
+          ...state.players,
+          [event.playerId]: {
+            ...player,
+            ...(event.displayName !== undefined
+              ? { displayName: event.displayName }
+              : {}),
+            ...(event.playmat !== undefined ? { playmat: event.playmat } : {}),
+          },
         },
       };
     }

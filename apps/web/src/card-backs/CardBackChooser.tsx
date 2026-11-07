@@ -79,7 +79,7 @@ const FIRST_DESIGN: CardBackDesign = Object.freeze({
 const NUDGE = 0.05;
 
 export interface CardBackChooserProps {
-  readonly shape?: 'card' | 'coin';
+  readonly shape?: 'card' | 'coin' | 'mat';
   /** The back the seat wears now. */
   readonly current?: string;
   /** Backs the player's saved decks wear. */
@@ -416,7 +416,11 @@ export const CardBackChooser = ({
 
   // The picture's slack in a card's shape: where it can move, and which way.
   const targetRatio =
-    shape === 'coin' ? 1 : CARD_BACK_IMAGE_WIDTH / CARD_BACK_IMAGE_HEIGHT;
+    shape === 'coin'
+      ? 1
+      : shape === 'mat'
+        ? 5 / 3
+        : CARD_BACK_IMAGE_WIDTH / CARD_BACK_IMAGE_HEIGHT;
   const pictureRatio = shown ? shown.width / shown.height : targetRatio;
   const movesSideways = pictureRatio > targetRatio + 0.01;
   const movesUpDown = pictureRatio < targetRatio - 0.01;
@@ -1025,7 +1029,9 @@ export const CardBackChooser = ({
             ? t`Saving…`
             : shape === 'coin'
               ? t`Use this coin`
-              : t`Use this back`}
+              : shape === 'mat'
+                ? t`Use this playmat`
+                : t`Use this back`}
         </UiButton>
       </div>
     </div>

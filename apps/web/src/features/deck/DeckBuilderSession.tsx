@@ -1,3 +1,4 @@
+import { useDeckLooks } from './useDeckLooks.js';
 import { sameDeckList } from '@ptcgsim/deck-core';
 import { parseCardBack, STANDARD_CARD_BACK } from '@ptcgsim/game-core';
 import {
@@ -130,8 +131,6 @@ export interface DeckBuilderSessionProps {
   readonly catalog?: CardCatalogSource;
   readonly library?: DeckLibrary;
   readonly samples?: PopularDecklistSource;
-  /** Deck text from the clipboard; the browser's by default. */
-  readonly readClipboard?: () => Promise<string>;
   readonly requestCardBack?: CardBackSelectionOptions<DeckBuilderTarget>['requestCardBack'];
   /**
    * Makes a saved deck's legacy URL back a picture of our own (ADR-041):
@@ -286,7 +285,6 @@ export const DeckBuilderSession = ({
   catalog: suppliedCatalog,
   library: suppliedLibrary,
   samples = popularDecklistSource,
-  readClipboard,
   requestCardBack,
   importCardBack = importCardBackFromUrl,
   beforeUnloadTarget,
@@ -616,6 +614,13 @@ export const DeckBuilderSession = ({
    * the deck, or at once if the screen has closed (an import that landed
    * after it).
    */
+  const reapplyDeckLooks = useDeckLooks(
+    session ?? shownSession,
+    store,
+    library,
+    alternateEnabled
+  );
+
   const dressSeat = useCallback(
     (seat: DeckBuilderTarget): void => {
       const deckId = store.getSnapshot().slots[seat].label?.deckId;
@@ -874,8 +879,8 @@ export const DeckBuilderSession = ({
       onClose={onBack ?? closeAndFlush}
       onChangeCardBack={changeCardBack}
       onSeatDeck={dressSeat}
+      onSeatLook={reapplyDeckLooks}
       cardBacks={cardBacks}
-      {...(readClipboard ? { readClipboard } : {})}
     />
   );
 };

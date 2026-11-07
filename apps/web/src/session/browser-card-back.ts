@@ -46,7 +46,7 @@ export type CardBackPictureSave = (
 ) => Promise<string | null>;
 
 export interface BrowserCardBackRequestOptions {
-  readonly shape?: 'card' | 'coin';
+  readonly shape?: 'card' | 'coin' | 'mat';
   readonly signal?: AbortSignal;
   /** The back the seat wears now, shown first. */
   readonly current?: string;
@@ -80,7 +80,7 @@ const fetchThroughApp: CardBackPictureFetch = (url, signal) =>
   fetchImportedPicture(url, { signal: patient(signal) });
 
 const saveAsOwn =
-  (shape: 'card' | 'coin'): CardBackPictureSave =>
+  (shape: 'card' | 'coin' | 'mat'): CardBackPictureSave =>
   async (picture, focus, signal) => {
     const encoded = await encodeCardBackImage(picture, focus, shape);
     if (!encoded || signal.aborted) return null;
@@ -121,7 +121,12 @@ export const requestBrowserCardBack: BrowserCardBackRequest = async (
   let answer: string | null;
   try {
     answer = await open({
-      title: options.shape === 'coin' ? t`Coin` : t`Card back`,
+      title:
+        options.shape === 'coin'
+          ? t`Coin`
+          : options.shape === 'mat'
+            ? t`Playmat`
+            : t`Card back`,
       className: 'card-back-chooser-dialog',
       content: (settle) =>
         createElement(CardBackChooser, {

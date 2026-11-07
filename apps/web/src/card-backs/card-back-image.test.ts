@@ -97,7 +97,13 @@ describe('resolveSceneCardBacks', () => {
       ...fields,
     }) as CardSceneNode;
   const scene = (cards: CardSceneNode[]) =>
-    ({ cards, zones: [], markers: [], counts: [] }) as unknown as BoardScene;
+    ({
+      cards,
+      zones: [],
+      markers: [],
+      counts: [],
+      layout: { players: [{ playerId: blue }, { playerId: red }] },
+    }) as unknown as BoardScene;
 
   it('draws each back for this viewer and leaves faces alone', () => {
     const face = card('face', blue, { imageUrl: '/face.png' });
@@ -132,6 +138,31 @@ describe('resolveSceneCardBacks', () => {
       imageUrl: '/top-card.png',
       tableImageUrl: STANDARD_CARD_BACK_IMAGE,
     });
+  });
+
+  it('shows both decks’ custom mats independently of the card-back preference', () => {
+    const base = scene([]);
+    const source = {
+      ...base,
+      layout: {
+        ...base.layout,
+        players: [
+          { ...base.layout.players[0], playmat: `img:${sha}` },
+          {
+            ...base.layout.players[1],
+            playmat: 'design:1.navy.stripes.gold.ball',
+          },
+        ] as typeof base.layout.players,
+      },
+    };
+    const result = resolveSceneCardBacks(source, {
+      ownPlayerIds: new Set([blue]),
+      opponentCustomBacks: false,
+    });
+    expect(result.layout.players[0].playmat).toBe(`/v2/images/${sha}`);
+    expect(decodeURIComponent(result.layout.players[1].playmat!)).toContain(
+      'viewBox="0 0 1000 600"'
+    );
   });
 
   it('keeps a scene without backs as it is', () => {

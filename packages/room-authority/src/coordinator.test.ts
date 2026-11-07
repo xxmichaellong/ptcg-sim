@@ -98,6 +98,49 @@ const dependencies = () => {
 };
 
 describe('room command coordinator', () => {
+  it('keeps authenticated names consistent through renaming either Solo seat and Undo', async () => {
+    const initial = snapshot();
+    let durable: RoomAuthoritySnapshot = {
+      ...initial,
+      mode: 'solo',
+      sessions: {
+        ...initial.sessions,
+        session: { ...initial.sessions.session!, displayName: 'Blue' },
+      },
+    };
+    const store: AuthoritySnapshotStore = {
+      load: async () => durable,
+      commit: async (transaction) => {
+        durable = transaction.snapshot;
+      },
+    };
+    const coordinator = new RoomAuthorityCoordinator(
+      durable,
+      store,
+      dependencies()
+    );
+    const send = (sequence: number, command: CommandEnvelope['command']) =>
+      coordinator.submit({
+        ...envelope(sequence),
+        lastSeenRevision: coordinator.currentSnapshot().state.revision,
+        command,
+      });
+    await send(1, { type: 'SetPlayerProfile', displayName: 'Michael' });
+    expect(durable.sessions.session?.displayName).toBe('Michael');
+    expect(durable.state.players[p1]?.displayName).toBe('Michael');
+    await send(2, {
+      type: 'SetPlayerProfile',
+      targetPlayerId: p2,
+      displayName: 'Practice',
+    });
+    expect(durable.state.players[p2]?.displayName).toBe('Practice');
+    await send(3, { type: 'ApplySoloUndo', targetPlayerId: p1 });
+    expect(durable.state.players[p2]?.displayName).toBe('Red');
+    await send(4, { type: 'ApplySoloUndo', targetPlayerId: p1 });
+    expect(durable.state.players[p1]?.displayName).toBe('Blue');
+    expect(durable.sessions.session?.displayName).toBe('Blue');
+  });
+
   it('prevents command decisions from interleaving across a storage await', async () => {
     let durable = snapshot();
     let commitCount = 0;

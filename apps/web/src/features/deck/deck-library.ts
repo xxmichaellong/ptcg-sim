@@ -11,7 +11,7 @@ import {
   type DeckList,
 } from '@ptcgsim/deck-core';
 import { MAX_IMAGE_URL_CODE_UNITS } from '@ptcgsim/protocol';
-import { isCardText } from '@ptcgsim/game-core';
+import { isCoinValue, isPlaymatValue, isCardText } from '@ptcgsim/game-core';
 
 /**
  * The player's saved decks, kept on this device.
@@ -67,6 +67,8 @@ export interface SavedDeck {
    * seat plays it in that seat's own.
    */
   readonly cardBack?: string;
+  readonly coin?: string;
+  readonly playmat?: string;
   readonly notes?: string;
   readonly source?: DeckSource;
   /**
@@ -93,6 +95,8 @@ export interface DeckDraft {
   readonly cards: DeckList;
   readonly coverId?: string;
   readonly cardBack?: string;
+  readonly coin?: string;
+  readonly playmat?: string;
   readonly notes?: string;
   readonly source?: DeckSource;
 }
@@ -100,7 +104,15 @@ export interface DeckDraft {
 export type DeckPatch = Partial<
   Pick<
     SavedDeck,
-    'name' | 'format' | 'cards' | 'coverId' | 'cardBack' | 'notes' | 'factsFrom'
+    | 'name'
+    | 'format'
+    | 'cards'
+    | 'coverId'
+    | 'cardBack'
+    | 'coin'
+    | 'playmat'
+    | 'notes'
+    | 'factsFrom'
   >
 >;
 
@@ -284,6 +296,8 @@ export const decodeSavedDeck = (value: unknown): SavedDeck | undefined => {
     ...(boundedString(value.cardBack, MAX_IMAGE_URL_CODE_UNITS)
       ? { cardBack: value.cardBack as string }
       : {}),
+    ...(isCoinValue(value.coin) ? { coin: value.coin } : {}),
+    ...(isPlaymatValue(value.playmat) ? { playmat: value.playmat } : {}),
     ...(boundedString(value.notes, MAX_DECK_NOTES_LENGTH)
       ? { notes: value.notes as string }
       : {}),
@@ -474,6 +488,8 @@ export class DeckLibrary {
       cards: draft.cards,
       ...(draft.coverId ? { coverId: draft.coverId } : {}),
       ...(draft.cardBack ? { cardBack: draft.cardBack } : {}),
+      ...(isCoinValue(draft.coin) ? { coin: draft.coin } : {}),
+      ...(isPlaymatValue(draft.playmat) ? { playmat: draft.playmat } : {}),
       ...(draft.notes ? { notes: draft.notes } : {}),
       ...(draft.source ? { source: draft.source } : {}),
       createdAt: now,
@@ -507,12 +523,16 @@ export class DeckLibrary {
     const {
       coverId: _cover,
       cardBack: _cardBack,
+      coin: _coin,
+      playmat: _playmat,
       notes: _notes,
       factsFrom: _factsFrom,
       ...rest
     } = current;
     const coverId = 'coverId' in patch ? patch.coverId : current.coverId;
     const cardBack = 'cardBack' in patch ? patch.cardBack : current.cardBack;
+    const coin = 'coin' in patch ? patch.coin : current.coin;
+    const playmat = 'playmat' in patch ? patch.playmat : current.playmat;
     const notes = 'notes' in patch ? patch.notes : current.notes;
     const factsFrom =
       'factsFrom' in patch
@@ -530,6 +550,8 @@ export class DeckLibrary {
       cards: patch.cards ?? current.cards,
       ...(coverId ? { coverId } : {}),
       ...(cardBack ? { cardBack } : {}),
+      ...(isCoinValue(coin) ? { coin } : {}),
+      ...(isPlaymatValue(playmat) ? { playmat } : {}),
       ...(notes ? { notes: notes.slice(0, MAX_DECK_NOTES_LENGTH) } : {}),
       ...(factsFrom ? { factsFrom } : {}),
       updatedAt: options.touch === false ? current.updatedAt : this.#now(),
@@ -541,6 +563,8 @@ export class DeckLibrary {
         !sameDeckList(next.cards, current.cards) ||
         next.coverId !== current.coverId ||
         next.cardBack !== current.cardBack ||
+        next.coin !== current.coin ||
+        next.playmat !== current.playmat ||
         next.notes !== current.notes;
       if (!edited) return current;
       this.#drafts.delete(id);
@@ -568,6 +592,8 @@ export class DeckLibrary {
       cards: current.cards,
       ...(current.coverId ? { coverId: current.coverId } : {}),
       ...(current.cardBack ? { cardBack: current.cardBack } : {}),
+      ...(current.coin ? { coin: current.coin } : {}),
+      ...(current.playmat ? { playmat: current.playmat } : {}),
       ...(current.notes ? { notes: current.notes } : {}),
       source: { kind: 'copy', label: current.name },
     });

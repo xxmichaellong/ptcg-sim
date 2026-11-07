@@ -1,3 +1,4 @@
+import { TABLE_COUNT_BADGE } from '@ptcgsim/renderer-contract';
 import { asPlayerId } from '@ptcgsim/game-core';
 import type {
   BoardDepthProjection,
@@ -38,7 +39,9 @@ describe('a count on the table', () => {
     // The far deck at the left edge of a phone held sideways: its badge,
     // 9px out past the pile's corner, would start a pixel off the screen.
     const node = tableCountNode(count(), undefined, true, layout);
-    expect(node.anchor.x - 9).toBeGreaterThanOrEqual(2);
+    expect(node.anchor.x - TABLE_COUNT_BADGE.outsetPx).toBeGreaterThanOrEqual(
+      2
+    );
     expect(node.anchor.y).toBe(117);
     // One with room keeps its place.
     const inside = count({ anchor: { x: 300, y: 117 } });

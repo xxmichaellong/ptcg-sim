@@ -1,3 +1,4 @@
+import { isPlaymatValue } from './player-profile.js';
 import { CARD_PLAYS_AS } from './card-plays-as.js';
 import { isCardPrint, isCardText, isMoveName } from './card-text.js';
 import { isStackReminder, STACK_REMINDERS } from './stack-reminders.js';
@@ -112,6 +113,8 @@ export const collectInvariantProblems = (
       if (!isCardBackValue(player.cardBackUrl)) {
         problems.push(`player ${playerId} has invalid card back`);
       }
+      if (player.playmat !== undefined && !isPlaymatValue(player.playmat))
+        problems.push(`player ${playerId} has invalid playmat`);
       if (player.coin !== undefined && !isCoinValue(player.coin)) {
         problems.push(`player ${playerId} has invalid coin`);
       }

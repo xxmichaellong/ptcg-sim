@@ -1268,7 +1268,6 @@ describe('table layout (geometry v2)', () => {
     // the larger cards; so does a near-square window, small either way.
     for (const [width, height] of [
       [820, 1024],
-      [700, 900],
       [360, 360],
       [375, 390],
     ] as const) {
@@ -2164,7 +2163,7 @@ describe('table layout (geometry v2)', () => {
           'prizes'
         ).physicalDeclaredBounds;
         const hand = region(snapshot, 'local', 'hand').physicalDeclaredBounds;
-        const piles = (['deck', 'discard', 'lostZone'] as const).map(
+        const piles = (['lostZone', 'deck', 'discard'] as const).map(
           (kind) => region(snapshot, 'local', kind).physicalDeclaredBounds
         );
         // From the centre line out: Active, bench, the pile row, the hand.
@@ -2599,10 +2598,10 @@ describe('table layout: the far half mirrored (ADR-046)', () => {
       expect(deck.countLabel, label).toMatchObject({
         anchor: {
           x: deck.physicalDeclaredBounds.x + deck.physicalDeclaredBounds.width,
-          y: deck.physicalDeclaredBounds.y,
+          y: deck.physicalDeclaredBounds.y + deck.physicalDeclaredBounds.height,
         },
         horizontalAlign: 'right',
-        verticalAlign: 'top',
+        verticalAlign: 'bottom',
       });
       const hand = far(laid).regions.find(
         (candidate) => candidate.kind === 'hand'

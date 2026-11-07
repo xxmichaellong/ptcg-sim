@@ -18,6 +18,7 @@ export interface CardBackViewer {
    * as it is (and imported from).
    */
   readonly ownDeckScreen?: boolean;
+  readonly shape?: 'card' | 'mat';
 }
 
 /**
@@ -37,7 +38,7 @@ export const cardBackImage = (
       return presetCardBackImage(back.id);
     case 'design':
       return custom
-        ? cardBackDesignImage(back.design)
+        ? cardBackDesignImage(back.design, viewer.shape ?? 'card')
         : STANDARD_CARD_BACK_IMAGE;
     case 'image':
       return custom ? `/v2/images/${back.sha256}` : STANDARD_CARD_BACK_IMAGE;
@@ -90,5 +91,21 @@ export const resolveSceneCardBacks = (
       }),
     };
   });
-  return changed ? { ...scene, cards, zones } : scene;
+  const frames = scene.layout.players;
+  const resolveMat = (frame: (typeof frames)[number]): typeof frame => {
+    if (!frame.playmat || frame.playmat.startsWith('style:')) return frame;
+    changed = true;
+    return {
+      ...frame,
+      playmat: cardBackImage(frame.playmat, {
+        own: viewer.ownPlayerIds.has(frame.playerId),
+        opponentCustomBacks: true,
+        shape: 'mat',
+      }),
+    };
+  };
+  const players: typeof frames = [resolveMat(frames[0]), resolveMat(frames[1])];
+  return changed
+    ? { ...scene, cards, zones, layout: { ...scene.layout, players } }
+    : scene;
 };

@@ -1276,7 +1276,7 @@ const layoutHalfAs = (
  */
 const PORTRAIT_PROPORTIONS = {
   active: 1.15,
-  pile: 0.9,
+  pile: 0.74,
   handStrip: 0.78,
 } as const;
 
@@ -1512,9 +1512,9 @@ const layoutHalfPortraitAs = (
       { kind: 'active', rect: activeRect },
       { kind: 'bench', rect: benchRect },
       { kind: 'prizes', rect: prizes },
-      { kind: 'deck', rect: pileAt(2), countAnchor: 'pile' },
-      { kind: 'discard', rect: pileAt(1), countAnchor: 'pile' },
-      { kind: 'lostZone', rect: pileAt(0), countAnchor: 'pile' },
+      { kind: 'deck', rect: pileAt(1), countAnchor: 'pile' },
+      { kind: 'discard', rect: pileAt(0), countAnchor: 'pile' },
+      { kind: 'lostZone', rect: pileAt(2), countAnchor: 'pile' },
     ],
     cardHeights: { active, bench },
     middle: { left: edge, right: width - edge },
@@ -1923,10 +1923,10 @@ const countLabelFor = (
     return {
       anchor: {
         x: right ? physical.x + physical.width : physical.x,
-        y: side === 'local' ? physical.y + physical.height : physical.y,
+        y: side === 'local' ? physical.y : physical.y + physical.height,
       },
       horizontalAlign: right ? 'right' : 'left',
-      verticalAlign: side === 'local' ? 'bottom' : 'top',
+      verticalAlign: side === 'local' ? 'top' : 'bottom',
       fontSizePx: 13,
     };
   }

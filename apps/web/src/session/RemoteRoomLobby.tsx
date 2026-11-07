@@ -2,7 +2,6 @@ import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { CircleNotchIcon } from '@phosphor-icons/react/dist/csr/CircleNotch';
-import { ClipboardTextIcon } from '@phosphor-icons/react/dist/csr/ClipboardText';
 import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
 import { SignInIcon } from '@phosphor-icons/react/dist/csr/SignIn';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
@@ -87,7 +86,6 @@ import {
   useAppBarReserve,
 } from './shell/AppMenu.js';
 import { toast } from '../ui/toast.js';
-import { Tooltip } from '../ui/Tooltip.js';
 import {
   startTutorial,
   takeTutorialRequest,
@@ -388,6 +386,9 @@ export const RemoteRoomLobby = ({
   const [spectator, setSpectator] = useState(false);
   // The host's own choice of code for the room they create, if any.
   const [customCode, setCustomCode] = useState('');
+  const [roomFlow, setRoomFlow] = useState<'create' | 'join'>(
+    roomCode ? 'join' : 'create'
+  );
   const [receipt, setReceipt] = useState<RemoteRoomInvitationHandoffReceipt>();
   const [operation, setOperation] = useState<LobbyOperation>();
   // Kept as a message, so it reads in whatever language is up when shown.
@@ -1078,6 +1079,7 @@ export const RemoteRoomLobby = ({
 
   /** Shows an invitation the custody accepted, as its room and role only. */
   const showAccepted = (accepted: RemoteRoomInvitationHandoffReceipt): void => {
+    setRoomFlow('join');
     setReceipt(accepted);
     setRoomCode(accepted.roomCode);
     setSpectator(accepted.requestedRole === 'spectator');
@@ -1101,6 +1103,7 @@ export const RemoteRoomLobby = ({
       owner.invitation.clear();
       setReceipt(undefined);
     }
+    setRoomFlow('join');
     setRoomCode(code);
     setStatus(undefined);
   };
@@ -1146,32 +1149,6 @@ export const RemoteRoomLobby = ({
     const text =
       event.dataTransfer.getData('text/uri-list') ||
       event.dataTransfer.getData('text/plain');
-    const code = roomCodeFromText(text);
-    if (code) {
-      takeCode(code);
-      return;
-    }
-    try {
-      showAccepted(owner.invitation.acceptText(text));
-    } catch (error) {
-      refuseInvitation(error);
-    }
-  };
-
-  /** The Paste button: the clipboard read where the browser allows it. */
-  const clipboardReadable =
-    typeof globalThis.navigator?.clipboard?.readText === 'function';
-  const handlePasteButton = async (): Promise<void> => {
-    const owner = ownerRef.current;
-    if (!owner || owner.disposed || owner.operation) return;
-    let text: string;
-    try {
-      text = await globalThis.navigator.clipboard.readText();
-    } catch {
-      setStatus(msg`Couldn't read the clipboard. Paste with the keyboard.`);
-      return;
-    }
-    if (owner.disposed || ownerRef.current !== owner || owner.operation) return;
     const code = roomCodeFromText(text);
     if (code) {
       takeCode(code);
@@ -1463,7 +1440,39 @@ export const RemoteRoomLobby = ({
               onChange={(event) => setName(event.target.value)}
             />
           </div>
-          <section className="lobby-choice" aria-labelledby="lobbyHostTitle">
+          <div
+            className="ptcgsim-segmented-control lobby-flow"
+            role="group"
+            aria-label={t`Play online`}
+          >
+            <button
+              type="button"
+              aria-pressed={roomFlow === 'create'}
+              disabled={busy}
+              onClick={() => {
+                setRoomFlow('create');
+                setStatus(undefined);
+              }}
+            >
+              <Trans>Host a room</Trans>
+            </button>
+            <button
+              type="button"
+              aria-pressed={roomFlow === 'join'}
+              disabled={busy}
+              onClick={() => {
+                setRoomFlow('join');
+                setStatus(undefined);
+              }}
+            >
+              <Trans>Join a room</Trans>
+            </button>
+          </div>
+          <section
+            className="lobby-choice"
+            hidden={roomFlow !== 'create'}
+            aria-labelledby="lobbyHostTitle"
+          >
             <h3 id="lobbyHostTitle" className="lobby-choice-title">
               <Trans>Host a room</Trans>
             </h3>
@@ -1514,12 +1523,8 @@ export const RemoteRoomLobby = ({
               </button>
             </div>
           </section>
-          <div className="lobby-or" role="separator">
-            <span>
-              <Trans context="host a room, or join one">or</Trans>
-            </span>
-          </div>
           <section
+            hidden={roomFlow !== 'join'}
             id="roomId"
             className="lobby-choice"
             aria-labelledby="lobbyJoinTitle"
@@ -1548,29 +1553,6 @@ export const RemoteRoomLobby = ({
                   if (event.key === 'Enter' && !busy) void handleJoin();
                 }}
               />
-              {clipboardReadable ? (
-                <Tooltip
-                  content={t({
-                    message: 'Paste',
-                    context: 'paste from the clipboard',
-                  })}
-                  side="bottom"
-                >
-                  <button
-                    id="pasteInvitationButton"
-                    type="button"
-                    className="ds-button ds-button--secondary lobby-paste"
-                    aria-label={t({
-                      message: 'Paste',
-                      context: 'paste from the clipboard',
-                    })}
-                    disabled={busy}
-                    onClick={() => void handlePasteButton()}
-                  >
-                    <ClipboardTextIcon {...decorative} weight="bold" />
-                  </button>
-                </Tooltip>
-              ) : null}
             </div>
             {receipt ? (
               <p id="invitationReceipt" className="ds-hint">

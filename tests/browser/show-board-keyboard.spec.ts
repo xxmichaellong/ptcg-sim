@@ -34,6 +34,13 @@ test('Show board keeps keyboard focus on Back, then two Escapes return and close
   expect(after.y).toBeCloseTo(before.y, 0);
   expect(after.x + after.width).toBeCloseTo(before.x + before.width, 0);
 
+  const otherHeaderActions = browser.locator(
+    '.ptcgsim-overlay-actions > :not(.ptcgsim-show-board-button)'
+  );
+  for (const control of await otherHeaderActions.all()) {
+    await expect(control).toHaveCSS('opacity', '0');
+  }
+
   for (const key of ['Tab', 'Tab', 'Tab', 'Shift+Tab', 'Shift+Tab']) {
     await page.keyboard.press(key);
     await expect(back).toBeFocused();
@@ -57,6 +64,9 @@ test('Show board keeps keyboard focus on Back, then two Escapes return and close
   await page.keyboard.press('Escape');
   await expect(browser).not.toHaveClass(/is-showing-board/);
   await expect(back).toBeFocused();
+  for (const control of await otherHeaderActions.all()) {
+    await expect(control).toHaveCSS('opacity', '1');
+  }
   // Restoring Board's tooltip must not consume the second Escape.
   await page.waitForTimeout(300);
   await page.keyboard.press('Escape');
@@ -66,6 +76,8 @@ test('Show board keeps keyboard focus on Back, then two Escapes return and close
 test('Show board removes work-area cards and bulk actions from the keyboard until Back', async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await fillPile(page, 'discard');
   // The room fixture loaded four cards. Undo the five later arrangement
   // commands, leaving them in Deck for the real keyboard inspection action.
@@ -84,9 +96,12 @@ test('Show board removes work-area cards and bulk actions from the keyboard unti
   const back = area.locator('.ptcgsim-show-board-button');
   await back.click();
   await expect(back).toHaveText('Back to Looking at cards');
+  const undo = area.locator('[data-work-area-undo]');
+  await expect(undo).toHaveCSS('opacity', '0');
+  await expect(undo).toHaveAttribute('inert');
   const before = await revision(page);
   const hiddenControls = area.locator(
-    '[data-work-area-card-id], [data-work-area-action], .ptcgsim-card-actions button:not(:disabled)'
+    '[data-work-area-undo], [data-work-area-card-id], [data-work-area-action], .ptcgsim-card-actions button:not(:disabled)'
   );
   for (const control of await hiddenControls.all()) {
     await control.evaluate((node: HTMLElement) => node.focus());
@@ -106,6 +121,8 @@ test('Show board removes work-area cards and bulk actions from the keyboard unti
   await back.focus();
   await page.keyboard.press('Enter');
   await expect(area).not.toHaveClass(/is-showing-board/);
+  await expect(undo).toHaveCSS('opacity', '1');
+  await expect(undo).not.toHaveAttribute('inert');
   await expect(area.locator('[data-work-area-card-id]')).toHaveCount(3);
   expect(await revision(page)).toBe(before);
   await area.locator('[data-work-area-action="toHand"]').focus();
@@ -125,102 +142,165 @@ interface DevRoomWindow extends Window {
   };
 }
 
-test('an attached-card window takes back the move that opened it: U from its buttons, and its own Undo', async ({
-  page,
-}) => {
-  const current = () =>
-    page.evaluate(() => {
-      const view = (
-        window as DevRoomWindow
-      ).__ptcgsimDevRoom?.runtime.session.getSnapshot().view;
-      if (!view) throw new Error('Missing real room projection');
-      return view;
+for (const viewport of [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+]) {
+  test(`an attached-card window hides Undo with View board and restores it (${viewport.width}px)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    const current = () =>
+      page.evaluate(() => {
+        const view = (
+          window as DevRoomWindow
+        ).__ptcgsimDevRoom?.runtime.session.getSnapshot().view;
+        if (!view) throw new Error('Missing real room projection');
+        return view;
+      });
+    const arrange = async (command: WireGameCommand) => {
+      const before = await revision(page);
+      await page.evaluate((command) => {
+        (window as DevRoomWindow).__ptcgsimDevRoom?.runtime.session.submit(
+          command
+        );
+      }, command);
+      await expect.poll(() => revision(page)).toBe(before + 1);
+    };
+    await page.goto('/?dev-room=1&room-mode=solo&name=Attached');
+    await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
+    await arrange({
+      type: 'LoadDeck',
+      entries: [
+        {
+          definition: {
+            id: 'mon',
+            name: 'Mon',
+            category: 'Pokémon',
+            imageUrl: '/v2/assets/cardback.png?mon',
+          },
+          count: 3,
+        },
+        {
+          definition: {
+            id: 'energy',
+            name: 'Energy',
+            category: 'Energy',
+            imageUrl: '/v2/assets/cardback.png?energy',
+          },
+          count: 2,
+        },
+      ],
     });
-  const arrange = async (command: WireGameCommand) => {
-    const before = await revision(page);
-    await page.evaluate((command) => {
-      (window as DevRoomWindow).__ptcgsimDevRoom?.runtime.session.submit(
-        command
-      );
-    }, command);
-    await expect.poll(() => revision(page)).toBe(before + 1);
-  };
-  await page.goto('/?dev-room=1&room-mode=solo&name=Attached');
-  await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
-  await arrange({
-    type: 'LoadDeck',
-    entries: [
-      {
-        definition: {
-          id: 'mon',
-          name: 'Mon',
-          category: 'Pokémon',
-          imageUrl: '/v2/assets/cardback.png?mon',
-        },
-        count: 3,
-      },
-      {
-        definition: {
-          id: 'energy',
-          name: 'Energy',
-          category: 'Energy',
-          imageUrl: '/v2/assets/cardback.png?energy',
-        },
-        count: 2,
-      },
-    ],
-  });
-  await arrange({ type: 'DrawCards', count: 5 });
-  let view = await current();
-  const me = view.playerOrder[0]!;
-  const hand = Object.values(view.zones).find(
-    (zone) => zone.ownerId === me && zone.kind === 'hand'
-  )!;
-  const known = hand.cards.flatMap((card) =>
-    card.kind === 'known' ? [card] : []
-  );
-  const mon = known.find((card) => card.category === 'Pokémon')!.id;
-  const energy = known.find((card) => card.category === 'Energy')!.id;
-  await arrange({
-    type: 'MoveCardToPlay',
-    cardId: mon,
-    expectedSourceZoneId: hand.id,
-    boardPlayerId: me,
-    slot: 'active',
-  });
-  view = await current();
-  await arrange({
-    type: 'PlaceCardOnPlayStack',
-    cardId: energy,
-    expectedSourceId: hand.id,
-    targetStackId: view.boards[me]!.activeStackId!,
-    expectedTargetTopCardId: mon,
-    mode: 'attachment',
-  });
-  const area = page.locator('[data-legacy-work-area="staged"]');
-  // Changed into a Tool, the Pokémon leaves its Energy waiting in the
-  // window, which lies over the rail's Undo and stays through Escape.
-  const toTool = async () => {
-    await page
-      .locator(`.ptcgsim-board-surface [data-card-id="${mon}"]`)
-      .click({ button: 'right' });
-    await page.getByRole('menuitem', { name: /Change type/ }).click();
-    await page.getByRole('menuitem', { name: /Tool/ }).first().click();
+    await arrange({ type: 'DrawCards', count: 5 });
+    let view = await current();
+    const me = view.playerOrder[0]!;
+    const hand = Object.values(view.zones).find(
+      (zone) => zone.ownerId === me && zone.kind === 'hand'
+    )!;
+    const known = hand.cards.flatMap((card) =>
+      card.kind === 'known' ? [card] : []
+    );
+    const mon = known.find((card) => card.category === 'Pokémon')!.id;
+    const energy = known.find((card) => card.category === 'Energy')!.id;
+    await arrange({
+      type: 'MoveCardToPlay',
+      cardId: mon,
+      expectedSourceZoneId: hand.id,
+      boardPlayerId: me,
+      slot: 'active',
+    });
+    view = await current();
+    await arrange({
+      type: 'PlaceCardOnPlayStack',
+      cardId: energy,
+      expectedSourceId: hand.id,
+      targetStackId: view.boards[me]!.activeStackId!,
+      expectedTargetTopCardId: mon,
+      mode: 'attachment',
+    });
+    const area = page.locator('[data-legacy-work-area="staged"]');
+    // Changed into a Tool, the Pokémon leaves its Energy waiting in the
+    // window, which lies over the rail's Undo and stays through Escape.
+    const toTool = async () => {
+      await page
+        .locator(`.ptcgsim-board-surface [data-card-id="${mon}"]`)
+        .click({ button: 'right' });
+      await page.getByRole('menuitem', { name: /Change type/ }).click();
+      await page.getByRole('menuitem', { name: /Tool/ }).first().click();
+      await expect(area).toHaveCount(1);
+    };
+    await toTool();
+    const undo = area.locator('[data-work-area-undo]');
+    await expect(undo).toHaveCSS('opacity', '1');
+    const back = area.locator('.ptcgsim-show-board-button');
+    const boardRevision = await revision(page);
+    await back.click();
+    await expect(back).toHaveText('Back to Move attached cards');
+    await expect(undo).toHaveCSS('opacity', '0');
+    await expect(undo).toHaveAttribute('inert');
+    await undo.evaluate((node: HTMLElement) => node.focus());
+    await expect(back).toBeFocused();
+    await page.screenshot({
+      path: `/tmp/ptcg-show-board-staged-${viewport.width}.png`,
+    });
+    await back.click();
+    await expect(undo).toHaveCSS('opacity', '1');
+    await expect(undo).not.toHaveAttribute('inert');
+    expect(await revision(page)).toBe(boardRevision);
+    const toHand = area.locator('[data-work-area-action="toHand"]');
+    await toHand.focus();
+    await page.keyboard.press('Escape');
     await expect(area).toHaveCount(1);
-  };
-  await toTool();
-  const toHand = area.locator('[data-work-area-action="toHand"]');
-  await toHand.focus();
-  await page.keyboard.press('Escape');
-  await expect(area).toHaveCount(1);
-  let before = await revision(page);
-  await page.keyboard.press('u');
-  await expect.poll(() => revision(page)).toBe(before + 1);
-  await expect(area).toHaveCount(0);
+    let before = await revision(page);
+    await page.keyboard.press('u');
+    await expect.poll(() => revision(page)).toBe(before + 1);
+    await expect(area).toHaveCount(0);
 
-  await toTool();
-  before = await revision(page);
-  await area.getByRole('button', { name: 'Undo', exact: true }).click();
-  await expect.poll(() => revision(page)).toBe(before + 1);
-  await expect(area).toHaveCount(0);
-});
+    await toTool();
+    before = await revision(page);
+    await area.getByRole('button', { name: 'Undo', exact: true }).click();
+    await expect.poll(() => revision(page)).toBe(before + 1);
+    await expect(area).toHaveCount(0);
+    await toTool();
+    await expect(
+      page.locator(
+        '.ptcgsim-board-surface [data-zone-kind="attachmentResolution"]'
+      )
+    ).toHaveCount(0);
+    const handCountBeforeDrag = Object.values((await current()).zones).find(
+      (zone) => zone.id === hand.id
+    )!.cards.length;
+    const source = area.locator('[data-work-area-card-id]').first();
+    const handZone = page.locator(
+      `.ptcgsim-board-surface [data-zone-id="${hand.id}"]`
+    );
+    const start = (await source.boundingBox())!,
+      end = (await handZone.boundingBox())!;
+    await page.mouse.move(
+      start.x + start.width / 2,
+      start.y + start.height / 2
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+      start.x + start.width / 2 + 15,
+      start.y + start.height / 2,
+      { steps: 4 }
+    );
+    await page.mouse.move(
+      end.x + end.width / 2,
+      end.y + Math.min(20, end.height / 2),
+      { steps: 15 }
+    );
+    await page.mouse.up();
+    await expect(area).toHaveCount(0);
+    await expect
+      .poll(
+        async () =>
+          Object.values((await current()).zones).find(
+            (zone) => zone.id === hand.id
+          )?.cards.length
+      )
+      .toBe(handCountBeforeDrag + 1);
+  });
+}

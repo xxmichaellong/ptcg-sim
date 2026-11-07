@@ -1,3 +1,4 @@
+import { isPlaymatValue, isPlayerDisplayName } from './player-profile.js';
 import { MAX_COIN_FLIP_COUNT, MAX_UNTIL_TAILS_FLIPS } from './coin-flips.js';
 import { isStackReminder } from './stack-reminders.js';
 import {
@@ -1222,6 +1223,25 @@ export const decideCommand = (
         type: 'PlayerCardBackSet',
         playerId: command.playerId,
         cardBackUrl: command.cardBackUrl,
+      });
+    }
+    case 'SetPlayerProfile': {
+      const playerError = requirePlayer(state, command.playerId);
+      if (playerError) return playerError;
+      if (
+        (command.displayName === undefined && command.playmat === undefined) ||
+        (command.displayName !== undefined &&
+          !isPlayerDisplayName(command.displayName)) ||
+        (command.playmat !== undefined && !isPlaymatValue(command.playmat))
+      )
+        return reject('invalid_command', 'Invalid player profile');
+      return accept({
+        type: 'PlayerProfileSet',
+        playerId: command.playerId,
+        ...(command.displayName !== undefined
+          ? { displayName: command.displayName.trim() }
+          : {}),
+        ...(command.playmat !== undefined ? { playmat: command.playmat } : {}),
       });
     }
     case 'SetCoin': {

@@ -29,6 +29,7 @@ import {
   tableCardMatrix,
   unprojectTablePoint,
   tablePileHeight,
+  TABLE_THICKNESS_MAXIMUM,
   type TableCamera,
   type TablePoint,
 } from './table-camera.js';
@@ -44,7 +45,7 @@ const FAN_DROP = 0.02;
 export const DEFAULT_BOARD_DEPTH: BoardDepthPreferences = Object.freeze({
   mode: 'flat',
   tilt: 22,
-  strength: 1,
+  strength: 0.6,
   lift: true,
   animate: true,
   parallax: false,
@@ -62,7 +63,11 @@ export const parseBoardDepth = (value: unknown): BoardDepthPreferences => {
   return {
     mode: mode === 'depth' || mode === 'table' ? mode : 'flat',
     tilt: number('tilt', DEFAULT_BOARD_DEPTH.tilt, TABLE_TILT_MAXIMUM),
-    strength: number('strength', 1, 2),
+    strength: number(
+      'strength',
+      DEFAULT_BOARD_DEPTH.strength,
+      TABLE_THICKNESS_MAXIMUM
+    ),
     lift: Reflect.get(value, 'lift') !== false,
     animate: Reflect.get(value, 'animate') !== false,
     parallax: Reflect.get(value, 'parallax') === true,

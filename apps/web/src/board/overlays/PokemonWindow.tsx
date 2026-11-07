@@ -94,6 +94,7 @@ export interface PokemonWindowProps {
   ) => ReactNode;
   /** The window's close button, at the end of its title bar. */
   readonly closeButton: ReactNode;
+  readonly onViewWhole?: () => void;
   readonly act: (request: LegacyBoardOverlayActionRequest) => void;
   /** After a move is used: the window has done its job. */
   readonly onUsed: () => void;
@@ -720,6 +721,7 @@ export const PokemonWindow = ({
   canUseMoves,
   renderCard,
   closeButton,
+  onViewWhole,
   owner,
   tone,
   act,
@@ -901,6 +903,16 @@ export const PokemonWindow = ({
           stage={text?.stage}
           types={text?.types ?? []}
         />
+        {onViewWhole ? (
+          <button
+            type="button"
+            className="ptcgsim-overlay-button"
+            data-preview-tabbable="true"
+            onClick={onViewWhole}
+          >
+            <Trans>View whole card</Trans>
+          </button>
+        ) : null}
         {closeButton}
       </header>
       <div className="pokemon-window__body">

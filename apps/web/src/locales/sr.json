@@ -1301,6 +1301,10 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, one {# карта вишка ({count}/{required}).} few {# карте вишка ({count}/{required}).} other {# карата вишка ({count}/{required}).}}"
   },
+  "uDVdkR": {
+    "message": "{overflow} more attached cards",
+    "translation": "Још придружених карата: {overflow}"
+  },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
     "comments": [
@@ -2018,6 +2022,7 @@
     "message": "Attach as an Energy…",
     "comments": [
       "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
+      "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
       "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on."
     ],
     "translation": "Прикачи као енергију…"
@@ -2340,10 +2345,6 @@
     "message": "Can't move these together",
     "translation": "Ово се не може преместити заједно"
   },
-  "Sq35G-": {
-    "message": "Can't read the clipboard",
-    "translation": "Не могу да прочитам привремену меморију"
-  },
   "JRqWr0": {
     "message": "Can't retreat",
     "comments": [
@@ -2616,10 +2617,6 @@
     "context": "shortcut key caption",
     "translation": "Затвори"
   },
-  "aVo9NM": {
-    "message": "Close card preview",
-    "translation": "Затвори преглед карте"
-  },
   "aYX0za": {
     "message": "Close keyboard shortcuts",
     "translation": "Затвори пречице на тастатури"
@@ -2802,10 +2799,6 @@
     "message": "Couldn't read that list",
     "translation": "Није успело читање те листе"
   },
-  "cU_nca": {
-    "message": "Couldn't read the clipboard. Paste with the keyboard.",
-    "translation": "Није могуће прочитати клипборд. Налепи тастатуром."
-  },
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "Није успело настављање партије"
@@ -2928,6 +2921,10 @@
     "message": "Custom image…",
     "translation": "Прилагођена слика…"
   },
+  "srRMnJ": {
+    "message": "Customize",
+    "translation": "Прилагоди"
+  },
   "3Vkuiz": {
     "message": "Damage",
     "comments": [
@@ -2980,6 +2977,10 @@
     "message": "Deal again",
     "translation": "Подели поново"
   },
+  "3AAg85": {
+    "message": "Deck",
+    "translation": "Шпил"
+  },
   "9uxaX9": {
     "message": "Deck",
     "context": "shortcut group",
@@ -3010,6 +3011,14 @@
     "context": "zone on the table",
     "translation": "Шпил"
   },
+  "9LJRNk": {
+    "message": "Deck (bottom)",
+    "translation": "Шпил (дно)"
+  },
+  "sjqzOD": {
+    "message": "Deck (top)",
+    "translation": "Шпил (врх)"
+  },
   "UJSJZe": {
     "message": "Deck and hand",
     "comments": [
@@ -3029,6 +3038,10 @@
   "kemNRk": {
     "message": "Deck for each seat",
     "translation": "Шпил за свако место"
+  },
+  "0KSYxL": {
+    "message": "Deck list",
+    "translation": "Списак карата"
   },
   "pX2_XZ": {
     "message": "Deck name",
@@ -3060,6 +3073,10 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "Шпилови, игра на мрежи, дневник и подешавања"
   },
+  "cnGeoo": {
+    "message": "Delete",
+    "translation": "Обриши"
+  },
   "gblLhJ": {
     "message": "Delete",
     "context": "keyboard key",
@@ -3069,6 +3086,10 @@
     "message": "Delete",
     "context": "menu item",
     "translation": "Обриши"
+  },
+  "Y2tU6I": {
+    "message": "Delete {0}",
+    "translation": "Обриши {0}"
   },
   "oC8v9i": {
     "message": "Delete {label} {number}",
@@ -4750,24 +4771,12 @@
     "context": "settings page",
     "translation": "Кретање"
   },
-  "CFLOVi": {
-    "message": "Move",
-    "context": "move the selected card",
-    "translation": "Премести"
-  },
   "2kUZvq": {
     "message": "Move {0}…",
     "comments": [
       "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
     ],
     "translation": "Премести {0}…"
-  },
-  "B8Y72Z": {
-    "message": "Move {cardName} to",
-    "comments": [
-      "{cardName} is a card; a list of places follows."
-    ],
-    "translation": "Премести {cardName} у"
   },
   "MnxTQZ": {
     "message": "Move all on playboard to hand",
@@ -4872,6 +4881,10 @@
   "VJISiI": {
     "message": "Name every Ability and attack.",
     "translation": "Именуј сваку способност и напад."
+  },
+  "fdwra1": {
+    "message": "Name for {seat}",
+    "translation": "Име за {seat}"
   },
   "nkyXf5": {
     "message": "Name or number",
@@ -5409,11 +5422,6 @@
     "message": "Opponents' custom backs",
     "translation": "Прилагођене полеђине противника"
   },
-  "_iG1gb": {
-    "message": "or",
-    "context": "host a room, or join one",
-    "translation": "или"
-  },
   "ONM3W_": {
     "message": "or a link",
     "translation": "или веза"
@@ -5492,11 +5500,6 @@
     "message": "Pass the turn",
     "translation": "Пас: заврши потез"
   },
-  "L3kYdG": {
-    "message": "Paste",
-    "context": "paste from the clipboard",
-    "translation": "Налепи"
-  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "Прво налепи листу шпила."
@@ -5505,17 +5508,9 @@
     "message": "Paste a link to an image.",
     "translation": "Налепи везу до слике."
   },
-  "aGL2ob": {
-    "message": "Paste a list from the clipboard",
-    "translation": "Налепи листу из привремене меморије"
-  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "Налепи детаље у свој извештај: помажу при проналажењу проблема."
-  },
-  "MfH2NF": {
-    "message": "Paste with Ctrl+V (⌘V) instead",
-    "translation": "Уместо тога налепи са Ctrl+V (⌘V)"
   },
   "X1Ni8e": {
     "message": "Pattern",
@@ -5594,6 +5589,7 @@
     "message": "Play as a Pokémon",
     "comments": [
       "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.",
+      "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.",
       "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench."
     ],
     "translation": "Иг#ај као Pokémon"
@@ -5641,6 +5637,14 @@
     "message": "Player",
     "context": "unnamed seat",
     "translation": "Играч"
+  },
+  "gfFbl3": {
+    "message": "Player names",
+    "translation": "Имена играча"
+  },
+  "5Y1AnD": {
+    "message": "Playmat",
+    "translation": "Подлога за игру"
   },
   "2H5TkX": {
     "message": "Plum",
@@ -6503,6 +6507,10 @@
   "4XBjuA": {
     "message": "Save game",
     "translation": "Сачувај партију"
+  },
+  "EsJdRp": {
+    "message": "Save theme",
+    "translation": "Сачувај тему"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -7598,6 +7606,14 @@
     ],
     "translation": "Противничка {theirs}% · Моја {percent}%"
   },
+  "HZ7fEu": {
+    "message": "Theme name",
+    "translation": "Назив теме"
+  },
+  "fJ3EbT": {
+    "message": "Themes",
+    "translation": "Теме"
+  },
   "WVrKZx": {
     "message": "Then draw",
     "translation": "Затим повуци"
@@ -8066,6 +8082,10 @@
   "vS8WGc": {
     "message": "Use this coin",
     "translation": "Користи овај новчић"
+  },
+  "UnzTr_": {
+    "message": "Use this playmat",
+    "translation": "Користи ову подлогу"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",

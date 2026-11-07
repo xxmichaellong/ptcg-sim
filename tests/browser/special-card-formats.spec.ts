@@ -134,7 +134,7 @@ const fromDeck = async (page: Page, piece: string, key: string) => {
       .getByRole('button', { name: 'Actions', exact: true })
       .click();
     await page
-      .getByRole('menuitem', {
+      .getByRole('button', {
         name: /^(?:Join pieces|Evolve a Pokémon|Attach to a Pokémon)…$/u,
       })
       .click();
@@ -330,6 +330,9 @@ for (const mode of ['flat', 'table'] as const)
         5
       );
       await page.locator(`[data-card-id="${first.id}"]`).dblclick();
+      await page
+        .getByRole('button', { name: 'View whole card', exact: true })
+        .click();
       const preview = page.locator('[data-preview-kind="composition"]');
       await expect(preview).toBeVisible();
       await expect(preview.locator('.ptcgsim-composition-piece')).toHaveCount(
@@ -474,6 +477,9 @@ for (const mode of ['flat', 'table'] as const)
       const overlay = await sceneCard(page, 'break');
       expect(overlay.rotationQuarterTurns).toBe(1);
       await page.locator(`[data-card-id="${breakId}"]`).dblclick();
+      await page
+        .getByRole('button', { name: 'View whole card', exact: true })
+        .click();
       await expect(
         page.locator(
           '.ptcgsim-composition-artwork[data-card-composition="overlay"]'
@@ -496,7 +502,7 @@ for (const mode of ['flat', 'table'] as const)
       // (ADR-043): the BREAK over the Stage it evolved from.
       await page.keyboard.press('Escape');
       await page.locator(`[data-card-id="${breakId}"]`).dblclick();
-      await page.getByRole('button', { name: 'Details' }).click();
+      // A double-click enters the Pokémon options window first.
       const window = page.locator('[data-pokemon-window]');
       await expect(window).toBeVisible();
       await expect(window).toHaveAccessibleName('Greninja BREAK');

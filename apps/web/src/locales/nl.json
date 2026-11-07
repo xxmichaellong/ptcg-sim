@@ -1301,6 +1301,10 @@
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
     "translation": "{over, plural, one {# kaart te veel ({count}/{required}).} other {# kaarten te veel ({count}/{required}).}}"
   },
+  "uDVdkR": {
+    "message": "{overflow} more attached cards",
+    "translation": "Nog {overflow} aangehechte kaarten"
+  },
   "2dJX8c": {
     "message": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} of {players}",
     "comments": [
@@ -2018,6 +2022,7 @@
     "message": "Attach as an Energy…",
     "comments": [
       "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
+      "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on.",
       "Card menu, for a Pokémon whose card lets it be attached as an Energy (a Holon's Pokémon): pick the Pokémon it goes on."
     ],
     "translation": "Aanhechten als Energie…"
@@ -2340,10 +2345,6 @@
     "message": "Can't move these together",
     "translation": "Deze kunnen niet samen worden verplaatst"
   },
-  "Sq35G-": {
-    "message": "Can't read the clipboard",
-    "translation": "Kan het klembord niet lezen"
-  },
   "JRqWr0": {
     "message": "Can't retreat",
     "comments": [
@@ -2616,10 +2617,6 @@
     "context": "shortcut key caption",
     "translation": "Sluiten"
   },
-  "aVo9NM": {
-    "message": "Close card preview",
-    "translation": "Kaartvoorbeeld sluiten"
-  },
   "aYX0za": {
     "message": "Close keyboard shortcuts",
     "translation": "Sneltoetsen sluiten"
@@ -2802,10 +2799,6 @@
     "message": "Couldn't read that list",
     "translation": "Kon die lijst niet lezen"
   },
-  "cU_nca": {
-    "message": "Couldn't read the clipboard. Paste with the keyboard.",
-    "translation": "Kan het klembord niet lezen. Plak met het toetsenbord."
-  },
   "heYM3E": {
     "message": "Couldn't resume the game",
     "translation": "Kon het spel niet hervatten"
@@ -2928,6 +2921,10 @@
     "message": "Custom image…",
     "translation": "Eigen afbeelding…"
   },
+  "srRMnJ": {
+    "message": "Customize",
+    "translation": "Aanpassen"
+  },
   "3Vkuiz": {
     "message": "Damage",
     "comments": [
@@ -2980,6 +2977,10 @@
     "message": "Deal again",
     "translation": "Opnieuw delen"
   },
+  "3AAg85": {
+    "message": "Deck",
+    "translation": "Deck"
+  },
   "9uxaX9": {
     "message": "Deck",
     "context": "shortcut group",
@@ -3010,6 +3011,14 @@
     "context": "zone on the table",
     "translation": "Deck"
   },
+  "9LJRNk": {
+    "message": "Deck (bottom)",
+    "translation": "Deck (onderop)"
+  },
+  "sjqzOD": {
+    "message": "Deck (top)",
+    "translation": "Deck (bovenop)"
+  },
   "UJSJZe": {
     "message": "Deck and hand",
     "comments": [
@@ -3029,6 +3038,10 @@
   "kemNRk": {
     "message": "Deck for each seat",
     "translation": "Deck voor elke zitplaats"
+  },
+  "0KSYxL": {
+    "message": "Deck list",
+    "translation": "Decklijst"
   },
   "pX2_XZ": {
     "message": "Deck name",
@@ -3060,6 +3073,10 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "Decks, online spelen, het log en instellingen"
   },
+  "cnGeoo": {
+    "message": "Delete",
+    "translation": "Verwijderen"
+  },
   "gblLhJ": {
     "message": "Delete",
     "context": "keyboard key",
@@ -3069,6 +3086,10 @@
     "message": "Delete",
     "context": "menu item",
     "translation": "Verwijderen"
+  },
+  "Y2tU6I": {
+    "message": "Delete {0}",
+    "translation": "{0} verwijderen"
   },
   "oC8v9i": {
     "message": "Delete {label} {number}",
@@ -4750,24 +4771,12 @@
     "context": "settings page",
     "translation": "Beweging"
   },
-  "CFLOVi": {
-    "message": "Move",
-    "context": "move the selected card",
-    "translation": "Verplaatsen"
-  },
   "2kUZvq": {
     "message": "Move {0}…",
     "comments": [
       "Opens the menu of what the selected cards can do, e.g. \"Move 3…\"."
     ],
     "translation": "{0} verplaatsen…"
-  },
-  "B8Y72Z": {
-    "message": "Move {cardName} to",
-    "comments": [
-      "{cardName} is a card; a list of places follows."
-    ],
-    "translation": "Verplaats {cardName} naar"
   },
   "MnxTQZ": {
     "message": "Move all on playboard to hand",
@@ -4872,6 +4881,10 @@
   "VJISiI": {
     "message": "Name every Ability and attack.",
     "translation": "Geef elke Ability en aanval een naam."
+  },
+  "fdwra1": {
+    "message": "Name for {seat}",
+    "translation": "Naam voor {seat}"
   },
   "nkyXf5": {
     "message": "Name or number",
@@ -5409,11 +5422,6 @@
     "message": "Opponents' custom backs",
     "translation": "Aangepaste ruggen van tegenstanders"
   },
-  "_iG1gb": {
-    "message": "or",
-    "context": "host a room, or join one",
-    "translation": "of"
-  },
   "ONM3W_": {
     "message": "or a link",
     "translation": "of een link"
@@ -5492,11 +5500,6 @@
     "message": "Pass the turn",
     "translation": "De beurt passen"
   },
-  "L3kYdG": {
-    "message": "Paste",
-    "context": "paste from the clipboard",
-    "translation": "Plakken"
-  },
   "BRnJkz": {
     "message": "Paste a decklist first.",
     "translation": "Plak eerst een decklijst."
@@ -5505,17 +5508,9 @@
     "message": "Paste a link to an image.",
     "translation": "Plak een link naar een afbeelding."
   },
-  "aGL2ob": {
-    "message": "Paste a list from the clipboard",
-    "translation": "Plak een lijst vanaf het klembord"
-  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "Plak de details in je melding: ze helpen om het probleem te vinden."
-  },
-  "MfH2NF": {
-    "message": "Paste with Ctrl+V (⌘V) instead",
-    "translation": "Plak in plaats daarvan met Ctrl+V (⌘V)"
   },
   "X1Ni8e": {
     "message": "Pattern",
@@ -5594,6 +5589,7 @@
     "message": "Play as a Pokémon",
     "comments": [
       "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.",
+      "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench.",
       "Card menu, for a Trainer played as if it were a Basic Pokémon (a Fossil): puts it on the Bench."
     ],
     "translation": "Spelen als Pokémon"
@@ -5641,6 +5637,14 @@
     "message": "Player",
     "context": "unnamed seat",
     "translation": "Speler"
+  },
+  "gfFbl3": {
+    "message": "Player names",
+    "translation": "Spelersnamen"
+  },
+  "5Y1AnD": {
+    "message": "Playmat",
+    "translation": "Speelmat"
   },
   "2H5TkX": {
     "message": "Plum",
@@ -6503,6 +6507,10 @@
   "4XBjuA": {
     "message": "Save game",
     "translation": "Spel opslaan"
+  },
+  "EsJdRp": {
+    "message": "Save theme",
+    "translation": "Thema opslaan"
   },
   "OnrVKw": {
     "message": "Saved",
@@ -7598,6 +7606,14 @@
     ],
     "translation": "Hun {theirs}% · Mijn {percent}%"
   },
+  "HZ7fEu": {
+    "message": "Theme name",
+    "translation": "Themanaam"
+  },
+  "fJ3EbT": {
+    "message": "Themes",
+    "translation": "Thema’s"
+  },
   "WVrKZx": {
     "message": "Then draw",
     "translation": "Trek daarna"
@@ -8066,6 +8082,10 @@
   "vS8WGc": {
     "message": "Use this coin",
     "translation": "Deze munt gebruiken"
+  },
+  "UnzTr_": {
+    "message": "Use this playmat",
+    "translation": "Deze speelmat gebruiken"
   },
   "8ZgYGP": {
     "message": "Use this print for the {deckCopies} in the deck",

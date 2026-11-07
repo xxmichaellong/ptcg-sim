@@ -753,7 +753,10 @@ describe('remote room lobby wiring', () => {
       expect(present(`#${id}`), id).toBe(false);
     }
     expect(element('#generateIdButton').textContent).toBe('Create');
-    expect(element('.lobby-or').textContent).toBe('or');
+    expect(present('.lobby-or')).toBe(false);
+    expect(element('.lobby-flow button[aria-pressed="true"]').textContent).toBe(
+      'Host a room'
+    );
     expect(element('#roomIdInput').getAttribute('aria-label')).toBe(
       'Room code'
     );

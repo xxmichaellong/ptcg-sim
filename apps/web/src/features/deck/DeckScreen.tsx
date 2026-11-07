@@ -41,7 +41,7 @@ import { readDeckFile } from './deck-browser-io.js';
 import { DeckBox, deckBoxToneOf } from './DeckBox.js';
 import { flyDeckBox } from './deck-box-flight.js';
 import { bringDeckFactsUpToDate } from './deck-facts.js';
-import { splitFinish, wordFinish, wordName } from './deck-home-covers.js';
+import { splitFinish, wordName } from './deck-home-covers.js';
 import type {
   DeckBuilderStore,
   DeckBuilderTarget,
@@ -107,10 +107,13 @@ export interface DeckScreenProps {
   readonly onChangeCardBack: (target: DeckBuilderTarget) => void;
   /** The player put a deck on a seat (its card back goes on with it). */
   readonly onSeatDeck?: (target: DeckBuilderTarget) => void;
+  readonly onSeatLook?: (
+    target: DeckBuilderTarget,
+    fields: readonly ('coin' | 'playmat')[]
+  ) => void;
   /** Each seat's card back, as its tray's sleeve shows it. */
   readonly cardBacks?: Readonly<Partial<Record<DeckBuilderTarget, string>>>;
   /** Deck text from the clipboard; the browser's by default. */
-  readonly readClipboard?: () => Promise<string>;
 }
 
 const isTextEntry = (element: EventTarget | null): boolean =>
@@ -121,9 +124,6 @@ const isTextEntry = (element: EventTarget | null): boolean =>
       !['checkbox', 'radio', 'button', 'submit', 'file', 'range'].includes(
         element.type
       )));
-
-const browserClipboard = async (): Promise<string> =>
-  await navigator.clipboard.readText();
 
 const DEFAULT_SLEEVE = STANDARD_CARD_BACK_IMAGE;
 
@@ -164,8 +164,8 @@ export const DeckScreen = ({
   onClose,
   onChangeCardBack,
   onSeatDeck,
+  onSeatLook,
   cardBacks,
-  readClipboard = browserClipboard,
 }: DeckScreenProps) => {
   const { t } = useLingui();
   const seats = useSyncExternalStore(
@@ -287,7 +287,18 @@ export const DeckScreen = ({
       get: (id) => library.get(id),
       update: (id, patch, options) => {
         const next = library.update(id, patch, options);
-        if (next) followOnSeats(id);
+        if (next) {
+          followOnSeats(id);
+          for (const seat of ['main', 'alternate'] as const) {
+            if (store.getSnapshot().slots[seat].label?.deckId !== id) continue;
+            onSeatDeck?.(seat);
+            if (options?.touch !== false)
+              onSeatLook?.(
+                seat,
+                (['coin', 'playmat'] as const).filter((field) => field in patch)
+              );
+          }
+        }
         return next;
       },
       remove: (id) => {
@@ -320,7 +331,7 @@ export const DeckScreen = ({
       },
       duplicate: (id) => library.duplicate(id),
     }),
-    [followOnSeats, library, store]
+    [followOnSeats, library, onSeatDeck, onSeatLook, store]
   );
 
   const rememberSeatDeck = useCallback(
@@ -665,25 +676,6 @@ export const DeckScreen = ({
     [beginImport, endImport, runImport, t]
   );
 
-  const importClipboard = useCallback(async () => {
-    const controller = beginImport();
-    let text: string;
-    try {
-      text = await readClipboard();
-    } catch {
-      if (!controller.signal.aborted) {
-        toast({
-          title: t`Can't read the clipboard`,
-          body: t`Paste with Ctrl+V (⌘V) instead`,
-          tone: 'warning',
-        });
-      }
-      endImport(controller);
-      return;
-    }
-    await runImport(text, { kind: 'paste' }, undefined, controller);
-  }, [beginImport, endImport, readClipboard, runImport, t]);
-
   /**
    * A sample deck at random, tried on the seat. Its import begins before
    * the sample is picked (the samples may still be loading), so a deck
@@ -959,6 +951,7 @@ export const DeckScreen = ({
   // Each new deck's name as made, in the language of the moment: still
   // that name, it is untouched, whatever the language is now.
   const madeNames = useRef(new Map<string, string>());
+  const madeFormats = useRef(new Map<string, DeckFormatId>());
   const newDeck = useCallback(
     (format: DeckFormatId = 'standard') => {
       const name = t`Untitled deck`;
@@ -969,6 +962,7 @@ export const DeckScreen = ({
         source: { kind: 'new' },
       });
       madeNames.current.set(deck.id, deck.name);
+      madeFormats.current.set(deck.id, deck.format);
       editDeck(deck.id);
     },
     [editDeck, library, t]
@@ -1019,6 +1013,12 @@ export const DeckScreen = ({
         (library.isDraft(deckId) ||
           (deck.cards.length === 0 &&
             deck.source?.kind === 'new' &&
+            !deck.cardBack &&
+            !deck.coin &&
+            !deck.playmat &&
+            !deck.notes &&
+            !deck.coverId &&
+            deck.format === (madeFormats.current.get(deck.id) ?? 'standard') &&
             deck.name === (madeNames.current.get(deck.id) ?? t`Untitled deck`)))
       ) {
         decks.remove(deck.id);
@@ -1226,7 +1226,7 @@ export const DeckScreen = ({
               slot.label?.name ??
               (total > 0 ? t`Unsaved deck` : t`No deck yet`);
             const name = wordName(stored);
-            const [title, finish] = splitFinish(stored);
+            const [title] = splitFinish(stored);
             const slotFormat = slot.label?.format ?? 'standard';
             const playable =
               total > 0 && checkDeck(slot.deck, slotFormat).valid;
@@ -1325,11 +1325,6 @@ export const DeckScreen = ({
                             }
                           >
                             {total}/{DECK_FORMATS[slotFormat].deckSize}
-                          </span>
-                        ) : null}
-                        {finish ? (
-                          <span className="deck-tray__finish">
-                            {wordFinish(finish)}
                           </span>
                         ) : null}
                       </span>
@@ -1512,7 +1507,6 @@ export const DeckScreen = ({
               }
               onNewDeck={() => newDeck()}
               onImportText={(text) => runImport(text, { kind: 'paste' })}
-              onImportClipboard={importClipboard}
               onOpenFile={() => fileInput.current?.click()}
               onTryList={(name, text, kind) =>
                 runImport(text, { kind, label: name }, { save: false, name })
