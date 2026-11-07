@@ -490,6 +490,67 @@ describe('React DOM board renderer', () => {
     });
   });
 
+  it('opens overflow attachments as a list without reporting an arbitrary card for inspection', async () => {
+    const hovers: unknown[] = [],
+      intents: BoardIntent[] = [];
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: (intent) => intents.push(intent),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+      reportCardHover: (hover) => hovers.push(hover),
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const base = createScene();
+    const scene: BoardScene = {
+      ...base,
+      cards: base.cards.map((card) => ({
+        ...card,
+        role: 'stackAttachment',
+        parentId: 'stack',
+        compactAttachment: { fullBounds: card.bounds, overflow: 5 },
+      })),
+    };
+    await mountInAct(renderer, host, scene);
+    const handle = host.querySelector<HTMLButtonElement>('[data-card-id]')!;
+    const hover = async () =>
+      act(async () => {
+        handle.dispatchEvent(
+          new PointerEvent('pointermove', {
+            bubbles: true,
+            clientX: 40,
+            clientY: 480,
+            pointerType: 'mouse',
+          })
+        );
+        await new Promise((resolve) => setTimeout(resolve, 40));
+      });
+    await hover();
+    expect(hovers).toEqual([]);
+    expect(handle.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(handle.hasAttribute('aria-pressed')).toBe(false);
+    await act(async () => handle.click());
+    expect(intents).toEqual([{ kind: 'CardPreviewRequested', cardId }]);
+    // Expanded artwork is an ordinary identifiable card again.
+    act(() =>
+      renderer.installScene(
+        {
+          ...scene,
+          revision: 2,
+          cards: scene.cards.map((card) => ({
+            ...card,
+            compactAttachment: { ...card.compactAttachment!, expanded: true },
+          })),
+        },
+        []
+      )
+    );
+    await hover();
+    expect(hovers).toEqual([expect.objectContaining({ cardId })]);
+    await act(async () => renderer.destroy());
+    host.remove();
+  });
+
   it('opens a cover zone without selecting or previewing its top card', async () => {
     const intents: BoardIntent[] = [];
     const renderer = new ReactDomBoardRenderer({

@@ -86,6 +86,31 @@ describe('picking several cards', () => {
     expect(ids(true)).toEqual(['far-hand']);
   });
 
+  it('leaves overflow attachment handles out of a rectangle but keeps ordinary and expanded cards', () => {
+    const plain = card('visible', 10, 10);
+    const overflow = {
+      ...card('overflow', 100, 10),
+      compactAttachment: { fullBounds: plain.bounds, overflow: 5 },
+    };
+    const expanded = {
+      ...card('expanded', 200, 10),
+      compactAttachment: {
+        fullBounds: plain.bounds,
+        overflow: 5,
+        expanded: true,
+      },
+    };
+    const scene = {
+      cards: [plain, overflow, expanded],
+      zones: [],
+    } as unknown as BoardScene;
+    expect(
+      sweepCandidates(scene, 'local', (item) => item.bounds).map(
+        (candidate) => candidate.card.id
+      )
+    ).toEqual(['visible', 'expanded']);
+  });
+
   it('keeps a rectangle to its half', () => {
     expect(
       sweepRect({ x: 50, y: 500 }, { x: 10, y: 100 }, { top: 388, bottom: 844 })

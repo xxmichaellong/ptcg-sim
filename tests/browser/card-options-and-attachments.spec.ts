@@ -112,6 +112,24 @@ for (const device of [
       await expect(
         page.locator('[data-attachment-compact="overflow"]')
       ).toBeVisible();
+      // The +N handle opens the full list, never an arbitrary hidden card.
+      const overflow = page.locator('[data-attachment-compact="overflow"]');
+      const overflowRevision = await revision(page);
+      await overflow.focus();
+      await page.keyboard.press('x');
+      await page.keyboard.press('Control+a');
+      await expect(page.locator('[data-select-order]')).toHaveCount(0);
+      await overflow.evaluate((element) => (element as HTMLElement).blur());
+      await overflow.hover();
+      await page.keyboard.press('x');
+      await expect(page.locator('[data-select-order]')).toHaveCount(0);
+      expect(await revision(page)).toBe(overflowRevision);
+      await overflow.click();
+      await expect(page.locator('[data-pokemon-window]')).toBeVisible();
+      await expect(
+        page.locator('[data-pokemon-window] [data-stack-preview-card-id]')
+      ).toHaveCount(attached.length + 1);
+      await page.locator('[data-pokemon-window-close]').click();
       // Carrying the whole Pokémon keeps its compact handles together with it.
       const hostBox = (await hostNode.boundingBox())!;
       await page.mouse.move(

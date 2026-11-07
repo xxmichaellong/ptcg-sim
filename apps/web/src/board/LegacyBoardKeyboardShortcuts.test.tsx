@@ -37,6 +37,99 @@ describe('legacy board keyboard shortcut bridge', () => {
     host.remove();
   });
 
+  it.each(['focus', 'pointer', 'hover'] as const)(
+    'does not select an overflow attachment from %s, while its expanded window card stays selectable',
+    async (origin) => {
+      const onLocalIntent = vi.fn();
+      const state = createInitialBoardSessionControllerState();
+      const view = createRendererSpikeView();
+      const scene = createBoardSceneForViewport(view, {
+        geometryVersion: 1,
+        viewport: { width: 1440, height: 900, devicePixelRatio: 1 },
+        bottomPlayerId: view.playerOrder[0]!,
+        splitRatio: 0.5,
+      });
+      const attachment = scene.cards.find(
+        (card) => card.role === 'stackAttachment'
+      )!;
+      const withOverflow = {
+        ...scene,
+        cards: scene.cards.map((card) =>
+          card.id === attachment.id
+            ? {
+                ...card,
+                compactAttachment: { fullBounds: card.bounds, overflow: 5 },
+              }
+            : card
+        ),
+      };
+      await act(async () =>
+        root.render(
+          createElement(LegacyBoardKeyboardShortcuts, {
+            state: {
+              ...state,
+              view,
+              scene: withOverflow,
+              presentation: {
+                ...state.presentation,
+                hoveredCardId: origin === 'hover' ? attachment.id : null,
+              },
+            },
+            onRequest: vi.fn(),
+            onLocalIntent,
+          })
+        )
+      );
+      const handle = document.createElement('button');
+      handle.dataset.cardId = attachment.id;
+      handle.dataset.attachmentCompact = 'overflow';
+      handle.dataset.testOverflow = 'true';
+      host.append(handle);
+      const query = document.querySelectorAll.bind(document);
+      const pointer =
+        origin === 'pointer'
+          ? vi
+              .spyOn(document, 'querySelectorAll')
+              .mockImplementation((selector) =>
+                query(
+                  selector.includes(':hover')
+                    ? '[data-test-overflow]'
+                    : selector
+                )
+              )
+          : undefined;
+      const press = (target: EventTarget, init: KeyboardEventInit) =>
+        target.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            ...init,
+          })
+        );
+      try {
+        press(origin === 'focus' ? handle : document, {
+          key: 'x',
+          code: 'KeyX',
+        });
+        if (origin === 'focus')
+          press(handle, { key: 'a', code: 'KeyA', ctrlKey: true });
+        expect(onLocalIntent).not.toHaveBeenCalled();
+      } finally {
+        pointer?.mockRestore();
+      }
+      // The same underlying card is an actual card in the opened window.
+      handle.removeAttribute('data-card-id');
+      handle.removeAttribute('data-attachment-compact');
+      handle.dataset.workAreaCardId = attachment.id;
+      press(handle, { key: 'x', code: 'KeyX' });
+      expect(onLocalIntent).toHaveBeenCalledExactlyOnceWith({
+        kind: 'CardSelected',
+        cardId: attachment.id,
+        mode: 'add',
+      });
+    }
+  );
+
   it('emits one closed request for the selected stable card and prevents the key default', async () => {
     const onRequest = vi.fn();
     const state = createInitialBoardSessionControllerState();

@@ -131,9 +131,15 @@ const isOverlayCardTarget = (target: EventTarget | null): boolean =>
   target instanceof Element &&
   target.closest('[data-overlay-card-id], [data-work-area-card-id]') !== null;
 
+/** The +N tile opens a list; it never identifies one of the hidden cards. */
+const isAttachmentOverflowTarget = (target: EventTarget | null): boolean =>
+  target instanceof Element &&
+  target.closest('[data-attachment-compact="overflow"]') !== null;
+
 /** The card a key press is on: the focused card, tile or window card. */
 const focusedCardOf = (target: EventTarget | null): ViewCardId | null => {
-  if (!(target instanceof Element)) return null;
+  if (!(target instanceof Element) || isAttachmentOverflowTarget(target))
+    return null;
   const element = target.closest<HTMLElement>(
     '[data-overlay-card-id], [data-work-area-card-id], [data-card-id]'
   );
@@ -157,7 +163,7 @@ const pointedCardOf = (): ViewCardId | null => {
       ...document.querySelectorAll<HTMLElement>(
         '[data-overlay-card-id]:hover, [data-work-area-card-id]:hover, [data-card-id]:hover'
       ),
-    ];
+    ].filter((element) => !isAttachmentOverflowTarget(element));
   } catch {
     return null;
   }
@@ -313,12 +319,24 @@ export const LegacyBoardKeyboardShortcuts = ({
         onDismissPresentation?.();
         return;
       }
+      if (
+        selectionShortcut !== null &&
+        isAttachmentOverflowTarget(event.target)
+      )
+        return;
       if (selectionShortcut === 'select.toggle') {
+        // Hover reports can predate a scene installing an overflow handle.
+        const hovered = state.scene?.cards.find(
+          (card) => card.id === state.presentation.hoveredCardId
+        );
+        const hoveredCardId =
+          hovered?.compactAttachment?.overflow &&
+          !hovered.compactAttachment.expanded
+            ? null
+            : state.presentation.hoveredCardId;
         // The focused card, or failing that the one under the pointer.
         const cardId =
-          focusedCardOf(event.target) ??
-          pointedCardOf() ??
-          state.presentation.hoveredCardId;
+          focusedCardOf(event.target) ?? pointedCardOf() ?? hoveredCardId;
         if (cardId === null) return;
         if (event.cancelable) event.preventDefault();
         onLocalIntent?.({ kind: 'CardSelected', cardId, mode: 'add' });

@@ -929,9 +929,11 @@ const CardNode = memo(
         }
         aria-describedby={order === undefined ? undefined : describedBy}
         aria-haspopup={
-          card.primaryAction?.kind === 'openZone' ? 'dialog' : undefined
+          card.primaryAction?.kind === 'openZone' || overflow
+            ? 'dialog'
+            : undefined
         }
-        aria-pressed={card.primaryAction ? undefined : selected}
+        aria-pressed={card.primaryAction || overflow ? undefined : selected}
         style={
           {
             // Lifted cards keep the table's order among themselves: an
@@ -951,7 +953,13 @@ const CardNode = memo(
             padding: 0,
             border: 0,
             background: 'transparent',
-            cursor: card.interactive ? (drag ? 'grabbing' : 'grab') : 'default',
+            cursor: card.interactive
+              ? overflow
+                ? 'pointer'
+                : drag
+                  ? 'grabbing'
+                  : 'grab'
+              : 'default',
             ...(clip ? { clipPath: clip } : {}),
             transform: `rotate(${card.rotationQuarterTurns * 90}deg)`,
             transformOrigin: 'center',
@@ -1973,7 +1981,11 @@ export const BoardSurface = ({
     const card = element?.dataset.cardId
       ? paintedById.get(element.dataset.cardId)
       : undefined;
-    if (!element || !card) {
+    if (
+      !element ||
+      !card ||
+      (card.compactAttachment?.overflow && !card.compactAttachment.expanded)
+    ) {
       clearHover();
       return;
     }

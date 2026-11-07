@@ -59,6 +59,7 @@ export const sweepCandidates = (
       card.renderKey === null ||
       !card.interactive ||
       card.primaryAction ||
+      (card.compactAttachment?.overflow && !card.compactAttachment.expanded) ||
       card.side !== side
     )
       continue;
