@@ -437,30 +437,53 @@ export const RemoteSessionBoard = ({
       }
       const viewerId = view.viewer.playerId;
       const playerId = requestedPlayerId ?? viewerId;
+      const currentCoin = (): string | undefined => {
+        const state = session.getSnapshot();
+        const latest = state.view;
+        if (
+          controller.signal.aborted ||
+          latest?.matchId !== view.matchId ||
+          latest.viewer.kind !== 'player' ||
+          latest.viewer.playerId !== viewerId ||
+          !latest.players[playerId]
+        )
+          return undefined;
+        return (
+          pendingCoinChange(state, playerId)?.coin ??
+          latest.players[playerId]?.coin ??
+          STANDARD_COIN
+        );
+      };
+      const applyCoin = (coin: string | undefined): void => {
+        if (!coin || currentCoin() === undefined) return;
+        if (playerId === viewerId && deckCoinSelection(session) !== undefined)
+          setDeckCoinSelection(session, coin);
+        const state = session.getSnapshot();
+        const pending = pendingCoinChange(state, playerId);
+        if (
+          pending?.coin === coin ||
+          (!pending &&
+            (state.view?.players[playerId]?.coin ?? STANDARD_COIN) === coin)
+        )
+          return;
+        session.submit({ type: 'SetCoin', targetPlayerId: playerId, coin });
+      };
       void editBrowserCoin(
         requestedPlayerId === undefined
           ? undefined
           : (view.players[playerId]?.coin ?? STANDARD_COIN),
         controller.signal,
-        playerId === viewerId
-      ).then((coin) => {
-        if (!coin || controller.signal.aborted) return;
-        if (playerId === viewerId && deckCoinSelection(session) !== undefined)
-          setDeckCoinSelection(session, coin);
-        const state = session.getSnapshot();
-        const latest = state.view;
-        const pending = pendingCoinChange(state, playerId);
-        if (
-          latest?.matchId !== view.matchId ||
-          latest.viewer.kind !== 'player' ||
-          latest.viewer.playerId !== viewerId ||
-          pending?.coin === coin ||
-          (!pending &&
-            (latest.players[playerId]?.coin ?? STANDARD_COIN) === coin)
-        )
-          return;
-        session.submit({ type: 'SetCoin', targetPlayerId: playerId, coin });
-      });
+        playerId === viewerId,
+        {
+          forgetWorn: (coin) => {
+            const wearing = currentCoin() === coin;
+            if (wearing) applyCoin(STANDARD_COIN);
+            return () => {
+              if (wearing && currentCoin() === STANDARD_COIN) applyCoin(coin);
+            };
+          },
+        }
+      ).then(applyCoin);
     },
     [roomMode, session]
   );

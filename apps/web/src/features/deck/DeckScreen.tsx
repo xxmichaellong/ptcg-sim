@@ -285,6 +285,7 @@ export const DeckScreen = ({
   const decks = useMemo<DeckLibraryActions>(
     () => ({
       get: (id) => library.get(id),
+      getSnapshot: () => library.getSnapshot(),
       update: (id, patch, options) => {
         const next = library.update(id, patch, options);
         if (next) {

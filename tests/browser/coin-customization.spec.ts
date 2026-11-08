@@ -5,6 +5,7 @@ import {
   closeSheet,
   dismissWelcome,
   openPlayOnline,
+  openDeck,
   openSettings,
 } from './support/table-shell.js';
 
@@ -453,4 +454,73 @@ for (const reload of [false, true]) {
       }
     }
   );
+}
+
+for (const side of ['local', 'opponent'] as const) {
+  test(`deleting the ${side} coin updates its live seat, and Undo restores it`, async ({
+    page,
+    context,
+  }) => {
+    await ownRoomBudget(context);
+    await page.goto('/');
+    await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
+    await dismissWelcome(page);
+    const editor = page.getByRole('dialog', { name: 'Coin', exact: true });
+    if (side === 'local') {
+      // Exercise the deck override as well as the personal-default path.
+      await openDeck(page);
+      await page.locator('#deckNewButton').click();
+      await page
+        .locator('.deck-editor__sections')
+        .getByRole('button', { name: 'Customize', exact: true })
+        .click();
+      await page
+        .locator('.deck-customize')
+        .getByRole('button', { name: 'Coin', exact: true })
+        .click();
+    } else {
+      await page
+        .locator('[data-table-coin="opponent"]')
+        .click({ button: 'right' });
+      await page.locator('[data-edit-coin]').click();
+    }
+    await editor.locator('#cardBackMode-design').check();
+    await editor
+      .getByRole('radio', { name: 'Gold', exact: true })
+      .first()
+      .check();
+    await editor.locator('#useCardBackButton').click();
+    await expect(editor).toHaveCount(0);
+    if (side === 'local') {
+      await page.locator('#deckUseOnSeatButton').click();
+      await page.locator('#deckEditorBackButton').click();
+      await page.locator('#deckBackButton').click();
+    }
+    const coin = page.locator(`[data-table-coin="${side}"]`);
+    const heads = coin.locator('.table-coin__face--heads img');
+    await expect(heads).toHaveAttribute('src', /^data:image\/svg/u);
+    const selected = await heads.getAttribute('src');
+    await coin.click({ button: 'right' });
+    await page.locator('[data-edit-coin]').click();
+    await editor.locator('#cardBackMode-backs').check();
+    const deletion = editor.locator('[data-delete-card-back]').first();
+    await deletion.click();
+    await expect(heads).toHaveAttribute(
+      'src',
+      '/v2/assets/table/coin-heads.webp'
+    );
+    await editor.locator('#undoCardBackDeleteButton').click();
+    await expect(heads).toHaveAttribute('src', selected!);
+    await deletion.click();
+    await expect(heads).toHaveAttribute(
+      'src',
+      '/v2/assets/table/coin-heads.webp'
+    );
+    await editor.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await expect(editor).toHaveCount(0);
+    await expect(heads).toHaveAttribute(
+      'src',
+      '/v2/assets/table/coin-heads.webp'
+    );
+  });
 }

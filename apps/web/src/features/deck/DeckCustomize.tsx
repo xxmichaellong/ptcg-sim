@@ -14,6 +14,11 @@ import type { SavedDeck, DeckLibraryActions } from './deck-library.js';
 import '../../board/view/table-art-controls.css';
 import './deck-customize.css';
 import { isInputMethodKey } from '../../ui/input-method.js';
+const defaults = {
+  cardBack: STANDARD_CARD_BACK,
+  coin: STANDARD_COIN,
+  playmat: 'style:default',
+};
 const viewer = { own: true, opponentCustomBacks: true, ownDeckScreen: true };
 export const DeckCustomize = ({
   deck,
@@ -33,14 +38,61 @@ export const DeckCustomize = ({
     request.current?.abort();
     const controller = new AbortController();
     request.current = controller;
+    // Sleeves and mats share a collection; coins have their own. Deleting
+    // an asset takes it off every saved deck wearing it in that collection.
+    const fields =
+      kind === 'coin'
+        ? (['coin'] as const)
+        : (['cardBack', 'playmat'] as const);
+    const deckIds = () => [
+      ...new Set([
+        deck.id,
+        ...library.getSnapshot().decks.map((each) => each.id),
+      ]),
+    ];
+    const assetOptions = {
+      worn: deckIds().flatMap((id) =>
+        fields.flatMap((field) => {
+          const asset = library.get(id)?.[field];
+          return asset ? [asset] : [];
+        })
+      ),
+      forgetWorn: (asset: string): (() => void) => {
+        const wearing = deckIds().flatMap((id) => {
+          const matching = fields.filter(
+            (field) => library.get(id)?.[field] === asset
+          );
+          return matching.length ? [{ id, fields: matching }] : [];
+        });
+        for (const { id, fields } of wearing)
+          library.update(
+            id,
+            Object.fromEntries(fields.map((field) => [field, defaults[field]]))
+          );
+        return () => {
+          for (const { id, fields } of wearing) {
+            const stillDefault = fields.filter(
+              (field) => library.get(id)?.[field] === defaults[field]
+            );
+            if (stillDefault.length)
+              library.update(
+                id,
+                Object.fromEntries(stillDefault.map((field) => [field, asset]))
+              );
+          }
+        };
+      },
+    };
     const value =
       kind === 'coin'
         ? await editBrowserCoin(
             deck.coin ?? STANDARD_COIN,
             controller.signal,
-            false
+            false,
+            assetOptions
           )
         : await requestBrowserCardBack({
+            ...assetOptions,
             shape: kind === 'playmat' ? 'mat' : 'card',
             current:
               kind === 'cardBack'

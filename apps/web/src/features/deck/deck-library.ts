@@ -368,7 +368,7 @@ export const cleanDeckName = (name: string): string =>
  */
 export type DeckLibraryActions = Pick<
   DeckLibrary,
-  'get' | 'update' | 'remove' | 'duplicate' | 'restore'
+  'get' | 'getSnapshot' | 'update' | 'remove' | 'duplicate' | 'restore'
 >;
 
 const randomId = (): string =>

@@ -18,6 +18,8 @@ Opening or remounting the editor retains a restored table's live looks. Explicit
 
 Restored canonical coins take precedence before personal-default synchronization, including Standard after Undo. Fresh empty seats still take their personal default. Names, notes, covers and other metadata changes do not redress a live seat. A mat-only edit changes only the mat. Library loading completes before restored deck associations are baselined; explicit choices made during loading remain pending and apply afterward.
 
+Deleting a custom asset in Customize also takes it off saved decks wearing it, including live seats linked to those decks. Sleeves and mats share their asset collection; coins keep their own. Undo restores only the affected fields still at their defaults and never recreates a deleted deck or replaces a later choice. Coin deletion keeps the personal-default Undo behavior too. From the table's coin editor, deletion and Undo also change the selected live seat, including the other Solo seat and a coin set by its deck; newer live choices take precedence.
+
 ## Canonical player metadata
 
 Settings' first page exposes both player names. Solo can edit either, multiplayer only its own, and spectators/replays cannot change live names. `SetPlayerProfile` carries a bounded name and/or playmat through authority, events, projections, persistence and replay. The room resolves seat permissions before execution.

@@ -222,3 +222,102 @@ test('an uploaded playmat keeps its landscape crop, reaches the live seat and su
   await expect(mat).toHaveCSS('background-image', picture);
   await page.screenshot({ path: '/tmp/ptcg-playmat-upload.png' });
 });
+
+for (const viewport of [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+  { width: 844, height: 390 },
+])
+  test.describe(`asset deletion at ${viewport.width}px`, () => {
+    test.use({ viewport, hasTouch: viewport.width !== 1440 });
+    test('deletion and Undo update deck looks, and cancelled pickers do not resurrect deleted assets', async ({
+      page,
+      context,
+    }) => {
+      test.setTimeout(120000);
+      await ownRoomBudget(context);
+      await page.goto('/');
+      await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
+      await dismissWelcome(page);
+      await openDeck(page);
+      await page.locator('#deckNewButton').click();
+      await page
+        .locator('.deck-editor__sections')
+        .getByRole('button', { name: 'Customize', exact: true })
+        .click();
+      const custom = page.locator('.deck-customize');
+      for (const kind of ['Card back', 'Coin', 'Playmat']) {
+        const opener = custom.getByRole('button', { name: kind, exact: true });
+        await opener.click();
+        const designer = page.getByRole('dialog', { name: kind, exact: true });
+        await designer.locator('#cardBackMode-design').check();
+        await designer
+          .getByRole('radio', { name: 'Gold', exact: true })
+          .first()
+          .check();
+        await designer.locator('#useCardBackButton').click();
+        await expect(designer).toHaveCount(0);
+        const look = custom
+          .locator('.deck-customize__look')
+          .nth(['Card back', 'Coin', 'Playmat'].indexOf(kind));
+        const shown = () =>
+          look.evaluate(
+            (node) =>
+              node.querySelector('img')?.getAttribute('src') ??
+              getComputedStyle(node.querySelector('.deck-customize__mat')!)
+                .backgroundImage
+          );
+        const original = await shown();
+        await opener.click();
+        await designer.locator('#cardBackMode-backs').check();
+        const asset = await designer
+          .locator('[data-delete-card-back]')
+          .first()
+          .getAttribute('data-delete-card-back');
+        expect(asset).toMatch(/^design:/);
+        const deletion = designer.locator(`[data-delete-card-back="${asset}"]`);
+        await deletion.click();
+        await expect.poll(shown).not.toBe(original);
+        await designer.locator('#undoCardBackDeleteButton').click();
+        await expect.poll(shown).toBe(original);
+        await deletion.click();
+        await expect.poll(shown).not.toBe(original);
+        await designer
+          .getByRole('button', { name: 'Cancel', exact: true })
+          .click();
+        await expect(designer).toHaveCount(0);
+        await opener.click();
+        await designer.locator('#cardBackMode-backs').check();
+        await expect(deletion).toHaveCount(0);
+        await designer
+          .getByRole('button', { name: 'Cancel', exact: true })
+          .click();
+        await expect(designer).toHaveCount(0);
+        await expect.poll(shown).not.toBe(original);
+      }
+      await page.reload();
+      await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
+      await openDeck(page);
+      await page
+        .getByRole('list', { name: 'Your decks', exact: true })
+        .getByRole('button', { name: /^Edit /u })
+        .first()
+        .click();
+      await page
+        .locator('.deck-editor__sections')
+        .getByRole('button', { name: 'Customize', exact: true })
+        .click();
+      for (const kind of ['Card back', 'Coin', 'Playmat']) {
+        await custom.getByRole('button', { name: kind, exact: true }).click();
+        const designer = page.getByRole('dialog', { name: kind, exact: true });
+        await designer.locator('#cardBackMode-backs').check();
+        await expect(designer.locator('[data-delete-card-back]')).toHaveCount(
+          0
+        );
+        await designer
+          .getByRole('button', { name: 'Cancel', exact: true })
+          .click();
+        await expect(designer).toHaveCount(0);
+      }
+    });
+  });
