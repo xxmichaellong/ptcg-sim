@@ -96,3 +96,71 @@ it('carries markers above windows with their card, without duplicate identities 
     layer.remove();
   }
 });
+
+for (const heldAttribute of ['data-held', 'data-over-windows'])
+  it.each([
+    ['damage', '<span>10</span>', '<span>20</span>', '20'],
+    [
+      'reminder',
+      '<span><svg><path d="M0 0" /></svg> once <b>old</b></span>',
+      '<span><svg><path d="M0 0" /></svg> twice <b>new</b></span>',
+      ' twice new',
+    ],
+    [
+      'mixed text',
+      '<span><b>Mark</b></span>',
+      '<span>New <b>Mark</b> note</span>',
+      'New Mark note',
+    ],
+  ])(
+    `keeps %s text current while carrying with ${heldAttribute}`,
+    (_kind, before, after, text) => {
+      const frames: FrameRequestCallback[] = [];
+      const request = vi
+        .spyOn(window, 'requestAnimationFrame')
+        .mockImplementation((callback) => {
+          frames.push(callback);
+          return frames.length;
+        });
+      const cancel = vi
+        .spyOn(window, 'cancelAnimationFrame')
+        .mockImplementation(() => {});
+      const surface = document.createElement('div'),
+        layer = document.createElement('div');
+      const held = card({
+        'data-card-id': 'marked',
+        [heldAttribute]: heldAttribute === 'data-held' ? 'drag' : '',
+      });
+      const marker = document.createElement('div');
+      marker.className = 'ptcgsim-marker';
+      marker.setAttribute('data-marker-id', 'live-marker');
+      marker.setAttribute('data-marker-parent-card-id', 'marked');
+      marker.innerHTML = before!;
+      surface.append(held, marker);
+      layer.append(document.createElement('div'));
+      document.body.append(surface, layer);
+      const stop = liftHeldCards(surface, layer);
+      try {
+        const visible = () =>
+          layer.querySelector<HTMLElement>('.ptcgsim-marker')!;
+        expect(visible().textContent).toBe(marker.textContent);
+        marker.innerHTML = after!;
+        frames.shift()!(0);
+        expect(visible().textContent).toBe(text);
+        // Removed inline text must disappear too, without losing the badge.
+        marker.innerHTML = '<span><b>Mark</b></span>';
+        frames.shift()!(0);
+        expect(visible().textContent).toBe('Mark');
+        expect(
+          layer.querySelector('[data-marker-id], [data-marker-parent-card-id]')
+        ).toBeNull();
+        expect(marker.hasAttribute('data-lifted')).toBe(true);
+      } finally {
+        stop();
+        request.mockRestore();
+        cancel.mockRestore();
+        surface.remove();
+        layer.remove();
+      }
+    }
+  );

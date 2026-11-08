@@ -400,3 +400,87 @@ for (const mode of ['flat', 'tilted'] as const)
       ).toHaveCount(0);
       await expect(token).toHaveAttribute('data-card-role', 'zone');
     });
+
+for (const mode of ['flat', 'tilted'] as const)
+  test(`a lifted damage badge follows authoritative updates during a drag (${mode})`, async ({
+    page,
+    context,
+  }) => {
+    await ownRoomBudget(context);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    if (mode === 'flat') await useFlatTable(page);
+    await page.goto('/?dev-room=1&room-mode=solo&name=Live%20damage');
+    await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
+    await submit(page, {
+      type: 'LoadDeck',
+      entries: [
+        {
+          definition: {
+            id: 'live-damage-host',
+            name: 'Live damage host',
+            category: 'Pokémon',
+            imageUrl: '/v2/assets/cardback.png?damage-host',
+          },
+          count: 3,
+        },
+      ],
+    });
+    await submit(page, { type: 'DrawCards', count: 1 });
+    const current = await view(page),
+      me = current.playerOrder[0]!;
+    const hand = Object.values(current.zones).find(
+      (zone) => zone.kind === 'hand' && zone.ownerId === me
+    )!;
+    const mon = hand.cards[0]!;
+    await submit(page, {
+      type: 'MoveCardToPlay',
+      cardId: mon.id,
+      expectedSourceZoneId: hand.id,
+      boardPlayerId: me,
+      slot: 'active',
+    });
+    const stackId = (await view(page)).boards[me]!.activeStackId!;
+    await submit(page, { type: 'SetDamage', stackId, damage: 10 });
+    await submit(page, {
+      type: 'ExtractDeckCardsForInspection',
+      ownerPlayerId: me,
+      count: 1,
+      edge: 'top',
+      visibility: 'private',
+    });
+    const area = page.locator('[data-legacy-work-area="inspection"]');
+    await expect(area).toBeVisible();
+    await area.locator('.ptcgsim-show-board-button').click();
+    const host = page.locator(
+      `.ptcgsim-board-surface [data-card-id="${mon.id}"]`
+    );
+    await host.click({ trial: true });
+    const from = (await host.boundingBox())!;
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await page.mouse.down();
+    try {
+      await page.mouse.move(
+        from.x + from.width / 2 + 80,
+        from.y + from.height / 2 + 30,
+        { steps: 6 }
+      );
+      await expect(host).toHaveAttribute('data-held', 'drag');
+      const visibleBadge = page.locator(
+        '.ptcgsim-marker-damage[data-lift-copy]'
+      );
+      await expect(visibleBadge).toHaveText('10');
+      await submit(page, { type: 'SetDamage', stackId, damage: 20 });
+      await expect(host).toHaveAttribute('data-held', 'drag');
+      await expect(visibleBadge).toHaveText('20');
+      await page.screenshot({ path: `/tmp/ptcg-live-marker-${mode}.png` });
+    } finally {
+      await page.keyboard.press('Escape');
+      await page.mouse.up();
+    }
+    await expect(
+      page.locator('.ptcgsim-marker-damage[data-lift-copy]')
+    ).toHaveCount(0);
+    await expect(
+      page.locator('.ptcgsim-board-surface .ptcgsim-marker-damage')
+    ).toHaveText('20');
+  });

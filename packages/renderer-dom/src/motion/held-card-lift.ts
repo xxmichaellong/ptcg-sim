@@ -47,16 +47,31 @@ const copyAttributes = (from: Element, to: Element): void => {
 /** Whether `to` still has the shape of `from`, node for node. */
 const sameShape = (from: Element, to: Element): boolean => {
   if (from.tagName !== to.tagName) return false;
-  if (from.children.length !== to.children.length) return false;
-  for (let index = 0; index < from.children.length; index += 1)
-    if (!sameShape(from.children[index]!, to.children[index]!)) return false;
+  if (from.childNodes.length !== to.childNodes.length) return false;
+  for (let index = 0; index < from.childNodes.length; index += 1) {
+    const original = from.childNodes[index]!;
+    const copy = to.childNodes[index]!;
+    if (original.nodeType !== copy.nodeType) return false;
+    if (
+      original.nodeType === 1 &&
+      !sameShape(original as Element, copy as Element)
+    )
+      return false;
+  }
   return true;
 };
 
 const follow = (from: Element, to: Element): void => {
   copyAttributes(from, to);
-  for (let index = 0; index < from.children.length; index += 1)
-    follow(from.children[index]!, to.children[index]!);
+  for (let index = 0; index < from.childNodes.length; index += 1) {
+    const original = from.childNodes[index]!;
+    const copy = to.childNodes[index]!;
+    if (original.nodeType === 1) {
+      follow(original as Element, copy as Element);
+    } else if (copy.nodeValue !== original.nodeValue) {
+      copy.nodeValue = original.nodeValue;
+    }
+  }
 };
 
 /** A cloned canvas is blank: each copy is drawn from its original. */
