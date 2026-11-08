@@ -1,3 +1,4 @@
+import { cardAbilityMarkerBounds } from './card-ability-marker.js';
 import {
   compactAttachmentSlots,
   basicAttachmentEnergyIndex,
@@ -925,10 +926,6 @@ const addCardAbilityMarker = (
   markers: MarkerSceneNode[],
   node: CardSceneNode
 ): void => {
-  const size = Math.max(
-    14,
-    Math.min(node.bounds.width, node.bounds.height) * 0.22
-  );
   markers.push({
     id: `${node.id}:abilityUsed`,
     parentCardId: node.id,
@@ -936,12 +933,7 @@ const addCardAbilityMarker = (
     kind: 'abilityUsed',
     presentation: 'generic',
     value: 'used',
-    bounds: {
-      x: node.bounds.x + node.bounds.width - size,
-      y: node.bounds.y,
-      width: size,
-      height: size,
-    },
+    bounds: cardAbilityMarkerBounds(node),
     zIndex: node.zIndex + 100,
     label: 'abilityUsed: used',
   });

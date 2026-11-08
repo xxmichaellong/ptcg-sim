@@ -11,6 +11,7 @@ import {
   tableVerticalLayout,
 } from './layout-table.js';
 import { withHeldCards } from './held-cards.js';
+import { paintedCardBounds, presentHeldMarker } from './card-composition.js';
 import { DEFAULT_BOARD_PRESENTATION } from './defaults.js';
 describe('compact attachments', () => {
   it.each([
@@ -230,4 +231,104 @@ describe('compact attachments', () => {
       ).toBeGreaterThan(first.bounds.height * 2);
     }
   );
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 390, height: 844 },
+    { width: 844, height: 390 },
+  ])
+    it.each([0, 1, 2, 3] as const)(
+      `keeps attachment marks on the expanded face at ${viewport.width}px, host turn %i`,
+      (hostTurn) => {
+        const base = createRendererSpikeView();
+        const inside = (
+          bounds: { x: number; y: number; width: number; height: number },
+          outer: typeof bounds
+        ) => {
+          expect(bounds.x).toBeGreaterThanOrEqual(outer.x - 0.001);
+          expect(bounds.y).toBeGreaterThanOrEqual(outer.y - 0.001);
+          expect(bounds.x + bounds.width).toBeLessThanOrEqual(
+            outer.x + outer.width + 0.001
+          );
+          expect(bounds.y + bounds.height).toBeLessThanOrEqual(
+            outer.y + outer.height + 0.001
+          );
+        };
+        for (const turn of [0, 1, 2, 3] as const)
+          for (const bottomPlayerId of base.playerOrder)
+            for (const farCardsUpright of [false, true]) {
+              const view = {
+                ...base,
+                stacks: Object.fromEntries(
+                  Object.entries(base.stacks).map(([id, stack]) => [
+                    id,
+                    {
+                      ...stack,
+                      rotationQuarterTurns: hostTurn,
+                      attachmentCards: Array.from({ length: 30 }, (_, i) => ({
+                        ...stack.attachmentCards[0]!,
+                        id: asViewCardId(`marked-${id}-${i}`),
+                        abilityUsed: true,
+                        orientationQuarterTurns: turn,
+                      })),
+                    },
+                  ])
+                ),
+              };
+              const scene = createBoardScene(
+                view,
+                createTableLayoutSnapshot({
+                  geometryVersion: 2,
+                  shellMode: 'fullscreen',
+                  viewport: { ...viewport, devicePixelRatio: 1 },
+                  playerIds: [base.playerOrder[0]!, base.playerOrder[1]!],
+                  bottomPlayerId,
+                  vertical: tableVerticalLayout(0.5),
+                  farCardsUpright,
+                })
+              );
+              for (const card of scene.cards.filter(
+                (card) => card.role === 'stackAttachment'
+              )) {
+                const marker = scene.markers.find(
+                  (marker) => marker.parentCardId === card.id
+                )!;
+                inside(
+                  marker.bounds,
+                  paintedCardBounds(card.bounds, card.rotationQuarterTurns)
+                );
+                for (const held of [
+                  { drag: { cardId: card.id, x: 400, y: 300, targetId: null } },
+                  { settling: [{ cardId: card.id, x: 400, y: 300 }] },
+                ]) {
+                  const presentation = {
+                    ...DEFAULT_BOARD_PRESENTATION,
+                    ...held,
+                  };
+                  const expanded = withHeldCards(scene, presentation),
+                    face = expanded.cards.find((node) => node.id === card.id)!;
+                  const mark = presentHeldMarker(
+                    expanded,
+                    expanded.markers.find(
+                      (marker) => marker.parentCardId === card.id
+                    )!,
+                    presentation
+                  );
+                  inside(
+                    mark.bounds,
+                    paintedCardBounds(
+                      {
+                        ...face.bounds,
+                        x: 400 - face.bounds.width / 2,
+                        y: 300 - face.bounds.height / 2,
+                      },
+                      face.rotationQuarterTurns
+                    )
+                  );
+                  expect(mark.id).toBe(marker.id);
+                  expect(mark.value).toBe(marker.value);
+                }
+              }
+            }
+      }
+    );
 });

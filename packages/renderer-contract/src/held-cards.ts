@@ -1,3 +1,4 @@
+import { cardAbilityMarkerBounds } from './card-ability-marker.js';
 import type { ViewCardId } from '@ptcgsim/game-core';
 
 import { arrangementIndexAt } from './arrangement.js';
@@ -102,6 +103,7 @@ export const withHeldCards = (
   }
   if (held.size === 0) return scene;
   const lifted: CardSceneNode[] = [];
+  const expandedCards = new Map<CardSceneNode['id'], CardSceneNode>();
   const markerOffsets = new Map<
     CardSceneNode['id'],
     { readonly x: number; readonly y: number }
@@ -111,6 +113,7 @@ export const withHeldCards = (
     droppedAt: { readonly x: number; readonly y: number } | undefined
   ) => {
     const next = asHeldCard(card, droppedAt);
+    if (card.compactAttachment) expandedCards.set(card.id, next);
     if (droppedAt) {
       const origin = card.compactAttachment?.fullBounds ?? card.bounds;
       markerOffsets.set(card.id, {
@@ -157,21 +160,36 @@ export const withHeldCards = (
         cards: [...cards, ...lifted],
         // A settling card's scene box already moved to the drop point. Its
         // retained markers need the same shift before the renderer poses them.
-        markers: markerOffsets.size
-          ? scene.markers.map((marker) => {
-              const offset = markerOffsets.get(marker.parentCardId);
-              return offset
-                ? {
+        markers:
+          markerOffsets.size || expandedCards.size
+            ? scene.markers.map((marker) => {
+                const expanded = expandedCards.get(marker.parentCardId);
+                if (
+                  expanded &&
+                  marker.kind === 'abilityUsed' &&
+                  marker.presentation === 'generic'
+                )
+                  return {
                     ...marker,
-                    bounds: {
-                      ...marker.bounds,
-                      x: marker.bounds.x + offset.x,
-                      y: marker.bounds.y + offset.y,
-                    },
-                  }
-                : marker;
-            })
-          : scene.markers,
+                    bounds: cardAbilityMarkerBounds(
+                      expanded,
+                      scene.layout.farCardsUpright === true &&
+                        expanded.side === 'opponent'
+                    ),
+                  };
+                const offset = markerOffsets.get(marker.parentCardId);
+                return offset
+                  ? {
+                      ...marker,
+                      bounds: {
+                        ...marker.bounds,
+                        x: marker.bounds.x + offset.x,
+                        y: marker.bounds.y + offset.y,
+                      },
+                    }
+                  : marker;
+              })
+            : scene.markers,
       }
     : scene;
 };
