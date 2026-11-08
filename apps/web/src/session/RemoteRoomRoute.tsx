@@ -1,3 +1,4 @@
+import { savePlayerName } from './save-player-name.js';
 import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -1077,13 +1078,8 @@ export const RemoteRoomRoute = ({
                           runtime.session.getSnapshot().phase === 'ready' &&
                           state.view?.viewer.kind === 'player' &&
                           (solo || state.view.viewer.playerId === id),
-                        onChange: (displayName: string) => {
-                          runtime.session.submit({
-                            type: 'SetPlayerProfile',
-                            targetPlayerId: id,
-                            displayName,
-                          });
-                        },
+                        onChange: (displayName: string) =>
+                          savePlayerName(runtime.session, id, displayName),
                       },
                     ]
                   : [];

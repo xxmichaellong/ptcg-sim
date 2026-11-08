@@ -5,7 +5,7 @@ export interface PlayerNameChoice {
   readonly id: string;
   readonly name: string;
   readonly editable: boolean;
-  readonly onChange: (name: string) => void;
+  readonly onChange: (name: string) => void | boolean | Promise<boolean>;
 }
 const NameField = ({
   player,
@@ -17,21 +17,39 @@ const NameField = ({
   const { t } = useLingui();
   const [name, setName] = useState(player.name);
   const dirty = useRef(false);
-  const pending = useRef<string | null>(null);
+  const version = useRef(0);
+  const mounted = useRef(true);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
-    if (pending.current === player.name) pending.current = null;
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  useEffect(() => {
     if (!dirty.current) setName(player.name);
   }, [player.name, player.editable]);
   const save = () => {
     if (!player.editable || !dirty.current) return;
     dirty.current = false;
+    const attempt = ++version.current;
     const value = name.trim();
     setName(value || player.name);
-    // A revert still needs to follow an earlier queued change, even if it
-    // matches the currently published name.
-    if (value && (value !== player.name || pending.current !== null)) {
-      pending.current = value;
-      player.onChange(value);
+    setFailed(false);
+    if (!value) return;
+    const refused = () => {
+      if (!mounted.current || version.current !== attempt) return;
+      dirty.current = true;
+      setFailed(true);
+    };
+    try {
+      void Promise.resolve(player.onChange(value))
+        .then((accepted) => {
+          if (accepted === false) refused();
+        })
+        .catch(refused);
+    } catch {
+      refused();
     }
   };
   return (
@@ -44,8 +62,11 @@ const NameField = ({
         maxLength={64}
         value={player.editable ? name : player.name}
         disabled={!player.editable}
+        aria-invalid={player.editable && failed ? true : undefined}
         onChange={(event) => {
           dirty.current = true;
+          version.current += 1;
+          setFailed(false);
           setName(event.target.value);
         }}
         onBlur={save}
@@ -54,6 +75,8 @@ const NameField = ({
           if (event.key === 'Enter') event.currentTarget.blur();
           if (event.key === 'Escape') {
             dirty.current = false;
+            version.current += 1;
+            setFailed(false);
             setName(player.name);
             event.stopPropagation();
           }

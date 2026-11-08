@@ -200,3 +200,101 @@ it('syncs pristine name fields, cancels escaped edits and preserves disabled dra
     host.remove();
   }
 });
+
+it.each(['immediate', 'deferred'])(
+  'keeps a rejected name retryable after %s failure',
+  async (mode) => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    let refuse!: (ok: boolean) => void;
+    const first = new Promise<boolean>((resolve) => {
+      refuse = resolve;
+    });
+    const onChange = vi
+      .fn()
+      .mockImplementationOnce(() => (mode === 'immediate' ? false : first))
+      .mockResolvedValue(true);
+    try {
+      await act(async () =>
+        root.render(
+          <PlayerNameControls
+            players={[{ id: 'p1', name: 'Original', editable: true, onChange }]}
+          />
+        )
+      );
+      const input = host.querySelector('input')!;
+      await act(async () => {
+        input.focus();
+        Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          'value'
+        )!.set!.call(input, 'Wanted');
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      await act(async () => input.blur());
+      if (mode === 'deferred') await act(async () => refuse(false));
+      expect(input.value).toBe('Wanted');
+      expect(input.getAttribute('aria-invalid')).toBe('true');
+      await act(async () => {
+        input.focus();
+        input.blur();
+      });
+      expect(onChange).toHaveBeenCalledTimes(2);
+      expect(input.getAttribute('aria-invalid')).toBeNull();
+    } finally {
+      await act(async () => root.unmount());
+      host.remove();
+    }
+  }
+);
+
+it.each(['edit', 'Escape'])(
+  'ignores an older name failure after a newer %s',
+  async (choice) => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    let refuse!: (ok: boolean) => void;
+    const onChange = vi.fn(
+      () =>
+        new Promise<boolean>((resolve) => {
+          refuse = resolve;
+        })
+    );
+    try {
+      await act(async () =>
+        root.render(
+          <PlayerNameControls
+            players={[{ id: 'p1', name: 'Original', editable: true, onChange }]}
+          />
+        )
+      );
+      const input = host.querySelector('input')!;
+      const type = async (value: string) =>
+        act(async () => {
+          input.focus();
+          Object.getOwnPropertyDescriptor(
+            HTMLInputElement.prototype,
+            'value'
+          )!.set!.call(input, value);
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+      await type('First');
+      await act(async () => input.blur());
+      await type('New draft');
+      if (choice === 'Escape')
+        await act(async () =>
+          input.dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+          )
+        );
+      await act(async () => refuse(false));
+      expect(input.value).toBe(choice === 'Escape' ? 'Original' : 'New draft');
+      expect(input.getAttribute('aria-invalid')).toBeNull();
+    } finally {
+      await act(async () => root.unmount());
+      host.remove();
+    }
+  }
+);
