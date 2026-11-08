@@ -3334,10 +3334,16 @@ export const BoardSurface = ({
             );
           const pose = depth.pose(parent, presentation);
           const projected = depth.markerMatrix(marker, pose);
+          const carried = presentHeldMarker(scene, marker, presentation);
+          const painted = projected ? marker : depth.marker(marker, pose);
           return (
             <MarkerNode
               key={marker.id}
-              marker={projected ? marker : depth.marker(marker, pose)}
+              marker={
+                carried === marker
+                  ? painted
+                  : { ...painted, zIndex: carried.zIndex }
+              }
               projected={projected}
             />
           );

@@ -272,6 +272,7 @@ export const MarkerNode = memo(function MarkerNode({
     <div
       className={`ptcgsim-marker ptcgsim-marker-${marker.kind}`}
       data-marker-id={marker.id}
+      data-marker-parent-card-id={marker.parentCardId}
       data-marker-presentation={marker.presentation}
       data-marker-side={marker.side}
       aria-hidden="true"

@@ -1,5 +1,6 @@
 import {
   asViewDefinitionId,
+  asViewCardId,
   type MatchViewState,
   type ViewCardId,
 } from '@ptcgsim/game-core';
@@ -4076,3 +4077,95 @@ describe('headless board session controller', () => {
     failing.dispose();
   });
 });
+
+it.each([false, true])(
+  'keeps hidden overflow attachments painted during a pending drop, singly or as a group (%s)',
+  (group) => {
+    const base = createRendererSpikeView(),
+      me = base.playerOrder[0]!;
+    const stack = base.stacks[base.boards[me]!.activeStackId!]!;
+    const attachments = Array.from({ length: 30 }, (_, i) => ({
+      ...stack.attachmentCards[0]!,
+      id: asViewCardId(`pending-overflow-${i}`),
+    }));
+    const view: MatchViewState = {
+      ...base,
+      stacks: {
+        ...base.stacks,
+        [stack.id]: { ...stack, attachmentCards: attachments },
+      },
+    };
+    const deps = {
+      createScene: (projected: MatchViewState) =>
+        createBoardScene(
+          projected,
+          createTableLayoutSnapshot({
+            geometryVersion: 2,
+            shellMode: 'fullscreen',
+            viewport,
+            playerIds: [base.playerOrder[0]!, base.playerOrder[1]!],
+            bottomPlayerId: me,
+            vertical: tableVerticalLayout(0.5),
+          })
+        ),
+    };
+    const initial = install(initialFrame(view), deps);
+    const ids = attachments.slice(group ? -2 : -1).map((card) => card.id);
+    for (const id of ids)
+      expect(
+        initial.scene!.cards.find((card) => card.id === id)!.renderKey
+      ).toBeNull();
+    const result = apply(
+      initial,
+      {
+        kind: 'RendererIntent',
+        intent: {
+          kind: 'CardDropRequested',
+          cardId: ids[0]!,
+          ...(group ? { groupCardIds: ids } : {}),
+          targetId: group ? `zone:${me}:discard` : 'zone:shared:stadium',
+          x: 600,
+          y: 450,
+        },
+      },
+      deps
+    );
+    expect(result.outcome).toBe('accepted');
+    expect(
+      result.state.presentation.settling.map((entry) => entry.cardId)
+    ).toEqual(ids);
+    for (const id of ids) {
+      const card = withHeldCards(
+        result.state.scene!,
+        result.state.presentation
+      ).cards.find((card) => card.id === id)!;
+      expect(card.renderKey).not.toBeNull();
+      if (id === ids[0])
+        expect(card.bounds.x + card.bounds.width / 2).toBe(600);
+    }
+    const queued = apply(
+      result.state,
+      { kind: 'SubmissionQueued', commandId: 'overflow-drop' },
+      deps
+    ).state;
+    const pending = apply(
+      queued,
+      {
+        kind: 'FrameReceived',
+        frame: liveFrame(2, view, { pendingCommandIds: ['overflow-drop'] }),
+      },
+      deps
+    ).state;
+    expect(pending.presentation.settling).toHaveLength(ids.length);
+    expect(
+      apply(
+        pending,
+        {
+          kind: 'FrameReceived',
+          frame: liveFrame(3, view, { pendingCommandIds: [] }),
+        },
+        deps
+      ).state.presentation.settling
+    ).toEqual([]);
+  }
+);

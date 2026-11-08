@@ -276,7 +276,9 @@ export const presentHeldMarker = (
   if (!hold) return marker;
   return {
     ...marker,
-    zIndex: (drag ? 10_000 : 9_000) + parent.zIndex + 100,
+    // Match the carried cards' bands, including the item's place in a fan.
+    zIndex:
+      (drag ? 20_000 - (drag.layer ?? 0) * 1_200 : 9_000) + parent.zIndex + 100,
     bounds: {
       ...marker.bounds,
       x: marker.bounds.x + hold.x - parent.bounds.x - parent.bounds.width / 2,

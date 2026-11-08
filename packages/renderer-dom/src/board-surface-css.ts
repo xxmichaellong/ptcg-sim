@@ -10,7 +10,8 @@
 export const BOARD_SURFACE_CSS = `
 /* A held card shown over the table's windows by its copy on the lift layer
    (held-card-lift.ts) stays where it is, unseen: it still has the pointer. */
-.ptcgsim-card[data-lifted] {
+.ptcgsim-card[data-lifted],
+.ptcgsim-marker[data-lifted] {
   visibility: hidden !important;
 }
 .ptcgsim-depth-mat {

@@ -6,8 +6,8 @@
  * card held there would pass under a window it is carried over -- even the
  * window it is about to be dropped into. While a card is held and a window
  * is open, the lift layer (a sibling of the surface, on --table-layer-drag)
- * shows an exact copy of every held card, kept in step frame by frame with
- * the original, which stays where it is (it holds the pointer) but unseen.
+ * shows an exact copy of every held card and its markers, kept in step
+ * frame by frame with the original, which stays where it is (it holds the pointer) but unseen.
  * The copy carries no identity -- no card id, role or label -- so the table
  * still has one card, and assistive technology and tests read the original.
  * A card flying out of a viewer (`data-over-windows`) is shown there too
@@ -20,6 +20,10 @@ const IDENTITY = new Set([
   'role',
   'tabindex',
   'data-card-id',
+  'data-marker-id',
+  'data-marker-parent-card-id',
+  'data-marker-hint-id',
+  'data-board-hint',
   'data-lifted',
   'aria-label',
   'aria-haspopup',
@@ -116,6 +120,12 @@ export const liftHeldCards = (
         )
       )
     );
+    const heldIds = new Set([...held].map((card) => card.dataset.cardId));
+    for (const marker of Array.from(
+      surface.querySelectorAll<HTMLElement>('[data-marker-parent-card-id]')
+    )) {
+      if (heldIds.has(marker.dataset.markerParentCardId)) held.add(marker);
+    }
     for (const [original, copy] of copies) {
       if (held.has(original) && original.isConnected) continue;
       copy.remove();

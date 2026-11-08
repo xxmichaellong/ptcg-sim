@@ -443,8 +443,9 @@ for (const reload of [false, true]) {
         await openSettings(page, 'cards');
         await page.locator('#editCoinButton').click();
         await expect(
-          editor.locator('input[value="preset:crimson"]')
+          editor.locator('input[value="preset:standard"]')
         ).toBeChecked();
+        await editor.locator('input[value="preset:crimson"]').check();
         await editor
           .getByRole('button', { name: 'Use this coin', exact: true })
           .click();
@@ -500,6 +501,27 @@ for (const side of ['local', 'opponent'] as const) {
     const heads = coin.locator('.table-coin__face--heads img');
     await expect(heads).toHaveAttribute('src', /^data:image\/svg/u);
     const selected = await heads.getAttribute('src');
+    if (side === 'local') {
+      await openSettings(page, 'cards');
+      await page.locator('#editCoinButton').click();
+      await editor.locator('#cardBackMode-backs').check();
+      const design = await editor
+        .locator('[data-delete-card-back]')
+        .first()
+        .getAttribute('data-delete-card-back');
+      await expect(editor.locator(`input[value="${design}"]`)).toBeChecked();
+      const before = await page
+        .locator('.ptcgsim-board-surface')
+        .getAttribute('data-revision');
+      await editor.locator('#useCardBackButton').click();
+      await expect(editor).toHaveCount(0);
+      await closeSheet(page);
+      await expect(heads).toHaveAttribute('src', selected!);
+      await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+        'data-revision',
+        before!
+      );
+    }
     await coin.click({ button: 'right' });
     await page.locator('[data-edit-coin]').click();
     await editor.locator('#cardBackMode-backs').check();

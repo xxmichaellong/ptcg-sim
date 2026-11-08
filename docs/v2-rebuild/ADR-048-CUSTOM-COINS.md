@@ -16,7 +16,7 @@ Poké Ball coin remains Standard. The reverse uses the chosen art in silver,
 matching the original coin's color-heads and silver-tails distinction.
 
 Settings → Cards → Coin opens the chooser. The coin's context menu also has
-Edit coin. In Solo either seat's coin can be edited; in a room only the
+Edit coin. With a player seat, either entry opens on that seat's latest queued or canonical coin, including a deck's coin and Standard after Undo. Without a seat, Settings opens the personal default. Accepting an unchanged live choice sends no extra room command. In Solo either seat's coin can be edited; in a room only the
 viewer's own coin can. Each room player has an optional `coin` reference;
 older games without it draw Standard. `SetCoin` / `PlayerCoinSet` validate
 bounded preset, design or stored-image references, and authority rejects

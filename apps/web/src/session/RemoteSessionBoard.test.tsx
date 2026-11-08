@@ -28,6 +28,8 @@ import {
   vi,
 } from 'vitest';
 
+import * as coinBrowser from './browser-coin.js';
+import { setDeckCoinSelection } from './deck-coin-selection.js';
 import { BoardSessionRuntime } from '../board/BoardSessionRuntime.js';
 import { COIN_PENDING_GRACE_MS } from '../board/TableCoin.js';
 import type { RailAction } from '../board/rail/TableRail.js';
@@ -2086,3 +2088,62 @@ describe('RemoteSessionBoard replay binding', () => {
     replay.dispose();
   });
 });
+
+it.each([false, true])(
+  'opens Settings on the live deck coin, including a pending choice (%s)',
+  async (pending) => {
+    const me = baseView.playerOrder[0]!;
+    const coin = pending ? 'preset:azure' : 'preset:crimson';
+    const state = initialState();
+    const session = new FakeRemoteBoardSession({
+      ...state,
+      view: {
+        ...baseView,
+        players: {
+          ...baseView.players,
+          [me]: { ...baseView.players[me]!, coin: 'preset:crimson' },
+        },
+      },
+      pendingCommands: pending
+        ? [
+            {
+              commandId: 'choosing-coin',
+              clientSequence: 1,
+              commandType: 'SetCoin',
+              command: { type: 'SetCoin', coin },
+              state: 'in_flight',
+            },
+          ]
+        : [],
+    });
+    setDeckCoinSelection(session, coin);
+    const replay = new ReplaySessionCoordinator(session);
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host),
+      commands = createRef<BoardCommands>();
+    const spy = vi
+      .spyOn(coinBrowser, 'editBrowserCoin')
+      .mockResolvedValue(coin);
+    try {
+      await act(async () =>
+        root.render(
+          <RemoteSessionBoard
+            session={session}
+            replay={replay}
+            onIntent={() => {}}
+            commandsRef={commands}
+          />
+        )
+      );
+      await act(async () => commands.current!.editCoin());
+      expect(spy.mock.calls[0]![0]).toBe(coin);
+      expect(session.submit).not.toHaveBeenCalled();
+    } finally {
+      await act(async () => root.unmount());
+      replay.dispose();
+      host.remove();
+      spy.mockRestore();
+    }
+  }
+);

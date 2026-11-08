@@ -3525,6 +3525,14 @@ for (const mode of ['flat', 'table'] as const) {
           host.querySelector(`[data-card-id="${hidden.id}"]`)
         ).not.toBeNull();
         expect(marked()).not.toBeNull();
+        expect(
+          Number.parseFloat((marked() as HTMLElement).style.zIndex)
+        ).toBeGreaterThan(
+          Number.parseFloat(
+            host.querySelector<HTMLElement>(`[data-card-id="${hidden.id}"]`)!
+              .style.zIndex
+          )
+        );
         if (mode === 'flat')
           expectMarkerWithinPaintedCard(host, hidden.id, abilityId);
         expect(paintedMarkers()).toEqual([...expected, abilityId].sort());
@@ -3620,6 +3628,16 @@ for (const mode of ['flat', 'table'] as const) {
             })
           );
           expect(host.querySelector('[data-marker-id]')).not.toBeNull();
+          expect(
+            Number.parseFloat(
+              host.querySelector<HTMLElement>('[data-marker-id]')!.style.zIndex
+            )
+          ).toBeGreaterThan(
+            Number.parseFloat(
+              host.querySelector<HTMLElement>(`[data-card-id="${cardId}"]`)!
+                .style.zIndex
+            )
+          );
           if (mode === 'flat')
             expectMarkerWithinPaintedCard(host, cardId, marker().id);
           act(() => renderer.installPresentation(DEFAULT_BOARD_PRESENTATION));

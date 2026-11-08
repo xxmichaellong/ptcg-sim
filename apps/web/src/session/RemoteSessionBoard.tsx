@@ -469,9 +469,7 @@ export const RemoteSessionBoard = ({
         session.submit({ type: 'SetCoin', targetPlayerId: playerId, coin });
       };
       void editBrowserCoin(
-        requestedPlayerId === undefined
-          ? undefined
-          : (view.players[playerId]?.coin ?? STANDARD_COIN),
+        currentCoin(),
         controller.signal,
         playerId === viewerId,
         {
