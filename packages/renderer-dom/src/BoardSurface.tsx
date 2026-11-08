@@ -1389,6 +1389,15 @@ export const BoardSurface = ({
     () => withHeldCards(installedScene, presentation),
     [installedScene, heldKey]
   );
+  const paintedCardById = useMemo(
+    () =>
+      new Map(
+        scene.cards.flatMap((card) =>
+          card.renderKey === null ? [] : [[card.id, card] as const]
+        )
+      ),
+    [scene.cards]
+  );
   // Card art that failed to load tries again by itself (card-image-retry).
   useEffect(() => {
     const surface = surfaceRef.current;
@@ -3312,6 +3321,10 @@ export const BoardSurface = ({
           }}
         />
         {scene.markers.map((marker) => {
+          // Hidden cards retain their markers as scene data. Paint both only
+          // when the card is visible, including one expanded for a drag.
+          const parent = paintedCardById.get(marker.parentCardId);
+          if (!parent) return null;
           if (!depth)
             return (
               <MarkerNode
@@ -3319,10 +3332,7 @@ export const BoardSurface = ({
                 marker={presentHeldMarker(scene, marker, presentation)}
               />
             );
-          const parent = scene.cards.find(
-            (card) => card.id === marker.parentCardId
-          );
-          const pose = parent ? depth.pose(parent, presentation) : undefined;
+          const pose = depth.pose(parent, presentation);
           const projected = depth.markerMatrix(marker, pose);
           return (
             <MarkerNode

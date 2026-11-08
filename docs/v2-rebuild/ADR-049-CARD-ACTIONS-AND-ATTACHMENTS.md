@@ -14,6 +14,8 @@ View card opens artwork explicitly. The distant corner close icon is removed. Cl
 
 Geometry v2 presents attachments as compact handles over the Pokémon's edge without widening the play row. Unambiguous Basic Energy names use Energy symbols. Special Energy, other attachments and ambiguous names retain art; the window still lists every individual card. Two rows bound the table footprint, with an overflow handle opening the complete window. Counts describe attached cards, never Energy provided. Carrying an individual handle expands it into the actual card; carrying the whole Pokémon keeps its handles compact. Cancel restores the handle, with reduced-motion behavior preserved. Geometry v1 remains available for characterization.
 
+Markers paint only while their parent card is painted. Hidden overflow, pile and work-area cards retain marker data so a card lifted or revealed later keeps its marks; carrying the whole Pokémon leaves its hidden attachments and their markers hidden. A settling card moves its retained marker bounds to the drop point too, so they stay together while the room answers.
+
 TCG Live's [publisher screenshots](https://apps.apple.com/us/app/pok%C3%A9mon-tcg-live/id1557962344) informed the Energy symbols and Tool artwork approach. Pocket's [Energy Zone rules](https://support.pokemon.com/hc/en-us/articles/38906248102292-Pok%C3%A9mon-TCG-Pocket-Battle-Rules-FAQ) differ from the main TCG and are not used to infer attached Energy. The official [EX Holon Phantoms card text](https://assets.pokemon.com/assets/cms/pdf/tcg/carddex/EX_Holon_Phantoms.pdf) lists Special Darkness and Metal Energy: their bare names are ambiguous, so only explicitly Basic forms become symbols.
 
 ## Targeting and responsive layout

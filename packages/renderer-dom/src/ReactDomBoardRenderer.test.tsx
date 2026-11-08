@@ -5,6 +5,8 @@ import {
   BOARD_LAYOUT_GEOMETRY_VERSION,
   createBoardLayoutSnapshot,
   createBoardSceneLayout,
+  createBoardScene,
+  createRendererSpikeView,
   createTableLayoutSnapshot,
   DEFAULT_BOARD_VERTICAL_LAYOUT_V1,
   DEFAULT_TABLE_VERTICAL_LAYOUT,
@@ -3415,3 +3417,232 @@ describe('selecting several cards (ADR-042)', () => {
     await unmount(renderer, host);
   });
 });
+
+const expectMarkerWithinPaintedCard = (
+  host: HTMLElement,
+  cardId: string,
+  markerId: string
+) => {
+  const card = host.querySelector<HTMLElement>(`[data-card-id="${cardId}"]`)!;
+  const marker = host.querySelector<HTMLElement>(
+    `[data-marker-id="${markerId}"]`
+  )!;
+  expect(Number.parseFloat(marker.style.left)).toBeGreaterThanOrEqual(
+    Number.parseFloat(card.style.left)
+  );
+  expect(Number.parseFloat(marker.style.top)).toBeGreaterThanOrEqual(
+    Number.parseFloat(card.style.top)
+  );
+  expect(
+    Number.parseFloat(marker.style.left) + Number.parseFloat(marker.style.width)
+  ).toBeLessThanOrEqual(
+    Number.parseFloat(card.style.left) +
+      Number.parseFloat(card.style.width) +
+      0.001
+  );
+  expect(
+    Number.parseFloat(marker.style.top) + Number.parseFloat(marker.style.height)
+  ).toBeLessThanOrEqual(
+    Number.parseFloat(card.style.top) +
+      Number.parseFloat(card.style.height) +
+      0.001
+  );
+};
+
+for (const mode of ['flat', 'table'] as const) {
+  it(`hides overflow attachment markers until their cards are painted (${mode})`, async () => {
+    const base = createRendererSpikeView();
+    const view = {
+      ...base,
+      stacks: Object.fromEntries(
+        Object.entries(base.stacks).map(([id, stack]) => [
+          id,
+          {
+            ...stack,
+            attachmentCards: Array.from({ length: 30 }, (_, index) => ({
+              ...stack.attachmentCards[0]!,
+              id: asViewCardId(`marked-${id}-${index}`),
+              abilityUsed: true,
+            })),
+          },
+        ])
+      ),
+    };
+    const tableLayout = createTableLayoutSnapshot({
+      geometryVersion: 2,
+      shellMode: 'fullscreen',
+      viewport: { width: 1440, height: 900, devicePixelRatio: 1 },
+      playerIds: [base.playerOrder[0]!, base.playerOrder[1]!],
+      bottomPlayerId: base.playerOrder[0]!,
+      vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+    });
+    const scene = createBoardScene(view, tableLayout);
+    const hidden = scene.cards.find(
+      (card) => card.role === 'stackAttachment' && card.renderKey === null
+    )!;
+    const abilityId = `${hidden.id}:abilityUsed`;
+    const renderer = new ReactDomBoardRenderer({
+      emitIntent: vi.fn(),
+      emitPresentationUpdate: vi.fn(),
+      reportError: vi.fn(),
+    });
+    renderer.setPreferences({
+      ...DEFAULT_BOARD_PREFERENCES,
+      reducedMotion: true,
+      depth: { ...DEFAULT_BOARD_DEPTH, mode },
+    });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const paintedMarkers = () =>
+      [...host.querySelectorAll<HTMLElement>('[data-marker-id]')]
+        .map((node) => node.dataset.markerId)
+        .sort();
+    const expected = scene.markers
+      .filter((marker) =>
+        scene.cards.some(
+          (card) => card.id === marker.parentCardId && card.renderKey !== null
+        )
+      )
+      .map((marker) => marker.id)
+      .sort();
+    const marked = () => host.querySelector(`[data-marker-id="${abilityId}"]`);
+    try {
+      await mountInAct(renderer, host, scene);
+      expect(hidden).toBeDefined();
+      expect(paintedMarkers()).toEqual(expected);
+      expect(marked()).toBeNull();
+      for (const held of [
+        { drag: { cardId: hidden.id, x: 400, y: 300, targetId: null } },
+        { settling: [{ cardId: hidden.id, x: 400, y: 300 }] },
+      ]) {
+        act(() =>
+          renderer.installPresentation({
+            ...DEFAULT_BOARD_PRESENTATION,
+            ...held,
+          })
+        );
+        expect(
+          host.querySelector(`[data-card-id="${hidden.id}"]`)
+        ).not.toBeNull();
+        expect(marked()).not.toBeNull();
+        if (mode === 'flat')
+          expectMarkerWithinPaintedCard(host, hidden.id, abilityId);
+        expect(paintedMarkers()).toEqual([...expected, abilityId].sort());
+        act(() => renderer.installPresentation(DEFAULT_BOARD_PRESENTATION));
+        expect(marked()).toBeNull();
+      }
+      const stack = view.stacks[hidden.parentId]!;
+      const hostId = stack.evolutionCards.at(-1)!.id;
+      act(() =>
+        renderer.installPresentation({
+          ...DEFAULT_BOARD_PRESENTATION,
+          drag: {
+            cardId: hostId,
+            groupCardIds: [hostId],
+            x: 400,
+            y: 300,
+            targetId: null,
+          },
+        })
+      );
+      expect(marked()).toBeNull();
+      act(() => renderer.installPresentation(DEFAULT_BOARD_PRESENTATION));
+      const fewer = {
+        ...view,
+        revision: view.revision + 1,
+        stacks: {
+          ...view.stacks,
+          [stack.id]: {
+            ...stack,
+            attachmentCards: stack.attachmentCards.filter(
+              (card) => card.id === hidden.id
+            ),
+          },
+        },
+      };
+      act(() =>
+        renderer.installScene(createBoardScene(fewer, tableLayout), [])
+      );
+      expect(marked()).not.toBeNull();
+      const cleared = {
+        ...fewer,
+        revision: fewer.revision + 1,
+        stacks: {
+          ...fewer.stacks,
+          [stack.id]: {
+            ...fewer.stacks[stack.id]!,
+            attachmentCards: fewer.stacks[stack.id]!.attachmentCards.map(
+              (card) => ({ ...card, abilityUsed: false })
+            ),
+          },
+        },
+      };
+      act(() =>
+        renderer.installScene(createBoardScene(cleared, tableLayout), [])
+      );
+      expect(marked()).toBeNull();
+    } finally {
+      await act(async () => renderer.destroy());
+      host.remove();
+    }
+  });
+  for (const role of ['zone', 'inspection', 'attachmentResolution'] as const) {
+    it(`hides a marker on an unpainted ${role} card, including after a carried card returns (${mode})`, async () => {
+      const base = createScene();
+      const scene = {
+        ...base,
+        cards: base.cards.map((card) => ({ ...card, role, renderKey: null })),
+        markers: [marker()],
+      };
+      const renderer = new ReactDomBoardRenderer({
+        emitIntent: vi.fn(),
+        emitPresentationUpdate: vi.fn(),
+        reportError: vi.fn(),
+      });
+      renderer.setPreferences({
+        ...DEFAULT_BOARD_PREFERENCES,
+        reducedMotion: true,
+        depth: { ...DEFAULT_BOARD_DEPTH, mode },
+      });
+      const host = document.createElement('div');
+      document.body.append(host);
+      try {
+        await mountInAct(renderer, host, scene);
+        expect(host.querySelector('[data-marker-id]')).toBeNull();
+        for (const held of [
+          { drag: { cardId, x: 400, y: 300, targetId: null } },
+          { settling: [{ cardId, x: 400, y: 300 }] },
+        ]) {
+          act(() =>
+            renderer.installPresentation({
+              ...DEFAULT_BOARD_PRESENTATION,
+              ...held,
+            })
+          );
+          expect(host.querySelector('[data-marker-id]')).not.toBeNull();
+          if (mode === 'flat')
+            expectMarkerWithinPaintedCard(host, cardId, marker().id);
+          act(() => renderer.installPresentation(DEFAULT_BOARD_PRESENTATION));
+          expect(host.querySelector('[data-marker-id]')).toBeNull();
+        }
+        act(() =>
+          renderer.installScene(
+            {
+              ...scene,
+              revision: 2,
+              cards: scene.cards.map((card) => ({
+                ...card,
+                renderKey: `card:${card.id}`,
+              })),
+            },
+            []
+          )
+        );
+        expect(host.querySelector('[data-marker-id]')).not.toBeNull();
+      } finally {
+        await act(async () => renderer.destroy());
+        host.remove();
+      }
+    });
+  }
+}

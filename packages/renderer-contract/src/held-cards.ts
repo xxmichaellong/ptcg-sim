@@ -102,6 +102,24 @@ export const withHeldCards = (
   }
   if (held.size === 0) return scene;
   const lifted: CardSceneNode[] = [];
+  const markerOffsets = new Map<
+    CardSceneNode['id'],
+    { readonly x: number; readonly y: number }
+  >();
+  const lift = (
+    card: CardSceneNode,
+    droppedAt: { readonly x: number; readonly y: number } | undefined
+  ) => {
+    const next = asHeldCard(card, droppedAt);
+    if (droppedAt) {
+      const origin = card.compactAttachment?.fullBounds ?? card.bounds;
+      markerOffsets.set(card.id, {
+        x: next.bounds.x - origin.x,
+        y: next.bounds.y - origin.y,
+      });
+    }
+    return next;
+  };
   let changed = false;
   const cards = scene.cards.map((card) => {
     if (!held.has(String(card.id))) return card;
@@ -115,7 +133,7 @@ export const withHeldCards = (
     const droppedAt = dropped.get(String(card.id));
     if (card.renderKey === null || card.compactAttachment) {
       changed = true;
-      return asHeldCard(card, droppedAt);
+      return lift(card, droppedAt);
     }
     // The top card taken from the open pile's viewer; on the table the cover
     // itself is lifted, as it always has been.
@@ -124,7 +142,7 @@ export const withHeldCards = (
       card.parentId === presentation.openedZoneId
     ) {
       changed = true;
-      lifted.push(asHeldCard(card, droppedAt));
+      lifted.push(lift(card, droppedAt));
       return {
         ...card,
         id: `${String(card.id)}${COVER_STAND_IN}` as CardSceneNode['id'],
@@ -133,7 +151,29 @@ export const withHeldCards = (
     }
     return card;
   });
-  return changed ? { ...scene, cards: [...cards, ...lifted] } : scene;
+  return changed
+    ? {
+        ...scene,
+        cards: [...cards, ...lifted],
+        // A settling card's scene box already moved to the drop point. Its
+        // retained markers need the same shift before the renderer poses them.
+        markers: markerOffsets.size
+          ? scene.markers.map((marker) => {
+              const offset = markerOffsets.get(marker.parentCardId);
+              return offset
+                ? {
+                    ...marker,
+                    bounds: {
+                      ...marker.bounds,
+                      x: marker.bounds.x + offset.x,
+                      y: marker.bounds.y + offset.y,
+                    },
+                  }
+                : marker;
+            })
+          : scene.markers,
+      }
+    : scene;
 };
 
 /** Where on its face a card is gripped: 0..1 across and down. */
