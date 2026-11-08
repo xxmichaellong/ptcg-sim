@@ -20,6 +20,11 @@
   pointer-events: none;
 }
 
+/* A tossed coin clears the resting coins, whichever seat is drawn last. */
+.table-coin[data-coin-in-air] {
+  z-index: 1;
+}
+
 /* Its shadow on the felt: close under it at rest, wide and pale in the air. */
 .table-coin__shadow {
   position: absolute;
