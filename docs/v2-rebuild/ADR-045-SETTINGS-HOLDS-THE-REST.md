@@ -106,6 +106,16 @@ first page.
 - The tutorial's "Around the table" lesson points at Settings instead of
   the menu.
 
+## Hover reading above drawers
+
+The passive card inspector mounts in the application overlay host, fixed to
+its window edges, above Settings and chat sheets. This keeps it readable
+while a drawer is open and inside the window when an Arabic dock moves the
+board sideways. It passes pointer input through to the drawer and takes no
+keyboard focus. Dialogs and menus keep their higher application layers.
+The inspector retains its dwell and fade, and yields to explicit card menus,
+marker controls, prompts, dragging, the deck screen and larger card windows.
+
 ## Verification
 
 `SettingsSheet.test.tsx` (the first page and each page's controls, the way

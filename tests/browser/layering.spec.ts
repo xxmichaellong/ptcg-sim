@@ -13,6 +13,7 @@ const LAYERS = [
   '--layer-panel',
   '--layer-deck-screen',
   '--layer-sheet',
+  '--layer-card-inspector',
   '--layer-dialog',
   '--layer-popover',
   '--layer-toast',
@@ -24,7 +25,6 @@ const TABLE_LAYERS = [
   '--table-layer-affordances',
   '--table-layer-rail',
   '--table-layer-touch-bar',
-  '--table-layer-inspector',
   '--table-layer-banner',
   '--table-layer-viewers',
 ] as const;

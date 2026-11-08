@@ -97,6 +97,64 @@ describe('compact attachments', () => {
     }
   );
 
+  it.each([1, 2, 3] as const)(
+    'preserves a manually turned attachment (%i) when it is expanded',
+    (turn) => {
+      const base = createRendererSpikeView();
+      const view = {
+        ...base,
+        stacks: Object.fromEntries(
+          Object.entries(base.stacks).map(([id, stack]) => [
+            id,
+            {
+              ...stack,
+              attachmentCards: Array.from({ length: 30 }, (_, index) => ({
+                ...stack.attachmentCards[0]!,
+                id: asViewCardId(`turned-${id}-${index}`),
+                orientationQuarterTurns: turn,
+              })),
+            },
+          ])
+        ),
+      };
+      for (const bottomPlayerId of base.playerOrder)
+        for (const farCardsUpright of [false, true]) {
+          const scene = createBoardScene(
+            view,
+            createTableLayoutSnapshot({
+              geometryVersion: 2,
+              shellMode: 'fullscreen',
+              viewport: { width: 1440, height: 900, devicePixelRatio: 1 },
+              playerIds: [base.playerOrder[0]!, base.playerOrder[1]!],
+              bottomPlayerId,
+              vertical: tableVerticalLayout(0.5),
+              farCardsUpright,
+            })
+          );
+          for (const card of scene.cards.filter(
+            (card) => card.role === 'stackAttachment'
+          )) {
+            const expected =
+              (turn + (card.side === 'opponent' && !farCardsUpright ? 2 : 0)) %
+              4;
+            const held = withHeldCards(scene, {
+              ...DEFAULT_BOARD_PRESENTATION,
+              drag: { cardId: card.id, x: 100, y: 200, targetId: null },
+            }).cards.find((entry) => entry.id === card.id)!;
+            expect(held.rotationQuarterTurns).toBe(expected);
+            expect(held.renderKey).not.toBeNull();
+            if (card.compactAttachment)
+              expect(held.compactAttachment?.expanded).toBe(true);
+            const settled = withHeldCards(scene, {
+              ...DEFAULT_BOARD_PRESENTATION,
+              settling: [{ cardId: card.id, x: 100, y: 200 }],
+            }).cards.find((entry) => entry.id === card.id)!;
+            expect(settled.rotationQuarterTurns).toBe(expected);
+          }
+        }
+    }
+  );
+
   it('bounds large sets to two rows with an explicit overflow handle', () => {
     const host = { x: 10, y: 20, width: 120, height: 168 };
     const slots = compactAttachmentSlots(host, 30, false);

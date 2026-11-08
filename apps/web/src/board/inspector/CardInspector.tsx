@@ -1,11 +1,19 @@
 import type { MatchViewState } from '@ptcgsim/game-core';
 import type { BoardCardHover, BoardScene } from '@ptcgsim/renderer-contract';
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
+import { createPortal } from 'react-dom';
 
 import { inspectCard, type CardInspection } from './card-inspection.js';
 import './CardInspector.css';
 import { CardImage } from '../../features/deck/CardImage.js';
 import { readingImageStyle } from '../../ui/card-artwork.js';
+import { OverlayContainerContext } from '../../ui/overlay-host-registry.js';
 
 /**
  * The hovered card, published by the renderer at most once per frame. Which
@@ -66,8 +74,8 @@ export interface CardInspectorProps {
   readonly scene: BoardScene | undefined;
   readonly reducedMotion: boolean;
   /**
-   * A zone browser or card preview is open: it shows its cards large
-   * itself, so the inspector closes at once and stays closed.
+   * Explicit card controls or a larger reading view are open, or a card is
+   * being dragged: the inspector closes at once and stays closed.
    */
   readonly suppressed?: boolean;
 }
@@ -84,6 +92,7 @@ export const CardInspector = ({
   reducedMotion,
   suppressed = false,
 }: CardInspectorProps) => {
+  const container = useContext(OverlayContainerContext);
   const hoveredId = useSyncExternalStore(
     store.subscribeCard,
     store.getCardId,
@@ -196,7 +205,7 @@ export const CardInspector = ({
   const inspection = shown?.inspection;
   // Suppression fades the open card out rather than dropping it.
   const open = inspection !== undefined && !suppressed;
-  return (
+  return createPortal(
     <aside
       className="card-inspector"
       data-card-inspector=""
@@ -226,6 +235,7 @@ export const CardInspector = ({
           />
         </div>
       ) : null}
-    </aside>
+    </aside>,
+    container ?? document.body
   );
 };

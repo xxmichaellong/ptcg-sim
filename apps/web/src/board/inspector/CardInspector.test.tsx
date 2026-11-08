@@ -8,7 +8,12 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CardHoverStore, CardInspector } from './CardInspector.js';
+import {
+  CardHoverStore,
+  CardInspector,
+  type CardInspectorProps,
+} from './CardInspector.js';
+import { OverlayContainerContext } from '../../ui/overlay-host-registry.js';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -24,30 +29,67 @@ const handCards = scene.cards
   .sort((left, right) => left.bounds.x - right.bounds.x);
 
 beforeEach(() => vi.useFakeTimers());
-afterEach(() => vi.useRealTimers());
+const mounted: {
+  host: HTMLElement;
+  portal: HTMLElement;
+  root: ReturnType<typeof createRoot>;
+}[] = [];
+afterEach(async () => {
+  for (const { root, host, portal } of mounted.splice(0)) {
+    await act(async () => root.unmount());
+    host.remove();
+    portal.remove();
+  }
+  vi.useRealTimers();
+});
 
 const mount = async () => {
   const store = new CardHoverStore();
   const host = document.createElement('div');
   document.body.append(host);
   const root = createRoot(host);
-  await act(async () =>
-    root.render(
-      <CardInspector
-        store={store}
-        view={view}
-        scene={scene}
-        reducedMotion={false}
-      />
-    )
-  );
-  const inspector = host.querySelector<HTMLElement>('[data-card-inspector]')!;
-  return { store, host, root, inspector };
+  const portal = document.createElement('div');
+  document.body.append(portal);
+  mounted.push({ host, portal, root });
+  const render = (props: Partial<CardInspectorProps> = {}) =>
+    act(async () =>
+      root.render(
+        <OverlayContainerContext.Provider value={portal}>
+          <CardInspector
+            store={store}
+            view={view}
+            scene={scene}
+            reducedMotion={false}
+            {...props}
+          />
+        </OverlayContainerContext.Provider>
+      )
+    );
+  await render();
+  const inspector = portal.querySelector<HTMLElement>('[data-card-inspector]')!;
+  return { store, host, portal, root, inspector, render };
 };
 
 describe('CardInspector', () => {
+  it('renders outside the board in the selected overlay host and removes its reading view on unmount', async () => {
+    const { store, host, portal, inspector, root } = await mount();
+    expect(host.contains(inspector)).toBe(false);
+    expect(inspector.parentElement).toBe(portal);
+    await act(async () => store.set({ cardId: handCards[0]!.id, x: 0, y: 0 }));
+    await act(async () => vi.advanceTimersByTime(150));
+    expect(inspector.dataset.open).toBe('true');
+    await act(async () => root.unmount());
+    expect(portal.childElementCount).toBe(0);
+    mounted.splice(
+      mounted.findIndex((entry) => entry.root === root),
+      1
+    );
+    host.remove();
+    portal.remove();
+  });
+
   it('opens after the pointer rests on a readable card and follows it from card to card', async () => {
-    const { store, root, inspector } = await mount();
+    const { store, inspector } = await mount();
     expect(inspector.dataset.open).toBe('false');
     expect(inspector.getAttribute('aria-hidden')).toBe('true');
 
@@ -92,11 +134,10 @@ describe('CardInspector', () => {
     expect(inspector.dataset.open).toBe('false');
 
     await act(async () => store.set(null));
-    await act(async () => root.unmount());
   });
 
   it('closes at once when the inspected card turns face down under a resting pointer', async () => {
-    const { store, root, inspector } = await mount();
+    const { store, inspector, render } = await mount();
     const first = handCards[0]!;
     await act(async () => store.set({ cardId: first.id, x: 0, y: 0 }));
     await act(async () => vi.advanceTimersByTime(150));
@@ -118,44 +159,21 @@ describe('CardInspector', () => {
       },
     };
     // The pointer has not moved: no new hover is reported.
-    await act(async () =>
-      root.render(
-        <CardInspector
-          store={store}
-          view={turned}
-          scene={scene}
-          reducedMotion={false}
-        />
-      )
-    );
+    await render({ view: turned });
     expect(inspector.dataset.open).toBe('false');
     expect(inspector.querySelector('.card-inspector__card')).toBeNull();
-    await act(async () => root.unmount());
   });
 
   it('stays closed while a zone browser or card preview shows cards large', async () => {
-    const { store, root, inspector } = await mount();
+    const { store, inspector, render } = await mount();
     await act(async () => store.set({ cardId: handCards[0]!.id, x: 0, y: 0 }));
     await act(async () => vi.advanceTimersByTime(150));
     expect(inspector.dataset.open).toBe('true');
-    const render = (suppressed: boolean) =>
-      act(async () =>
-        root.render(
-          <CardInspector
-            store={store}
-            view={view}
-            scene={scene}
-            reducedMotion={false}
-            suppressed={suppressed}
-          />
-        )
-      );
-    await render(true);
+    await render({ suppressed: true });
     expect(inspector.dataset.open).toBe('false');
     // The card stays mounted so it fades out instead of vanishing.
     expect(inspector.querySelector('.card-inspector__card')).not.toBeNull();
-    await render(false);
+    await render({ suppressed: false });
     expect(inspector.dataset.open).toBe('true');
-    await act(async () => root.unmount());
   });
 });

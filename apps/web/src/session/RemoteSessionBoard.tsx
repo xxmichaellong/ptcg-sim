@@ -2093,8 +2093,14 @@ export const RemoteSessionBoard = ({
               scene={boardState.scene}
               reducedMotion={preferences.reducedMotion}
               suppressed={
+                keysSuspended ||
                 boardState.presentation.openedZoneId !== null ||
-                boardState.overlays.preview !== null
+                boardState.presentation.drag !== null ||
+                boardState.overlays.preview !== null ||
+                boardState.overlays.contextMenuCardId !== null ||
+                boardState.overlays.input !== null ||
+                Boolean(boardState.overlays.marker) ||
+                groupSurface !== null
               }
             />
           ) : null}

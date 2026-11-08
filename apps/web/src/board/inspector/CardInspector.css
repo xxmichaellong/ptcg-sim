@@ -4,7 +4,7 @@
  * glare plus a rainbow foil in colour-dodge); no code is borrowed.
  */
 .card-inspector {
-  position: absolute;
+  position: fixed;
   inset-block: 0;
   --inspector-card-height: min(66vh, 600px);
   width: min(
@@ -14,7 +14,7 @@
   display: grid;
   place-items: center;
   pointer-events: none;
-  z-index: var(--table-layer-inspector);
+  z-index: var(--layer-card-inspector);
   perspective: 1100px;
   opacity: 0;
   translate: var(--inspector-enter-x, 24px) 0;

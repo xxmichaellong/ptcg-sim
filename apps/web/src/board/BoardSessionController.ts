@@ -746,6 +746,11 @@ const purgeRejectedRecipientProjection = (
 const hasCard = (scene: BoardScene, cardId: ViewCardId): boolean =>
   scene.cards.some((card) => card.id === cardId && card.interactive);
 
+/** Window cards have no duplicate on the table, but still paint while carried. */
+const isWorkAreaCard = (card: BoardScene['cards'][number]): boolean =>
+  card.interactive &&
+  (card.role === 'inspection' || card.role === 'attachmentResolution');
+
 const hasOpenedZoneCard = (
   state: BoardSessionControllerState,
   scene: BoardScene,
@@ -2111,7 +2116,9 @@ const handleIntent = (
         installedScene.cards.find(
           (card) =>
             card.id === intent.cardId &&
-            (card.renderKey !== null || allowOpenedZoneCard)
+            (card.renderKey !== null ||
+              allowOpenedZoneCard ||
+              isWorkAreaCard(card))
         );
       const settling: readonly SettlingEntry[] = settledCard
         ? [
@@ -2273,6 +2280,7 @@ const groupSettling = (
         candidate.id === cardId &&
         (candidate.renderKey !== null ||
           allowOpenedZoneCard ||
+          isWorkAreaCard(candidate) ||
           candidate.parentId === state.presentation.openedZoneId)
     );
     if (!card) return [];

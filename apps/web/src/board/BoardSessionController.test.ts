@@ -11,10 +11,12 @@ import {
   createRendererSpikeView,
   DEFAULT_BOARD_PRESENTATION,
   selectedCardIdOf,
+  withHeldCards,
   type BoardIntent,
   type BoardScene,
 } from '@ptcgsim/renderer-contract';
 import { describe, expect, it, vi } from 'vitest';
+import { predictWireCommand } from './predictWireCommand.js';
 
 import {
   BoardSessionController,
@@ -592,6 +594,202 @@ describe('headless board session controller', () => {
     }
     expect(resolveDrop).not.toHaveBeenCalled();
   });
+
+  it.each(['inspection', 'attachmentResolution'] as const)(
+    'keeps a %s card painted during a pending drop',
+    (kind) => {
+      const base = createRendererSpikeView(),
+        me = base.playerOrder[0]!,
+        hand = base.zones[`zone:${me}:hand`]!,
+        card = hand.cards[0]!;
+      const view: MatchViewState = {
+        ...base,
+        zones: {
+          ...base.zones,
+          [hand.id]: { ...hand, cards: hand.cards.slice(1) },
+        },
+        workAreas: {
+          ...base.workAreas,
+          [me]: {
+            ...base.workAreas[me]!,
+            ...(kind === 'inspection'
+              ? {
+                  inspection: {
+                    id: 'pending-area',
+                    sourceZoneId: hand.id,
+                    cards: [card],
+                  },
+                }
+              : {
+                  attachmentResolution: {
+                    id: 'pending-area',
+                    sourceStackId: base.boards[me]!.activeStackId!,
+                    cards: [card],
+                    evolutionCards: [],
+                    attachmentCards: [card],
+                    suggestedSlot: 'bench' as const,
+                  },
+                }),
+          },
+        },
+      };
+      const deps = {
+        createScene: (projected: MatchViewState) =>
+          createBoardScene(
+            projected,
+            createTableLayoutSnapshot({
+              geometryVersion: 2,
+              shellMode: 'fullscreen',
+              viewport,
+              playerIds: [base.playerOrder[0]!, base.playerOrder[1]!],
+              bottomPlayerId: me,
+              vertical: tableVerticalLayout(0.5),
+            })
+          ),
+      };
+      const initial = install(initialFrame(view), deps);
+      expect(
+        initial.scene!.cards.find((entry) => entry.id === card.id)!.renderKey
+      ).toBeNull();
+      const result = apply(
+        initial,
+        {
+          kind: 'RendererIntent',
+          intent: {
+            kind: 'CardDropRequested',
+            cardId: card.id,
+            targetId: 'zone:shared:stadium',
+            x: 600,
+            y: 450,
+          },
+        },
+        deps
+      );
+      expect(result.outcome).toBe('accepted');
+      const submit = result.effects.find(
+        (effect) => effect.kind === 'SubmitCommand'
+      )!;
+      expect(submit.kind).toBe('SubmitCommand');
+      if (submit.kind === 'SubmitCommand' && kind === 'attachmentResolution')
+        expect(predictWireCommand(view, submit.command)).toBeNull();
+      expect(result.state.presentation.settling).toEqual([
+        { cardId: card.id, x: 600, y: 450, commandId: null },
+      ]);
+      const painted = withHeldCards(
+        result.state.scene!,
+        result.state.presentation
+      ).cards.find((entry) => entry.id === card.id)!;
+      expect(painted.renderKey).not.toBeNull();
+      expect(painted.bounds.x + painted.bounds.width / 2).toBe(600);
+      const queued = apply(
+        result.state,
+        { kind: 'SubmissionQueued', commandId: 'pending-drop' },
+        deps
+      ).state;
+      const pending = apply(
+        queued,
+        {
+          kind: 'FrameReceived',
+          frame: liveFrame(2, view, { pendingCommandIds: ['pending-drop'] }),
+        },
+        deps
+      ).state;
+      expect(pending.presentation.settling).toHaveLength(1);
+      expect(
+        apply(
+          pending,
+          {
+            kind: 'FrameReceived',
+            frame: liveFrame(3, view, { pendingCommandIds: [] }),
+          },
+          deps
+        ).state.presentation.settling
+      ).toEqual([]);
+    }
+  );
+
+  it.each(['inspection', 'attachmentResolution'] as const)(
+    'keeps a dragged group from %s painted until its move resolves',
+    (kind) => {
+      const base = createRendererSpikeView(),
+        me = base.playerOrder[0]!,
+        hand = base.zones[`zone:${me}:hand`]!,
+        cards = hand.cards.slice(0, 2);
+      const ids = cards.map((card) => card.id);
+      const view: MatchViewState = {
+        ...base,
+        zones: {
+          ...base.zones,
+          [hand.id]: { ...hand, cards: hand.cards.slice(2) },
+        },
+        workAreas: {
+          ...base.workAreas,
+          [me]: {
+            ...base.workAreas[me]!,
+            ...(kind === 'inspection'
+              ? {
+                  inspection: {
+                    id: 'pending-area',
+                    sourceZoneId: hand.id,
+                    cards,
+                  },
+                }
+              : {
+                  attachmentResolution: {
+                    id: 'pending-area',
+                    sourceStackId: base.boards[me]!.activeStackId!,
+                    cards,
+                    evolutionCards: [],
+                    attachmentCards: cards,
+                    suggestedSlot: 'bench' as const,
+                  },
+                }),
+          },
+        },
+      };
+      const deps = {
+        createScene: (projected: MatchViewState) =>
+          createBoardScene(
+            projected,
+            createTableLayoutSnapshot({
+              geometryVersion: 2,
+              shellMode: 'fullscreen',
+              viewport,
+              playerIds: [base.playerOrder[0]!, base.playerOrder[1]!],
+              bottomPlayerId: me,
+              vertical: tableVerticalLayout(0.5),
+            })
+          ),
+      };
+      const result = apply(
+        install(initialFrame(view), deps),
+        {
+          kind: 'RendererIntent',
+          intent: {
+            kind: 'CardDropRequested',
+            cardId: ids[0]!,
+            groupCardIds: ids,
+            targetId: `zone:${me}:discard`,
+            x: 600,
+            y: 450,
+          },
+        },
+        deps
+      );
+      expect(result.outcome).toBe('accepted');
+      expect(
+        result.state.presentation.settling.map((entry) => entry.cardId)
+      ).toEqual(ids);
+      const held = withHeldCards(
+        result.state.scene!,
+        result.state.presentation
+      );
+      for (const id of ids)
+        expect(
+          held.cards.find((card) => card.id === id)!.renderKey
+        ).not.toBeNull();
+    }
+  );
 
   it('emits one protocol-safe command from one installed pair', () => {
     const state = install();

@@ -10,6 +10,8 @@ import {
 const sharedSpecs = [
   'remote-room-solo-full-stack.spec.ts',
   'experience-refinement.spec.ts',
+  'hover-preview-layering.spec.ts',
+  'work-area-flight.spec.ts',
   'special-card-formats.spec.ts',
   'table-depth-live.spec.ts',
   'table-depth-lab.spec.ts',

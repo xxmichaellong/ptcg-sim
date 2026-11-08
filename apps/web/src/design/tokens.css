@@ -236,6 +236,7 @@
        deck-screen  the full-window deck screen
        sheet        sheets and drawers: Settings, Play online, the log on a
                     phone; above the deck screen, which can open them
+       inspector    passive hover reading, above drawers without taking input
        dialog       dialogs, which a sheet or the deck screen can open
        popover      menus, selects and popovers: always above whatever opened
                     them, a sheet or a dialog included
@@ -252,7 +253,6 @@
        affordances  what the table offers on its felt (+, markers)
        rail         the seam rail: the toolbar and the turn's actions
        touch-bar    the Read / Actions bar beside a tapped card
-       inspector    the hover read view docked beside the table
        banner       the turn banner
        viewers      the board overlays: pile viewers, the "Looking at cards"
                     and attached-cards windows, the card menu and the
@@ -266,6 +266,7 @@
   --layer-panel: 200;
   --layer-deck-screen: 1500;
   --layer-sheet: 2000;
+  --layer-card-inspector: 2050;
   --layer-dialog: 2100;
   --layer-popover: 2200;
   --layer-curtain: 2500;
@@ -276,7 +277,6 @@
   --table-layer-affordances: 2;
   --table-layer-rail: 3;
   --table-layer-touch-bar: 4;
-  --table-layer-inspector: 5;
   --table-layer-banner: 6;
   --table-layer-viewers: 7;
   --table-layer-drag: 8;

@@ -1524,8 +1524,7 @@ export const createBoardScene = (
                 role: 'stackAttachment',
                 bounds: copyRect(slot?.bounds ?? fullBounds),
                 zIndex: 450 + index,
-                // makeCardNode applies the seat's half-turn once.
-                rotationQuarterTurns: 0,
+                // makeCardNode keeps the card's turn and applies its seat once.
                 interactive: true,
                 ...(slot
                   ? {
