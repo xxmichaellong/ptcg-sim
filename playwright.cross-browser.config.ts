@@ -13,6 +13,7 @@ const sharedSpecs = [
   'hover-preview-layering.spec.ts',
   'work-area-flight.spec.ts',
   'card-options-and-attachments.spec.ts',
+  'player-name-controls.spec.ts',
   'special-card-formats.spec.ts',
   'table-depth-live.spec.ts',
   'table-depth-lab.spec.ts',

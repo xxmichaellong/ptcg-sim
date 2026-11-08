@@ -1977,6 +1977,7 @@ const CardWindowContents = ({
         ...(destination ? { destination } : {}),
       });
     else actions.invokeContextAction(action, card.id);
+    if (destination) onClose();
   };
   const special = placement || asEnergy || asPokemon;
   const options = groups

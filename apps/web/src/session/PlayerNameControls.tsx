@@ -1,5 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { isInputMethodKey } from '../ui/input-method.js';
 export interface PlayerNameChoice {
   readonly id: string;
@@ -16,11 +16,23 @@ const NameField = ({
 }) => {
   const { t } = useLingui();
   const [name, setName] = useState(player.name);
-  useEffect(() => setName(player.name), [player.name]);
+  const dirty = useRef(false);
+  const pending = useRef<string | null>(null);
+  useEffect(() => {
+    if (pending.current === player.name) pending.current = null;
+    if (!dirty.current) setName(player.name);
+  }, [player.name, player.editable]);
   const save = () => {
+    if (!player.editable || !dirty.current) return;
+    dirty.current = false;
     const value = name.trim();
-    if (value && value !== player.name) player.onChange(value);
-    else setName(player.name);
+    setName(value || player.name);
+    // A revert still needs to follow an earlier queued change, even if it
+    // matches the currently published name.
+    if (value && (value !== player.name || pending.current !== null)) {
+      pending.current = value;
+      player.onChange(value);
+    }
   };
   return (
     <label className="ds-field">
@@ -30,14 +42,18 @@ const NameField = ({
         aria-label={t`Name for ${seat}`}
         autoComplete="off"
         maxLength={64}
-        value={name}
+        value={player.editable ? name : player.name}
         disabled={!player.editable}
-        onChange={(event) => setName(event.target.value)}
+        onChange={(event) => {
+          dirty.current = true;
+          setName(event.target.value);
+        }}
         onBlur={save}
         onKeyDown={(event) => {
           if (isInputMethodKey(event.nativeEvent)) return;
           if (event.key === 'Enter') event.currentTarget.blur();
           if (event.key === 'Escape') {
+            dirty.current = false;
             setName(player.name);
             event.stopPropagation();
           }

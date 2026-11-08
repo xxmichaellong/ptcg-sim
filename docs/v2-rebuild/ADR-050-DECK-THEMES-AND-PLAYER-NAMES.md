@@ -22,7 +22,7 @@ Deleting a custom asset in Customize also takes it off saved decks wearing it, i
 
 ## Canonical player metadata
 
-Settings' first page exposes both player names. Solo can edit either, multiplayer only its own, and spectators/replays cannot change live names. `SetPlayerProfile` carries a bounded name and/or playmat through authority, events, projections, persistence and replay. The room resolves seat permissions before execution.
+Settings' first page exposes both player names. Solo can edit either, multiplayer only its own, and spectators/replays cannot change live names. `SetPlayerProfile` carries a bounded name and/or playmat through authority, events, projections, persistence and replay. The room resolves seat permissions before execution. Published acknowledgements update clean name fields without replacing a newer unsaved draft. Blur and Enter save trimmed edits; Escape cancels the draft. A disabled field shows the canonical value while keeping an unsaved draft for editing to resume, including after a reconnect. A revert queues behind an earlier pending change.
 
 Authenticated session names follow a canonical player-name change in the same committed candidate, including Undo. Unchanged players' session records retain their identity and fields; command candidate validation permits only the corresponding name change alongside the ordinary issuer outcome update. Renaming does not invalidate a live connection.
 

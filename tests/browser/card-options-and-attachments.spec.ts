@@ -478,4 +478,61 @@ for (const device of [
         ).toBe(true);
       }
     });
+    test('extra deck moves put the card options away, including a shuffle into an empty deck', async ({
+      page,
+      context,
+    }) => {
+      await ownRoomBudget(context);
+      await page.goto('/?dev-room=1&room-mode=solo&name=Extra%20moves');
+      await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
+      await dismissWelcome(page);
+      for (const destination of ['deckSwitch', 'deckShuffle'] as const) {
+        await submit(page, {
+          type: 'LoadDeck',
+          entries: [
+            {
+              count: destination === 'deckSwitch' ? 2 : 1,
+              definition: {
+                id: 'move-test',
+                name: 'Move card',
+                category: 'Trainer',
+                imageUrl: '/v2/assets/cardback.png?move',
+              },
+            },
+          ],
+        });
+        await submit(page, { type: 'DrawCards', count: 1 });
+        const current = await view(page),
+          me = current.playerOrder[0]!;
+        const hand = Object.values(current.zones).find(
+          (zone) => zone.kind === 'hand' && zone.ownerId === me
+        )!;
+        const node = page.locator(
+          `.ptcgsim-board-surface [data-card-id="${hand.cards[0]!.id}"]`
+        );
+        await node.click({ trial: true });
+        await node.dblclick();
+        const options = page.locator('[data-card-actions-window]');
+        await expect(options).toBeVisible();
+        const button = options.locator(
+            `[data-card-destination="${destination}"]`
+          ),
+          before = await revision(page);
+        if (device.touch) await button.tap();
+        else await button.click();
+        await expect(options).toHaveCount(0);
+        await expect.poll(() => revision(page)).toBeGreaterThan(before);
+        const next = await view(page);
+        expect(
+          Object.values(next.zones).find(
+            (zone) => zone.kind === 'deck' && zone.ownerId === me
+          )!.cards
+        ).toHaveLength(1);
+        expect(
+          Object.values(next.zones).find(
+            (zone) => zone.kind === 'hand' && zone.ownerId === me
+          )!.cards
+        ).toHaveLength(destination === 'deckSwitch' ? 1 : 0);
+      }
+    });
   });

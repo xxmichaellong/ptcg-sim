@@ -262,6 +262,43 @@ describe('legacy board overlays', () => {
       }
     );
 
+  it.each(['deckSwitch', 'deckShuffle'] as const)(
+    'closes card options after the extra deck move %s',
+    async (destination) => {
+      const card = cardIn(`zone:${firstPlayer}:hand`);
+      const callbacks = { ...actions(), invokeWindowAction: vi.fn() };
+      await act(async () =>
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state({
+              overlays: {
+                contextMenuCardId: null,
+                preview: { kind: 'card', cardId: card.id },
+                input: null,
+              },
+            }),
+            darkMode: false,
+            actions: callbacks,
+          })
+        )
+      );
+      await act(async () =>
+        host
+          .querySelector<HTMLButtonElement>(
+            `[data-card-destination="${destination}"]`
+          )!
+          .click()
+      );
+      expect(callbacks.invokeWindowAction).toHaveBeenCalledExactlyOnceWith({
+        kind: 'context',
+        cardId: card.id,
+        action: 'moveCard',
+        destination,
+      });
+      expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('preview');
+    }
+  );
+
   it('lays the stack view out upright over its player frame, sized to its cards', () => {
     const local = scene.layout.players.find((frame) => frame.side === 'local')!;
     const opponent = scene.layout.players.find(
