@@ -330,4 +330,152 @@ for (const device of [
         )!.cards
       ).toHaveLength(2);
     });
+    test('paired Stadium options move the requested half after viewing its artwork', async ({
+      page,
+      context,
+    }) => {
+      await ownRoomBudget(context);
+      await page.goto('/?dev-room=1&room-mode=solo&name=Stadium%20pieces');
+      await expect(page.locator('[data-session-phase="ready"]')).toBeVisible();
+      await dismissWelcome(page);
+      for (const destination of ['hand', 'discard'] as const) {
+        await submit(page, {
+          type: 'LoadDeck',
+          entries: [
+            ...([0, 1] as const).map((part) => ({
+              count: 1,
+              definition: {
+                id: `stadium-piece-${part}`,
+                name: 'Paired Stadium',
+                category: 'Trainer' as const,
+                imageUrl: `/v2/assets/cardback.png?stadium-${part}`,
+                presentation: {
+                  readingQuarterTurns: 0 as const,
+                  join: {
+                    key: 'stadium-pair',
+                    columns: 2 as const,
+                    rows: 1 as const,
+                    part,
+                  },
+                },
+              },
+            })),
+            {
+              count: 1,
+              definition: {
+                id: 'played-card',
+                name: 'Played card',
+                category: 'Trainer' as const,
+                imageUrl: '/v2/assets/cardback.png?played',
+              },
+            },
+          ],
+        });
+        await submit(page, { type: 'DrawCards', count: 3 });
+        let current = await view(page);
+        const me = current.playerOrder[0]!,
+          hand = Object.values(current.zones).find(
+            (zone) => zone.ownerId === me && zone.kind === 'hand'
+          )!;
+        for (const card of hand.cards) {
+          if (
+            card.kind === 'known' &&
+            !current.definitions[card.definitionId]?.presentation?.join
+          ) {
+            await submit(page, {
+              type: 'MoveCard',
+              cardId: card.id,
+              expectedSourceZoneId: hand.id,
+              destinationZoneId: Object.values(current.zones).find(
+                (zone) => zone.ownerId === me && zone.kind === 'discard'
+              )!.id,
+            });
+            continue;
+          }
+          const occupants = Object.values((await view(page)).zones)
+            .find((zone) => zone.kind === 'stadium')!
+            .cards.map((card) => card.id);
+          await submit(page, {
+            type: 'MoveCardToStadium',
+            cardId: card.id,
+            expectedSourceId: hand.id,
+            expectedStadiumCardId: occupants[0] ?? null,
+            expectedStadiumCardIds: occupants,
+            ...(occupants.length ? { placement: 'add' as const } : {}),
+          });
+        }
+        current = await view(page);
+        const stadium = Object.values(current.zones).find(
+          (zone) => zone.kind === 'stadium'
+        )!;
+        expect(stadium.cards).toHaveLength(2);
+        const right = stadium.cards.find(
+          (card) =>
+            card.kind === 'known' &&
+            current.definitions[card.definitionId]?.presentation?.join?.part ===
+              1
+        )!;
+        const left = stadium.cards.find((card) => card.id !== right.id)!;
+        const node = page.locator(
+          `.ptcgsim-board-surface [data-card-id="${right.id}"]`
+        );
+        await expect(page.locator('.ptcgsim-board-surface')).toHaveAttribute(
+          'data-board-motion',
+          'idle'
+        );
+        // The seam toolbar can cross the centre on a phone. Press a visible
+        // part of the piece, as a player does, without forcing through it.
+        const point = await node.evaluate((element) => {
+          const box = element.getBoundingClientRect();
+          for (const fy of [0.85, 0.15, 0.5])
+            for (const fx of [0.5, 0.2, 0.8]) {
+              const x = box.x + box.width * fx,
+                y = box.y + box.height * fy;
+              if (element.contains(document.elementFromPoint(x, y)))
+                return { x, y };
+            }
+          return null;
+        });
+        expect(point).not.toBeNull();
+        await page.screenshot({
+          path: `/tmp/ptcg-paired-stadium-table-${device.width}.png`,
+        });
+        await page.mouse.move(point!.x, point!.y);
+        await page.mouse.dblclick(point!.x, point!.y);
+        const options = page.locator('[data-card-actions-window]');
+        await expect(options).toBeVisible();
+        await expect(options.locator('[data-motion-origin]')).toHaveAttribute(
+          'data-motion-origin',
+          right.id
+        );
+        await options.locator('.card-window__card').click();
+        await expect(options).toHaveCount(0);
+        await page.keyboard.press('Escape');
+        await expect(options).toBeVisible();
+        const move = options.locator(
+          `[data-card-destination="${destination}"]`
+        );
+        if (device.touch) await move.tap();
+        else await move.click();
+        await expect(options).toHaveCount(0);
+        await expect
+          .poll(async () =>
+            Object.values((await view(page)).zones)
+              .find((zone) => zone.kind === 'stadium')!
+              .cards.map((card) => card.id)
+          )
+          .toEqual([left.id]);
+        current = await view(page);
+        expect(
+          Object.values(current.zones)
+            .find((zone) => zone.ownerId === me && zone.kind === destination)!
+            .cards.some(
+              (card) =>
+                card.kind === 'known' &&
+                current.definitions[card.definitionId]?.presentation?.join
+                  ?.part === 1
+            )
+        ).toBe(true);
+      }
+    });
   });

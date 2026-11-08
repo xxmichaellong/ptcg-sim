@@ -23,6 +23,7 @@ import {
   TABLE_LAYOUT_GEOMETRY_VERSION,
   flipBoardLayoutState,
   ownSeatOf,
+  paintedCardBounds,
   selectedCardIdOf,
   tableVerticalLayout,
   type BoardIntent,
@@ -1723,6 +1724,27 @@ export const RemoteSessionBoard = ({
   // pill with that hand's Sort.
   // Tilted, a hand laid out past the window's edge has its count where the
   // hand is drawn (the projection's flat point).
+  const stadiumBounds = useMemo(() => {
+    const scene = boardState?.scene;
+    const zone = scene?.zones.find((zone) => zone.kind === 'stadium');
+    if (!scene || !zone) return undefined;
+    const boxes = [
+      zone.bounds,
+      ...scene.cards
+        .filter((card) => card.parentId === zone.id && card.renderKey !== null)
+        .map((card) =>
+          paintedCardBounds(card.bounds, card.rotationQuarterTurns)
+        ),
+    ];
+    const x = Math.min(...boxes.map((box) => box.x)),
+      y = Math.min(...boxes.map((box) => box.y));
+    return {
+      x,
+      y,
+      width: Math.max(...boxes.map((box) => box.x + box.width)) - x,
+      height: Math.max(...boxes.map((box) => box.y + box.height)) - y,
+    };
+  }, [boardState?.scene]);
   const handCounts = useMemo(() => {
     const scene = boardState?.scene;
     if (!scene) return undefined;
@@ -1939,6 +1961,7 @@ export const RemoteSessionBoard = ({
           {layout ? (
             <LegacyBoardChrome
               {...(depthProjection ? { depth: depthProjection } : {})}
+              {...(stadiumBounds ? { stadiumBounds } : {})}
               layout={layout}
               // Each seat's colour follows the player: the viewer's own
               // (a spectator's, the first) wherever it sits (SeatTone).

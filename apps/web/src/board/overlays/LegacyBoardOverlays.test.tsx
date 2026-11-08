@@ -1,6 +1,10 @@
 // @vitest-environment happy-dom
 
-import type { MatchViewState } from '@ptcgsim/game-core';
+import {
+  asViewCardId,
+  asViewDefinitionId,
+  type MatchViewState,
+} from '@ptcgsim/game-core';
 import {
   createBoardSceneForViewport,
   createRendererSpikeView,
@@ -164,6 +168,99 @@ describe('legacy board overlays', () => {
     overlayRoot = createRoot(element);
     await act(async () => overlayRoot?.render(createElement(OverlayHost)));
   };
+
+  for (const part of [0, 1] as const)
+    it.each(['hand', 'discard'] as const)(
+      `acts on requested Stadium piece ${part} when moving to %s`,
+      async (destination) => {
+        const stadium = Object.values(view.zones).find(
+          (zone) => zone.kind === 'stadium'
+        )!;
+        const template = view.zones[`zone:${firstPlayer}:hand`]!.cards.find(
+          (card) => card.kind === 'known'
+        )!;
+        if (template.kind !== 'known') throw new Error('Missing known card');
+        const pieces = ([0, 1] as const).map((part) => ({
+          ...template,
+          id: asViewCardId(`stadium-${part}`),
+          definitionId: asViewDefinitionId(`stadium-def-${part}`),
+          category: 'Trainer' as const,
+        }));
+        const paired: MatchViewState = {
+          ...view,
+          zones: { ...view.zones, [stadium.id]: { ...stadium, cards: pieces } },
+          definitions: {
+            ...view.definitions,
+            ...Object.fromEntries(
+              pieces.map((piece, index) => [
+                piece.definitionId,
+                {
+                  ...view.definitions[template.definitionId]!,
+                  id: piece.definitionId,
+                  name: `Stadium part ${index}`,
+                  category: 'Trainer',
+                  presentation: {
+                    readingQuarterTurns: 0,
+                    join: {
+                      key: 'paired-stadium',
+                      columns: 2,
+                      rows: 1,
+                      part: index,
+                    },
+                  },
+                },
+              ])
+            ),
+          },
+        };
+        const pairedScene = createBoardSceneForViewport(paired, {
+          geometryVersion: 1,
+          viewport: scene.viewport,
+          bottomPlayerId: firstPlayer,
+          splitRatio: 0.5,
+        });
+        const target = pieces[part]!;
+        const emit = vi.fn();
+        const callbacks = { ...actions(), emitCardIntent: emit };
+        await act(async () =>
+          root.render(
+            createElement(LegacyBoardOverlays, {
+              state: state({
+                view: paired,
+                scene: pairedScene,
+                overlays: {
+                  contextMenuCardId: null,
+                  preview: { kind: 'card', cardId: target.id },
+                  input: null,
+                },
+              }),
+              darkMode: false,
+              actions: callbacks,
+            })
+          )
+        );
+        const dialog = host.querySelector<HTMLElement>(
+          '[data-card-actions-window]'
+        )!;
+        await act(async () =>
+          dialog
+            .querySelector<HTMLButtonElement>(
+              `[data-card-destination="${destination}"]`
+            )!
+            .click()
+        );
+        expect(emit).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({ cardId: target.id })
+        );
+        expect(callbacks.dismiss).toHaveBeenCalledExactlyOnceWith('preview');
+        expect(dialog.getAttribute('aria-label')).toBe(`Stadium part ${part}`);
+        expect(
+          dialog
+            .querySelector('[data-motion-origin]')
+            ?.getAttribute('data-motion-origin')
+        ).toBe(target.id);
+      }
+    );
 
   it('lays the stack view out upright over its player frame, sized to its cards', () => {
     const local = scene.layout.players.find((frame) => frame.side === 'local')!;

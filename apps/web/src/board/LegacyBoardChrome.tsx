@@ -564,6 +564,7 @@ const TableHandPill = memo(function TableHandPill({
  */
 export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   layout,
+  stadiumBounds,
   localPlayerId,
   players,
   darkMode,
@@ -578,6 +579,8 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   handCover,
 }: {
   readonly layout: BoardLayoutSnapshot;
+  /** The Stadium as painted, including assembled or rotated pieces. */
+  readonly stadiumBounds?: Rect;
   readonly depth?: BoardDepthProjection;
   readonly localPlayerId: PlayerId;
   readonly players: MatchViewState['players'];
@@ -716,7 +719,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
     const middle = anchor.y + anchor.height / 2;
     return middle < top || middle > bottom;
   })();
-  const stadium = layout.shared.stadium.physicalDeclaredBounds;
+  const stadium = stadiumBounds ?? layout.shared.stadium.physicalDeclaredBounds;
   // The actions at the seam's right end stop short of the near piles there
   // (their stacks rise toward the seam), or of the mat's edge.
   const bottomFrame = layout.players.find(

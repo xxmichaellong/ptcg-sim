@@ -13,6 +13,7 @@ import {
   DEFAULT_BOARD_PRESENTATION,
   selectedCardIdOf,
   withHeldCards,
+  compositionHold,
   type BoardIntent,
   type BoardScene,
 } from '@ptcgsim/renderer-contract';
@@ -4169,3 +4170,97 @@ it.each([false, true])(
     ).toEqual([]);
   }
 );
+
+for (const size of [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+  { width: 844, height: 390 },
+])
+  it(`keeps a compact-led group's fan positions on release at ${size.width}px`, () => {
+    const base = createRendererSpikeView(),
+      owner = base.playerOrder[0]!,
+      stackId = base.boards[owner]!.activeStackId!,
+      stack = base.stacks[stackId]!;
+    const attachments = Array.from({ length: 30 }, (_, index) => ({
+      ...stack.attachmentCards[0]!,
+      id: asViewCardId(`fan-energy-${index}`),
+    }));
+    for (const hostTurn of [0, 1, 2, 3] as const)
+      for (const bottomPlayerId of base.playerOrder)
+        for (const farCardsUpright of [false, true])
+          for (const lead of [attachments[0]!, attachments.at(-1)!]) {
+            const view = {
+              ...base,
+              stacks: {
+                ...base.stacks,
+                [stackId]: {
+                  ...stack,
+                  rotationQuarterTurns: hostTurn,
+                  attachmentCards: attachments,
+                },
+              },
+            };
+            const scene = createBoardScene(
+              view,
+              createTableLayoutSnapshot({
+                geometryVersion: 2,
+                shellMode: 'fullscreen',
+                viewport: { ...size, devicePixelRatio: 1 },
+                playerIds: [owner, base.playerOrder[1]!],
+                bottomPlayerId,
+                vertical: tableVerticalLayout(0.5),
+                farCardsUpright,
+              })
+            );
+            const ids = [
+              lead.id,
+              ...attachments
+                .filter((card) => card.id !== lead.id)
+                .slice(0, 5)
+                .map((card) => card.id),
+            ];
+            const initial = createInitialBoardSessionControllerState();
+            const drag = {
+              cardId: lead.id,
+              groupCardIds: ids,
+              x: 400,
+              y: 400,
+              targetId: `zone:${owner}:discard`,
+            };
+            const presentation = {
+              ...initial.presentation,
+              drag,
+              selection: ids,
+            };
+            const painted = withHeldCards(scene, presentation);
+            const result = reduceBoardSessionController(
+              {
+                ...initial,
+                generation: 1,
+                sessionPhase: 'ready',
+                source: { kind: 'live' },
+                view,
+                scene,
+                canSubmitCommands: true,
+                presentation,
+              },
+              {
+                kind: 'RendererIntent',
+                intent: { kind: 'CardDropRequested', ...drag },
+              },
+              { createScene: () => scene }
+            );
+            expect(
+              result.effects.some((effect) => effect.kind === 'SubmitCommand')
+            ).toBe(true);
+            expect(result.state.presentation.settling).toHaveLength(5);
+            for (const entry of result.state.presentation.settling) {
+              const card = painted.cards.find(
+                (card) => card.id === entry.cardId
+              )!;
+              const before = compositionHold(painted, card, drag)!;
+              expect(entry.x).toBeCloseTo(before.x, 8);
+              expect(entry.y).toBeCloseTo(before.y, 8);
+            }
+          }
+  });

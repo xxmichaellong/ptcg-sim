@@ -1959,10 +1959,12 @@ const CardWindowContents = ({
     state.view &&
     actions.playCardAsPokemon &&
     playsAsPokemon(state.view, card.id);
-  const emit = (intent: OpenedZoneCardIntent) =>
-    card.parentId === state.presentation.openedZoneId
-      ? actions.emitOpenedZoneCardIntent(intent)
-      : actions.emitCardIntent?.(intent);
+  const emit = (intent: OpenedZoneCardIntent) => {
+    if (card.parentId === state.presentation.openedZoneId)
+      actions.emitOpenedZoneCardIntent(intent);
+    else actions.emitCardIntent?.(intent);
+    onClose();
+  };
   const act = (
     action: LegacyBoardContextActionId,
     destination?: LegacyBoardMoveChoice
@@ -2244,8 +2246,13 @@ const Preview = ({
   // Details returns from joined artwork to its Pokémon options.
   const [showDetails, setShowDetails] = useState(false);
   const [individualCardId, setIndividualCardId] = useState<string | null>(null);
+  const requestedCardId =
+    kind === 'card' && state.overlays.preview?.kind === 'card'
+      ? state.overlays.preview.cardId
+      : null;
   const readingCard =
-    cards.find((card) => card.id === individualCardId) ?? cards[0];
+    cards.find((card) => card.id === (individualCardId ?? requestedCardId)) ??
+    cards[0];
   const artworkCards = cards
     .filter((card) => card.role !== 'stackAttachment')
     .sort((left, right) => left.zIndex - right.zIndex);
@@ -2337,7 +2344,7 @@ const Preview = ({
     }
   };
   const previewedCardId =
-    individualCardId ?? (kind === 'card' ? cards[0]?.id : undefined);
+    individualCardId ?? (kind === 'card' ? readingCard?.id : undefined);
   // The card zooms out of where it was clicked -- a card on the table, in a
   // pile or in the stack view -- or, opened from the keyboard, out of where
   // the table shows it.

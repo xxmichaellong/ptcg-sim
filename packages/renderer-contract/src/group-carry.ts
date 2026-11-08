@@ -116,6 +116,8 @@ export const carriedGroup = (
   const first: CarriedItem = { itemId: leadItem, layer: 0, dx: 0, dy: 0 };
   const group = hold.groupCardIds;
   if (!lead || hold.detached || !group || group.length < 2) return [first];
+  // Individual compact handles travel as full cards, including their fan.
+  const bounds = lead.compactAttachment?.fullBounds ?? lead.bounds;
   const carried: CarriedItem[] = [first];
   for (const itemId of group) {
     if (carried.length >= MAX_CARRIED_ITEMS) break;
@@ -124,8 +126,8 @@ export const carriedGroup = (
     carried.push({
       itemId,
       layer,
-      dx: layer * FAN.x * lead.bounds.width,
-      dy: layer * FAN.y * lead.bounds.height,
+      dx: layer * FAN.x * bounds.width,
+      dy: layer * FAN.y * bounds.height,
     });
   }
   return carried;
