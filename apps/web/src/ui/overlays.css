@@ -406,6 +406,12 @@
   transition: opacity var(--duration-fast) var(--ease-out);
 }
 
+/* Passive reading stays unobscured by notifications. Notices retain their
+   normal priority when reading closes; dialogs and menus keep their layers. */
+html:has([data-card-inspector][data-open='true']) .ptcgsim-ui-toast-viewport {
+  z-index: calc(var(--layer-card-inspector) - 1);
+}
+
 /* A menu the player opened is never under a notice: while one is open (the
    table's card and group menus, the app's menus), the notices step aside --
    faded, taking no presses -- and come back as it is put away (a leaving

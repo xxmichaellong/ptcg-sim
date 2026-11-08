@@ -242,8 +242,8 @@
                     them, a sheet or a dialog included
        curtain      the loading screen over a table being set up or traded
                     (index.html, table-curtain.ts); paint only, never input
-       toast        notices, above everything they could be about; they never
-                    take input outside their own box
+       toast        notices, above the UI they describe, below an open
+                    hover inspector; never taking input outside their box
        tooltip      tooltips, over the menus and toasts they describe
        drag         anything carried over the whole window, over all (a
                     card held on the table rises over its own viewers on

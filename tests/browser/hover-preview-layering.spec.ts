@@ -277,3 +277,61 @@ test('hover reading never covers the pointer on a card beside an Arabic dock', a
     }
   }
 });
+
+for (const width of [1000, 820])
+  test(`notifications do not cover hover reading at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await setUp(page);
+    // A real, persistent notice makes this paint check independent of the
+    // setup confirmation's expiry or a slow CI machine.
+    await page.evaluate(async () => {
+      const modulePath = '/src/ui/toast.ts';
+      const { toast } = (await import(modulePath)) as {
+        toast: (options: {
+          id: string;
+          title: string;
+          timeout: number;
+        }) => string;
+      };
+      toast({
+        id: 'hover-reading-notice',
+        title: 'Reading notification',
+        timeout: 0,
+      });
+    });
+    const notice = page
+      .locator('.ptcgsim-ui-toast')
+      .filter({ hasText: 'Reading notification' });
+    await expect(notice).toBeVisible();
+    await notice.evaluate((node) =>
+      node.setAttribute('data-hover-reading-notice', '')
+    );
+    const inspector = await hover(page);
+    expect(
+      await paint(page, '.ptcgsim-ui-toast[data-hover-reading-notice]')
+    ).toEqual({
+      overlap: true,
+      previewAbove: true,
+      inputReachesDrawer: true,
+    });
+    await page.screenshot({ path: `/tmp/ptcg-hover-toast-${width}.png` });
+    const readingLayer = await inspector.evaluate((node) =>
+      Number(getComputedStyle(node).zIndex)
+    );
+    await page.mouse.move(5, 5);
+    await expect(page.locator('[data-card-inspector]')).toHaveAttribute(
+      'data-open',
+      'false'
+    );
+    await expect
+      .poll(() =>
+        page
+          .locator('.ptcgsim-ui-toast-viewport')
+          .evaluate((node) => Number(getComputedStyle(node).zIndex))
+      )
+      .toBeGreaterThan(readingLayer);
+    await notice.locator('.ptcgsim-ui-toast__close').click();
+    await expect(notice).toHaveCount(0);
+  });

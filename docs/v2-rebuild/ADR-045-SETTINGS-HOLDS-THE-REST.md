@@ -128,3 +128,5 @@ specs that use it: `app-bar.spec.ts`, `board-view.spec.ts`,
 `command-palette.spec.ts`, `localization.spec.ts`, `rtl-layout.spec.ts`,
 `experience-refinement.spec.ts`, `tooltips.spec.ts` and the rest through
 the shell helpers.
+
+While hover reading is open, notifications paint just below it; their usual priority returns as it closes. They remain available to pointer and keyboard input. Dialog and menu ordering is unchanged.
