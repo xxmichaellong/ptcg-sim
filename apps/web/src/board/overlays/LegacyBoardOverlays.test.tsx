@@ -1707,6 +1707,151 @@ describe('legacy board overlays', () => {
     expect(callbacks.submitCountInput).not.toHaveBeenCalled();
   });
 
+  it.each([
+    { columns: 1, rows: 2, part: 0, readingQuarterTurns: 1 } as const,
+    { columns: 1, rows: 2, part: 1, readingQuarterTurns: 1 } as const,
+    ...([0, 1, 2, 3] as const).map((part) => ({
+      columns: 2 as const,
+      rows: 2 as const,
+      part,
+      readingQuarterTurns: 0 as const,
+    })),
+  ])(
+    'reads an incomplete joined stack at $columns x $rows, part $part',
+    async ({ columns, rows, part, readingQuarterTurns }) => {
+      const stackId = view.boards[firstPlayer]!.activeStackId!,
+        single = view.stacks[stackId]!.evolutionCards[0]!;
+      const partialView = {
+        ...view,
+        stacks: {
+          ...view.stacks,
+          [stackId]: {
+            ...view.stacks[stackId]!,
+            evolutionCards: [single],
+            attachmentCards: [],
+          },
+        },
+      };
+      const partialScene = {
+        ...scene,
+        cards: scene.cards
+          .filter((card) => card.parentId !== stackId || card.id === single.id)
+          .map((card): CardSceneNode =>
+            card.id !== single.id
+              ? card
+              : {
+                  ...card,
+                  presentation: {
+                    readingQuarterTurns: readingQuarterTurns as 0 | 1,
+                    join: { key: 'incomplete', columns, rows, part },
+                  },
+                }
+          ),
+      };
+      await act(async () =>
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state({
+              view: partialView,
+              scene: partialScene,
+              overlays: {
+                contextMenuCardId: null,
+                preview: { kind: 'stack', stackId, focusCardId: single.id },
+                input: null,
+              },
+            }),
+            darkMode: false,
+            actions: actions(),
+          })
+        )
+      );
+      const control = (label: string) =>
+        [...host.querySelectorAll<HTMLButtonElement>('button')].find(
+          (button) => button.textContent?.trim() === label
+        )!;
+      const click = async (label: string) => {
+        expect(control(label)).toBeDefined();
+        await act(async () => control(label).click());
+      };
+      await click('View whole card');
+      expect(
+        host.querySelectorAll(
+          '[data-preview-kind="composition"] .ptcgsim-composition-piece'
+        )
+      ).toHaveLength(1);
+      expect(
+        host.querySelector('.ptcgsim-composition-caption')?.textContent
+      ).toContain(`1 of ${columns * rows} pieces`);
+      await click('Details');
+      expect(host.querySelector('[data-pokemon-window]')).not.toBeNull();
+      await click('View whole card');
+      await click('View each card');
+      expect(host.querySelector('.is-piece-list')).not.toBeNull();
+      await act(async () =>
+        host
+          .querySelector<HTMLButtonElement>(
+            `[data-stack-preview-card-id="${single.id}"]`
+          )!
+          .click()
+      );
+      expect(host.querySelector('[data-preview-kind="card"]')).not.toBeNull();
+      await click('View whole card');
+      expect(
+        host.querySelector('[data-preview-kind="composition"]')
+      ).not.toBeNull();
+    }
+  );
+
+  it.each([2, 4])(
+    'keeps a loose joined piece as individual artwork (%s pieces)',
+    async (total) => {
+      const card = cardIn(`:${firstPlayer}:hand`);
+      const partialScene = {
+        ...scene,
+        cards: scene.cards.map((node): CardSceneNode =>
+          node.id !== card.id
+            ? node
+            : {
+                ...node,
+                presentation: {
+                  readingQuarterTurns: 0,
+                  join: {
+                    key: 'loose',
+                    columns: total === 2 ? 1 : 2,
+                    rows: 2,
+                    part: 0,
+                  },
+                },
+              }
+        ),
+      };
+      await act(async () =>
+        root.render(
+          createElement(LegacyBoardOverlays, {
+            state: state({
+              scene: partialScene,
+              overlays: {
+                contextMenuCardId: null,
+                preview: { kind: 'card', cardId: card.id },
+                input: null,
+              },
+            }),
+            darkMode: false,
+            actions: actions(),
+          })
+        )
+      );
+      const read = [...host.querySelectorAll<HTMLButtonElement>('button')].find(
+        (button) => button.textContent?.trim() === 'View card'
+      )!;
+      await act(async () => read.click());
+      expect(host.querySelector('[data-preview-kind="card"]')).not.toBeNull();
+      expect(
+        host.querySelector('[data-preview-kind="composition"]')
+      ).toBeNull();
+    }
+  );
+
   it('reads the selected assembled-card piece and returns to the composition', async () => {
     const stackId = view.boards[firstPlayer]!.activeStackId!;
     const stages = view.stacks[stackId]!.evolutionCards;

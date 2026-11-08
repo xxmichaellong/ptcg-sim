@@ -290,6 +290,79 @@ for (const mode of ['flat', 'table'] as const)
         mode
       );
     });
+    for (const viewport of [
+      { width: 1440, height: 900 },
+      { width: 390, height: 844 },
+      { width: 844, height: 390 },
+    ])
+      test.describe(`single pieces at ${viewport.width}px`, () => {
+        test.use({ viewport, hasTouch: viewport.width !== 1440 });
+        test('a single joined piece opens whole artwork, details and each piece', async ({
+          page,
+        }) => {
+          test.setTimeout(120000);
+          await start(page);
+          for (const [piece, total] of [
+            ['union-3', 4],
+            ['legend-1', 2],
+          ] as const) {
+            const id = await fromDeck(page, piece, 'b');
+            await page.keyboard.press('Escape');
+            await expect(
+              page.locator('[data-legacy-zone-browser]')
+            ).toHaveCount(0);
+            await expect(
+              page.locator('.ptcgsim-board-surface')
+            ).toHaveAttribute('data-board-motion', 'idle');
+            const target = page.locator(
+              `.ptcgsim-board-surface [data-card-id="${id}"]`
+            );
+            await target.hover();
+            await target.click({ trial: true });
+            await target.dblclick();
+            const window = page.locator('[data-pokemon-window]');
+            await expect(window).toBeVisible();
+            await window
+              .getByRole('button', { name: 'View whole card', exact: true })
+              .click();
+            const composition = page.locator(
+              '[data-preview-kind="composition"]'
+            );
+            await expect(composition).toBeVisible();
+            await expect(
+              composition.locator('.ptcgsim-composition-piece')
+            ).toHaveCount(1);
+            await expect(
+              composition.locator('.ptcgsim-composition-caption')
+            ).toContainText(`1 of ${total} pieces`);
+            await composition
+              .getByRole('button', { name: 'Details', exact: true })
+              .click();
+            await expect(window).toBeVisible();
+            await window
+              .getByRole('button', { name: 'View whole card', exact: true })
+              .click();
+            await composition
+              .getByRole('button', { name: 'View each card', exact: true })
+              .click();
+            const pieces = page.locator('.is-piece-list');
+            await pieces
+              .locator(`[data-stack-preview-card-id="${id}"]`)
+              .click();
+            const read = page.locator('[data-preview-kind="card"]');
+            await expect(read).toBeVisible();
+            await read
+              .getByRole('button', { name: 'View whole card', exact: true })
+              .click();
+            await expect(composition).toBeVisible();
+            await page.keyboard.press('Escape');
+            await expect(window).toBeVisible();
+            await window.locator('[data-pokemon-window-close]').click();
+            await expect(window).toHaveCount(0);
+          }
+        });
+      });
+
     test('four pieces remain joined through preview, drag, rotation and board flip', async ({
       page,
     }) => {

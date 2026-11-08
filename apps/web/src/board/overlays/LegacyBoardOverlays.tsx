@@ -2443,7 +2443,7 @@ const Preview = ({
   if (
     composition &&
     (!pokemonWindow || showArtwork) &&
-    cards.length > 1 &&
+    (cards.length > 1 || pokemonWindow) &&
     !showPieces &&
     !individualCardId &&
     !(pokemonWindow && showDetails)
