@@ -3,6 +3,7 @@ import {
   TABLE_CARD_THICKNESS,
   TablePoseMotion,
   planBoardMotion,
+  projectTablePoint,
   tablePoseMatrix,
   tablePoseEdges,
   tableShadowStyle,
@@ -12,6 +13,7 @@ import {
   type BoardScene,
   type BoardSceneMotion,
   type CardSceneNode,
+  type TableCamera,
   type TableCardPose,
   type TablePoint,
   type Rect,
@@ -19,6 +21,16 @@ import {
 import { depthPaintKey } from './depth-paint-key.js';
 import { pictureElement as pictureFor } from './card-pictures.js';
 import { faceImageOf, isFaceReady, whenFaceReady } from './face-ready.js';
+import {
+  RIFFLE_MARGIN,
+  RIFFLE_MS,
+  RIFFLE_PACKETS,
+  riffleFrame,
+  riffleOrder,
+  riffleShift,
+  type RiffleHalf,
+  type RiffleOrder,
+} from './riffle.js';
 
 const timestamp = () => performance.now();
 /** How long a card takes to rise to its held height. */
@@ -37,8 +49,6 @@ const STACK_PIECE_ROLES: ReadonlySet<string> = new Set([
 /** A card under the pointer rises this share of its width, over this long. */
 const HOVER_RAISE = 0.06;
 const HOVER_RAISE_MS = 140;
-/** A riffle shuffle, from split to squared pile. */
-const RIFFLE_MS = 900;
 /** A card turned over by hand, from flat to flat again. */
 const TURN_MS = 420;
 /** One frame, at sixty a second. */
@@ -180,14 +190,15 @@ export const spreadShufflePose = (
 };
 
 /**
- * A pile being riffled: split in two halves that lift apart and tip in,
- * riffle back together while the cards pass into one pile in the middle,
- * and square up. Stand-ins play it while the real pile is hidden.
+ * A pile being riffled (see riffle.ts): stand-ins play it while the real
+ * pile is hidden.
  */
 interface Riffle {
-  readonly left: string;
-  readonly right: string;
-  readonly middle: string;
+  /** The stand-in for each half, the new pile and each packet. */
+  readonly stands: ReadonlyMap<RiffleHalf | 'pile' | number, string>;
+  readonly order: RiffleOrder;
+  /** How far along the table it is drawn from the pile (riffleShift). */
+  readonly shift: number;
   readonly pile: string | null;
   readonly base: TableCardPose;
   readonly start: number;
@@ -986,7 +997,7 @@ export class TableDepthDirector {
     };
   }
 
-  /** A pile shuffled where it lies: see Riffle. */
+  /** A pile shuffled where it lies: see riffle.ts. */
   private riffle(
     rect: Rect,
     turns: number,
@@ -1022,48 +1033,41 @@ export class TableDepthDirector {
     }
     const duration = RIFFLE_MS * this.durationScale;
     const lasts = start - timestamp() + duration;
-    const half = {
-      ...base,
-      thickness: base.thickness / 2,
-      elevation: base.thickness / 2,
-    };
-    const left = this.addGhost(
-      image,
-      half,
-      half,
-      start,
-      0,
-      undefined,
-      undefined,
-      { bands: 4, lasts }
+    const order = riffleOrder(
+      (cover && projection.pileCounts.get(cover.id)) ?? RIFFLE_PACKETS
     );
-    const right = this.addGhost(
-      image,
-      half,
-      half,
-      start,
-      0,
-      undefined,
-      undefined,
-      { bands: 4, lasts }
-    );
-    const middle = this.addGhost(
-      image,
-      base,
-      base,
-      start,
-      0,
-      undefined,
-      undefined,
-      { bands: 8, lasts }
-    );
-    if (!left || !right || !middle) return;
-    for (const key of [left, right, middle])
-      this.ghosts.get(key)!.element.style.opacity = '0';
-    this.riffles.set(left, {
-      left,
-      right,
-      middle,
+    const shift = riffleShift(...this.roomBeside(base, projection.camera));
+    const stand = (bands: number) =>
+      this.addGhost(image, base, base, start, 0, undefined, undefined, {
+        bands,
+        lasts,
+      });
+    // Drawn in this order, later over earlier: the bottom half under the top
+    // half cut off it, the new pile over the halves' inner edges, and the
+    // packets over all, each over the one that landed before it.
+    const lower = stand(order.cards);
+    const upper = stand(order.cards);
+    const gathered = stand(order.cards);
+    const packets = order.halves.map(() => stand(order.cardsPerPacket));
+    const keys = [lower, upper, gathered, ...packets];
+    if (!lower || !upper || !gathered || keys.some((key) => key === null)) {
+      for (const key of keys) if (key) this.removeGhost(key);
+      return;
+    }
+    keys.forEach((key, index) => {
+      const { element } = this.ghosts.get(key!)!;
+      element.style.opacity = '0';
+      element.style.zIndex = String(index + 1);
+    });
+    this.riffles.set(gathered, {
+      stands: new Map<RiffleHalf | 'pile' | number, string>([
+        ['upper', upper],
+        ['lower', lower],
+        ['pile', gathered],
+        ...packets.map((key, index) => [index, key!] as const),
+      ]),
+      order,
+      shift,
       pile: cover?.renderKey ?? null,
       base,
       start,
@@ -1071,66 +1075,59 @@ export class TableDepthDirector {
     });
   }
 
+  /**
+   * The room beside a pile along the table, either side, as far as the
+   * window shows the table at the pile's row; and the pile's own width
+   * along it.
+   */
+  private roomBeside(
+    base: TableCardPose,
+    camera: TableCamera
+  ): [{ left: number; right: number }, number] {
+    const across =
+      Math.round(base.turns) % 2 === 0 ? base.bounds.width : base.bounds.height;
+    const x = base.bounds.x + base.bounds.width / 2;
+    const y = base.bounds.y + base.bounds.height / 2;
+    const anywhere = { left: Infinity, right: Infinity };
+    try {
+      const row = projectTablePoint(camera, { x, y, z: base.elevation }).y;
+      const edge = (screenX: number) =>
+        unprojectTablePoint(camera, { x: screenX, y: row }, base.elevation)?.x;
+      const left = edge(RIFFLE_MARGIN);
+      const right = edge(camera.width - RIFFLE_MARGIN);
+      if (left === undefined || right === undefined) return [anywhere, across];
+      return [
+        { left: x - across / 2 - left, right: right - (x + across / 2) },
+        across,
+      ];
+    } catch {
+      return [anywhere, across];
+    }
+  }
+
   private paintRiffle(riffle: Riffle, at: number): boolean {
     const t = (at - riffle.start) / riffle.duration;
     if (t < 0) return false;
     const pile = riffle.pile ? this.elements.get(riffle.pile) : undefined;
-    const ghost = (key: string) => this.ghosts.get(key)?.element;
     if (t >= 1) {
       if (pile) pile.style.removeProperty('opacity');
-      for (const key of [riffle.left, riffle.right, riffle.middle])
-        this.removeGhost(key);
+      for (const key of riffle.stands.values()) this.removeGhost(key);
       return true;
     }
     if (pile) pile.style.opacity = '0';
-    const { base } = riffle;
-    const width = base.bounds.width;
-    const full = base.thickness;
-    const half = full / 2;
-    // Split (0-0.3), riffle (0.3-0.82), square up (0.82-1).
-    const split = easeInOut(Math.min(1, t / 0.3));
-    const pass = Math.max(0, Math.min(1, (t - 0.3) / 0.52));
-    const square = Math.max(0, (t - 0.82) / 0.18);
-    const apart = 0.55 * width * split * (1 - 0.8 * easeInOut(pass));
-    const raise = 0.12 * width * split * (1 - pass);
-    const tip = 0.14 * split * (1 - pass);
-    const flutter =
-      pass > 0 && pass < 1 ? Math.sin(pass * Math.PI * 14) * 0.012 * width : 0;
-    const halfThickness = half * (1 - pass);
-    const halfPose = (side: number): TableCardPose => ({
-      ...base,
-      bounds: { ...base.bounds, x: base.bounds.x + side * apart },
-      thickness: halfThickness,
-      elevation: halfThickness + raise + (side > 0 ? flutter : -flutter * 0.5),
-      flip: -side * tip,
-    });
-    const middleThickness = full * pass;
-    const settle =
-      square > 0
-        ? Math.sin(square * Math.PI * 2) * 0.02 * width * (1 - square)
-        : 0;
-    for (const [key, side] of [
-      [riffle.left, -1],
-      [riffle.right, 1],
-    ] as const) {
-      const element = ghost(key);
-      if (!element) continue;
-      element.style.opacity = halfThickness > 0.3 ? '1' : '0';
-      this.paint(key, halfPose(side), at);
-    }
-    const middle = ghost(riffle.middle);
-    if (middle) {
-      middle.style.opacity = middleThickness > 0.3 ? '1' : '0';
-      this.paint(
-        riffle.middle,
-        {
-          ...base,
-          bounds: { ...base.bounds, x: base.bounds.x + settle },
-          thickness: middleThickness,
-          elevation: middleThickness,
-        },
-        at
-      );
+    for (const [part, piece] of riffleFrame(
+      riffle.base,
+      riffle.order,
+      t,
+      riffle.shift
+    )) {
+      const key = riffle.stands.get(part);
+      const ghost = key === undefined ? undefined : this.ghosts.get(key);
+      if (!key || !ghost) continue;
+      ghost.element.style.opacity = piece ? '1' : '0';
+      if (!piece) continue;
+      ghost.bands = piece.bands;
+      this.paint(key, piece.pose, at);
     }
     return false;
   }

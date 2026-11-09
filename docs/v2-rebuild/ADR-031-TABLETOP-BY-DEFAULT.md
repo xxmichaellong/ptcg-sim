@@ -91,10 +91,17 @@ a raised mat at about 40°, and the CABT viewer a gentle 8° CSS tilt.
    0.6°, Prizes under 1.2°, and a hair off true), the same way every time.
    Piles, the hand and joined panels stay square. Settings → Table →
    Natural card placement turns it off.
-10. **A shuffled pile is riffled**: it splits into two halves that lift
-    apart and tip in, riffles back together while the cards pass into one
-    pile between them, and squares up (900ms). Stand-ins with their own
-    edges and shadows play it while the real pile is hidden; picking the
+10. **A shuffled pile is riffled**, the whole deck seen to take part
+    (2026-11-09, `motion/riffle.ts`, one timeline for both renderers): the
+    top half is lifted off to one side and the bottom half slides to the
+    other; packets then come off the halves' tops by turns and land on a
+    new pile where the deck lay, so its top changes with each and the old
+    top card ends at the bottom; it squares up (900ms). Before, a third
+    pile grew in the middle over the halves, so the deck's top never moved.
+    Where a half would run off the window (the flat table's deck sits at its
+    edge) the riffle is drawn in toward the room and the squared pile slides
+    back. Stand-ins with their own edges and shadows play it while the real
+    pile is hidden (the flat table hides it for the riffle too); picking the
     pile up ends it at once.
 11. **Collection precedes redistribution** (2026-11-06). Setup and re-setup
     gather every painted card of that player back into their deck, turn it

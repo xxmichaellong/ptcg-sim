@@ -22,6 +22,7 @@ import {
   type ViewCard,
 } from '@ptcgsim/game-core';
 import { fallBackCardImage } from '../card-image-retry.js';
+import { RIFFLE_CUT, RIFFLE_MS, riffleOrder } from './riffle.js';
 import { spreadShufflePose, TableDepthDirector } from './TableDepthDirector.js';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -522,17 +523,60 @@ it('riffles a shuffled deck with stand-ins, hides the pile meanwhile, and gives 
     1
   );
   const pile = elements.get(cover.renderKey!)!;
-  // Two halves and the pile they riffle into stand in for the deck.
-  expect(layer.childElementCount).toBe(3);
-  advance(300);
-  expect(pile.style.opacity).toBe('0');
-  const visible = [...layer.children].filter(
-    (child) => (child as HTMLElement).style.opacity === '1'
-  );
-  expect(visible.length).toBeGreaterThanOrEqual(2);
+  const count = shuffled.cards.filter(
+    (card) => card.parentId === deckZone.id
+  ).length;
+  const packets = riffleOrder(count).halves.length;
+  // Each half, the new pile and each packet stand in for the deck, drawn in
+  // that order: the packets over the pile they land on, over the halves.
+  const [lower, upper, gathered, ...flying] = [
+    ...layer.children,
+  ] as HTMLElement[];
+  expect(layer.childElementCount).toBe(3 + packets);
+  expect(
+    [...layer.children].map((child) =>
+      Number((child as HTMLElement).style.zIndex)
+    )
+  ).toEqual(Array.from({ length: 3 + packets }, (_, index) => index + 1));
   // Each stand-in has its edges, so the halves read as thick piles.
-  expect(layer.querySelectorAll('[data-depth-side]').length).toBe(3);
-  for (let at = 316; at <= 1400; at += 16) advance(at);
+  expect(layer.querySelectorAll('[data-depth-side]').length).toBe(3 + packets);
+  const shown = (element: HTMLElement) => element.style.opacity === '1';
+  const height = (element: HTMLElement) => Number(element.dataset.elevation);
+  /** Where a stand-in's corner is drawn across the screen. */
+  const across = (element: HTMLElement) => {
+    const matrix = element.style.transform
+      .slice('matrix3d('.length, -1)
+      .split(',')
+      .map(Number);
+    return matrix[12]! / matrix[15]!;
+  };
+  // The first frame sets it off.
+  advance(16);
+  // Cut: the deck is in two halves, the top one lifted off to one side and
+  // the bottom one gone to the other; nothing is where the deck lay, so its
+  // old top card is seen to go.
+  advance(16 + RIFFLE_MS * RIFFLE_CUT * 0.6);
+  expect(pile.style.opacity).toBe('0');
+  expect(shown(upper!) && shown(lower!)).toBe(true);
+  expect(shown(gathered!)).toBe(false);
+  expect(height(upper!)).toBeGreaterThan(height(lower!));
+  expect(across(upper!)).toBeLessThan(across(pile) - 10);
+  expect(across(lower!)).toBeGreaterThan(across(pile) + 10);
+  // Riffled: packets come off the halves by turns onto the new pile, whose
+  // top keeps changing as it grows.
+  const piled: number[] = [];
+  let inFlight = 0;
+  for (let at = 32 + RIFFLE_MS * RIFFLE_CUT; at < RIFFLE_MS; at += 8) {
+    advance(at);
+    if (shown(gathered!)) piled.push(height(gathered!));
+    inFlight = Math.max(inFlight, flying.filter(shown).length);
+  }
+  expect(inFlight).toBeGreaterThan(0);
+  expect(new Set(piled).size).toBeGreaterThanOrEqual(packets);
+  expect(piled).toEqual([...piled].sort((a, b) => a - b));
+  // Squared, the halves are gone into it.
+  expect(shown(upper!) || shown(lower!)).toBe(false);
+  for (let at = RIFFLE_MS; at <= 1400; at += 16) advance(at);
   expect(layer.childElementCount).toBe(0);
   expect(pile.style.opacity).toBe('');
   expect(director.active).toBe(false);

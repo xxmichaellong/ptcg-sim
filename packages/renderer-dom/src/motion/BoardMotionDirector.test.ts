@@ -13,6 +13,7 @@ import {
   BoardMotionDirector,
   type PaintedCard,
 } from './BoardMotionDirector.js';
+import { riffleOrder } from './riffle.js';
 
 interface RecordedAnimation {
   readonly element: Element;
@@ -565,7 +566,7 @@ describe('BoardMotionDirector', () => {
     expect(test.ghostLayer.childElementCount).toBe(0);
   });
 
-  it('riffles a shuffled deck with short-lived copies of its cover', () => {
+  it('riffles a shuffled deck with copies of its cover, the pile itself hidden meanwhile', () => {
     const deckId = 'zone:spike-blue:deck';
     const deck = base.zones[deckId]!.cards;
     const shuffled: MatchViewState = {
@@ -584,7 +585,12 @@ describe('BoardMotionDirector', () => {
     };
     const before = sceneOf(base);
     const after = sceneOf(shuffled);
+    const cover = after.cards.find(
+      (card) => card.parentId === deckId && card.renderKey !== null
+    )!;
+    const packets = riffleOrder(deck.length).halves.length;
     for (const reduced of [false, true]) {
+      recorded = [];
       const test = setup();
       test.director.setSettings({ reduced, durationScale: 1 });
       test.register(before);
@@ -603,10 +609,56 @@ describe('BoardMotionDirector', () => {
         paintedOf(after),
         new Set()
       );
-      const riffle = test.ghostLayer.querySelectorAll(
-        '.ptcgsim-card-ghost--riffle'
+      const copies = [
+        ...test.ghostLayer.querySelectorAll<HTMLElement>(
+          '.ptcgsim-card-ghost--riffle'
+        ),
+      ];
+      const pile = test.elements.get(cover.renderKey!)!;
+      const hidden = recorded.filter(
+        (entry) =>
+          entry.element === pile &&
+          entry.keyframes.every((frame) => frame.opacity === 0)
       );
-      expect(riffle).toHaveLength(reduced ? 0 : 4);
+      if (reduced) {
+        expect(copies).toHaveLength(0);
+        expect(hidden).toHaveLength(0);
+        test.director.cancelAll();
+        continue;
+      }
+      // Both halves, then each packet, over the pile, which is hidden for
+      // just as long: its own top card is never left standing still.
+      expect(copies).toHaveLength(2 + packets);
+      expect(hidden).toHaveLength(1);
+      for (const copy of copies) {
+        // Hidden by their own style before and after: only the riffle shows.
+        expect(copy.style.opacity).toBe('0');
+        const animation = recorded.find((entry) => entry.element === copy)!;
+        expect(animation.options.fill).toBe('none');
+        expect(animation.options.duration).toBe(hidden[0]!.options.duration);
+        const offsets = animation.keyframes.map((frame) => frame.offset!);
+        expect(offsets).toEqual([...offsets].sort((a, b) => a - b));
+      }
+      // The top half (drawn over the bottom one) lifts off the pile and
+      // moves aside; every packet ends where the deck lies.
+      const upper = recorded.find((entry) => entry.element === copies[1])!;
+      expect(upper.keyframes[0]!.translate).toBe('0.0px 0.0px');
+      expect(upper.keyframes.at(-1)!.translate).not.toBe('0.0px 0.0px');
+      const last = recorded.find((entry) => entry.element === copies.at(-1))!;
+      expect(last.keyframes.at(-1)!.translate).toBe('0.0px 0.0px');
+      // Picking the pile up ends its riffle at once.
+      test.director.commit(
+        after,
+        after,
+        undefined,
+        paintedOf(after),
+        new Set([cover.renderKey!])
+      );
+      expect(hidden[0]!.cancel).toHaveBeenCalled();
+      for (const copy of copies)
+        expect(
+          recorded.find((entry) => entry.element === copy)!.cancel
+        ).toHaveBeenCalled();
       test.director.cancelAll();
     }
   });

@@ -18,6 +18,19 @@ import {
 } from '@ptcgsim/renderer-contract';
 import { pictureElement as pictureFor } from './card-pictures.js';
 import { faceImageOf, isFaceReady, whenFaceReady } from './face-ready.js';
+import {
+  RIFFLE_CUT,
+  RIFFLE_DROPPED,
+  RIFFLE_MARGIN,
+  RIFFLE_MS,
+  RIFFLE_PACKETS,
+  RIFFLE_SPLAY,
+  RIFFLE_SPREAD,
+  riffleOrder,
+  rifflePacketTrip,
+  riffleShift,
+  riffleSide,
+} from './riffle.js';
 import { TableDepthDirector } from './TableDepthDirector.js';
 
 /** Where a painted card was last drawn, including a drag or settle hold. */
@@ -353,7 +366,7 @@ export class BoardMotionDirector {
     }
     for (const shuffle of plan.shuffles) {
       if (shuffle.spread) this.gatherSpread(shuffle, held);
-      else this.riffle(shuffle);
+      else this.riffle(shuffle, next);
     }
   }
 
@@ -1217,88 +1230,173 @@ export class BoardMotionDirector {
   }
 
   /**
-   * A riffle over a shuffled pile: two half-decks swing apart and interleave
-   * back, drawn as short-lived copies of the pile's cover over the pile.
+   * A riffle over a shuffled pile (see riffle.ts), drawn with copies of its
+   * cover while the pile itself is hidden: the top half lifts off to one
+   * side, the bottom half slides to the other, and packets come off them by
+   * turns onto a new pile where the deck lay.
    */
-  private riffle(shuffle: PileShuffle): void {
+  private riffle(shuffle: PileShuffle, next: BoardScene): void {
     const layer = this.ghostLayer;
     if (!layer || this.settings.reduced) return;
     const scale = this.settings.durationScale;
     const { rect } = shuffle;
-    const spread = rect.width * 0.62;
-    const lift = rect.height * 0.05;
-    const halves = [
-      { side: -1, cards: 2 },
-      { side: 1, cards: 2 },
-    ];
-    halves.forEach(({ side, cards }, halfIndex) => {
-      for (let index = 0; index < cards; index += 1) {
-        const ghost = document.createElement('div');
-        ghost.className = 'ptcgsim-card-ghost ptcgsim-card-ghost--riffle';
-        ghost.setAttribute('aria-hidden', 'true');
-        Object.assign(ghost.style, {
-          position: 'absolute',
-          left: `${rect.x}px`,
-          top: `${rect.y}px`,
-          width: `${rect.width}px`,
-          height: `${rect.height}px`,
-          transform: `rotate(${shuffle.rotationQuarterTurns * 90}deg)`,
-          pointerEvents: 'none',
-        } satisfies Partial<CSSStyleDeclaration>);
-        const face = document.createElement('div');
-        face.className = 'ptcgsim-card__face';
-        const image = document.createElement('img');
-        image.alt = '';
-        image.draggable = false;
-        image.src = shuffle.imageUrl;
-        face.append(image);
-        ghost.append(face);
-        layer.append(ghost);
-        this.ghosts.add(ghost);
+    const cover = next.cards.find(
+      (card) => card.parentId === shuffle.zoneId && card.renderKey !== null
+    );
+    const order = riffleOrder(
+      next.zones.find((zone) => zone.id === shuffle.zoneId)?.count ??
+        RIFFLE_PACKETS
+    );
+    const timing: KeyframeAnimationOptions = {
+      duration: RIFFLE_MS * scale,
+      delay: shuffle.delay * 1000 * scale,
+      // Only while it runs: until then (cards still landing on the pile) the
+      // pile is itself, and the copies are hidden by their own style.
+      fill: 'none',
+    };
+    const play = (element: HTMLElement, keyframes: Keyframe[]) => {
+      if (!canAnimate(element)) return null;
+      const animation = element.animate(keyframes, timing);
+      // Picking the pile up ends its riffle at once (stopCardExtras).
+      this.track(animation, cover?.renderKey ?? undefined);
+      return animation;
+    };
+    const pile = cover?.renderKey
+      ? this.elements.get(cover.renderKey)
+      : undefined;
+    if (pile) play(pile, [{ opacity: 0 }, { opacity: 0 }]);
+    const across =
+      shuffle.rotationQuarterTurns % 2 === 0 ? rect.width : rect.height;
+    const spread = across * RIFFLE_SPREAD;
+    // Drawn in from the edge of the window when a half would not fit.
+    const middle = rect.x + rect.width / 2;
+    const shift = riffleShift(
+      {
+        left: middle - across / 2 - RIFFLE_MARGIN,
+        right: next.viewport.width - RIFFLE_MARGIN - (middle + across / 2),
+      },
+      across
+    );
+    const lift = rect.height * 0.06;
+    const splay = RIFFLE_SPLAY * 90;
+    const pose = (
+      x: number,
+      y: number,
+      degrees: number,
+      size = 1,
+      opacity = 1
+    ): Keyframe => ({
+      translate: `${x.toFixed(1)}px ${y.toFixed(1)}px`,
+      rotate: `${degrees.toFixed(2)}deg`,
+      scale: String(size),
+      opacity,
+    });
+    const at = (offset: number, frame: Keyframe, easing = 'linear') => ({
+      ...frame,
+      offset: Math.max(0, Math.min(1, offset)),
+      easing,
+    });
+    const copy = (keyframes: Keyframe[]) => {
+      const ghost = document.createElement('div');
+      ghost.className = 'ptcgsim-card-ghost ptcgsim-card-ghost--riffle';
+      ghost.setAttribute('aria-hidden', 'true');
+      Object.assign(ghost.style, {
+        position: 'absolute',
+        left: `${rect.x}px`,
+        top: `${rect.y}px`,
+        width: `${rect.width}px`,
+        height: `${rect.height}px`,
+        transform: `rotate(${shuffle.rotationQuarterTurns * 90}deg)`,
+        pointerEvents: 'none',
+        opacity: '0',
+      } satisfies Partial<CSSStyleDeclaration>);
+      const face = document.createElement('div');
+      face.className = 'ptcgsim-card__face';
+      const image = document.createElement('img');
+      image.alt = '';
+      image.draggable = false;
+      image.src = shuffle.imageUrl;
+      face.append(image);
+      ghost.append(face);
+      layer.append(ghost);
+      this.ghosts.add(ghost);
+      this.notify();
+      const remove = () => {
+        ghost.remove();
+        this.ghosts.delete(ghost);
         this.notify();
-        const remove = () => {
-          ghost.remove();
-          this.ghosts.delete(ghost);
-          this.notify();
-        };
-        if (!canAnimate(ghost)) {
-          remove();
-          continue;
-        }
-        const out = side * spread * (0.7 + index * 0.3);
-        const tilt = side * (5 + index * 2);
-        // The halves interleave: cards from each side land alternately.
-        const landing = 0.62 + (index * 2 + halfIndex) * 0.07;
-        const animation = ghost.animate(
-          [
-            { translate: '0px 0px', rotate: '0deg', offset: 0 },
-            {
-              translate: `${out.toFixed(1)}px ${(-lift).toFixed(1)}px`,
-              rotate: `${tilt}deg`,
-              offset: 0.32,
-            },
-            {
-              translate: `${(out * 0.35).toFixed(1)}px ${(-lift * 0.6).toFixed(1)}px`,
-              rotate: `${tilt * 0.4}deg`,
-              offset: Math.min(0.9, landing - 0.12),
-            },
-            {
-              translate: '0px 0px',
-              rotate: '0deg',
-              offset: Math.min(0.97, landing),
-            },
-            { translate: '0px 0px', rotate: '0deg', offset: 1 },
-          ],
-          {
-            duration: 900 * scale,
-            delay: (shuffle.delay * 1000 + index * 30) * scale,
-            easing: 'cubic-bezier(0.45, 0, 0.25, 1)',
-            fill: 'backwards',
-          }
-        );
-        this.track(animation);
-        void animation.finished.then(remove, remove);
-      }
+      };
+      const animation = play(ghost, keyframes);
+      if (!animation) remove();
+      else void animation.finished.then(remove, remove);
+    };
+    const swing = 'cubic-bezier(0.45, 0, 0.25, 1)';
+    // Each half shows until its last packet has left it. The bottom half is
+    // drawn first, under the top half lifted off it.
+    for (const half of ['lower', 'upper'] as const) {
+      const side = riffleSide(half);
+      const gone = rifflePacketTrip(
+        order,
+        order.halves.lastIndexOf(half)
+      ).leaves;
+      const apart = pose(shift + side * spread, 0, side * splay);
+      copy([
+        at(0, pose(0, 0, 0), half === 'upper' ? 'ease-in' : swing),
+        ...(half === 'upper'
+          ? [
+              at(
+                RIFFLE_CUT / 2,
+                pose(
+                  (shift + side * spread) / 2,
+                  -lift,
+                  (side * splay) / 2,
+                  1.05
+                ),
+                'ease-out'
+              ),
+            ]
+          : []),
+        at(RIFFLE_CUT, apart),
+        at(gone - 0.001, apart),
+        at(gone, { ...apart, opacity: 0 }),
+        at(1, { ...apart, opacity: 0 }),
+      ]);
+    }
+    // The packets, each drawn over the one that landed before it; landed,
+    // the top one is the new pile, put back where the deck lay as it squares
+    // up. One the next has covered goes, so their shadows never pile up.
+    const gathered = pose(shift, 0, 0);
+    order.halves.forEach((half, index) => {
+      const side = riffleSide(half);
+      const { leaves, lands } = rifflePacketTrip(order, index);
+      const covered =
+        index + 1 < order.halves.length
+          ? rifflePacketTrip(order, index + 1).lands
+          : null;
+      const off = pose(shift + side * spread, 0, side * splay);
+      copy([
+        at(0, { ...off, opacity: 0 }),
+        at(leaves - 0.001, { ...off, opacity: 0 }),
+        at(leaves, off, 'ease-in'),
+        at(
+          (leaves + lands) / 2,
+          pose(
+            shift + (side * spread) / 2,
+            -lift * 0.7,
+            (side * splay) / 2,
+            1.05
+          ),
+          'ease-out'
+        ),
+        at(lands, gathered),
+        ...(covered === null
+          ? [at(RIFFLE_DROPPED, gathered, swing), at(1, pose(0, 0, 0))]
+          : [
+              at(covered, gathered),
+              at(covered + 0.001, { ...gathered, opacity: 0 }),
+              at(1, { ...gathered, opacity: 0 }),
+            ]),
+      ]);
     });
   }
 
