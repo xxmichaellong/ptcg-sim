@@ -1326,7 +1326,16 @@ export class BoardMotionDirector {
         this.ghosts.delete(ghost);
         this.notify();
       };
-      const animation = play(ghost, keyframes);
+      // A browser refuses keyframes whose offsets go back (it throws), which
+      // would break the commit: never let a rounding make one.
+      let reached = 0;
+      const animation = play(
+        ghost,
+        keyframes.map((frame) => {
+          reached = Math.max(reached, frame.offset ?? reached);
+          return { ...frame, offset: reached };
+        })
+      );
       if (!animation) remove();
       else void animation.finished.then(remove, remove);
     };
@@ -1357,7 +1366,8 @@ export class BoardMotionDirector {
             ]
           : []),
         at(RIFFLE_CUT, apart),
-        at(gone - 0.001, apart),
+        // A half of one packet gives it up the moment the cut ends.
+        at(Math.max(RIFFLE_CUT, gone - 0.001), apart),
         at(gone, { ...apart, opacity: 0 }),
         at(1, { ...apart, opacity: 0 }),
       ]);

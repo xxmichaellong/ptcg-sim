@@ -33,6 +33,14 @@ beforeEach(() => {
     keyframes: Keyframe[] | PropertyIndexedKeyframes | null,
     options?: number | KeyframeAnimationOptions
   ): Animation {
+    // As a browser does: offsets that go back are refused with a throw.
+    const offsets = Array.isArray(keyframes)
+      ? keyframes.flatMap((frame) =>
+          typeof frame.offset === 'number' ? [frame.offset] : []
+        )
+      : [];
+    if (offsets.some((offset, index) => offset < (offsets[index - 1] ?? 0)))
+      throw new TypeError('Offsets must be monotonically non-decreasing.');
     let resolve: () => void = () => undefined;
     let reject: (reason: unknown) => void = () => undefined;
     const finished = new Promise<Animation>((done, fail) => {
@@ -659,6 +667,61 @@ describe('BoardMotionDirector', () => {
         expect(
           recorded.find((entry) => entry.element === copy)!.cancel
         ).toHaveBeenCalled();
+      test.director.cancelAll();
+    }
+  });
+
+  it('riffles a deck of only a few cards without a keyframe going back', () => {
+    const deckId = 'zone:spike-blue:deck';
+    for (const count of [2, 3]) {
+      const few = base.zones[deckId]!.cards.slice(0, count);
+      const small: MatchViewState = {
+        ...base,
+        zones: {
+          ...base.zones,
+          [deckId]: { ...base.zones[deckId]!, cards: few },
+        },
+      };
+      const shuffled: MatchViewState = {
+        ...small,
+        revision: small.revision + 1,
+        zones: {
+          ...small.zones,
+          [deckId]: {
+            ...small.zones[deckId]!,
+            cards: few.map((card, index) => ({
+              ...card,
+              id: `few-${count}-${index}` as CardSceneNode['id'],
+            })),
+          },
+        },
+      };
+      const before = sceneOf(small);
+      const after = sceneOf(shuffled);
+      recorded = [];
+      const test = setup();
+      test.register(before);
+      test.register(after);
+      test.director.commit(
+        null,
+        before,
+        undefined,
+        paintedOf(before),
+        new Set()
+      );
+      // A browser throws on offsets that go back, which broke the commit.
+      expect(() =>
+        test.director.commit(
+          before,
+          after,
+          { cause: 'advance' },
+          paintedOf(after),
+          new Set()
+        )
+      ).not.toThrow();
+      expect(
+        test.ghostLayer.querySelectorAll('.ptcgsim-card-ghost--riffle')
+      ).toHaveLength(2 + riffleOrder(count).halves.length);
       test.director.cancelAll();
     }
   });
