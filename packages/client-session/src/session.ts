@@ -6,6 +6,7 @@ import {
   type MatchViewState,
 } from '@ptcgsim/game-core';
 import {
+  HEARTBEAT_PING_ID,
   hydrateMatchViewState,
   MAX_CHAT_CODE_UNITS,
   MAX_CLIENT_FRAME_CODE_UNITS,
@@ -284,7 +285,8 @@ export class RemoteGameSession {
     ServerMessage,
     { type: 'MulliganAnnouncement' | 'DeckViewAnnouncement' }
   >['event'][] = [];
-  private readonly pingTimes = new Map<number, number>();
+  /** When the Ping still unanswered went out. */
+  private pingSentAt: number | undefined;
   private state: ClientSessionState = initialState();
   private options?: Omit<
     ConnectSessionOptions,
@@ -308,7 +310,6 @@ export class RemoteGameSession {
   private reconnectingSince?: number;
   private reconnectAttempts = 0;
   private manualClose = false;
-  private nextPingId = 0;
   private replayTransfer?: ReplayTransfer;
 
   constructor(dependencies: ClientSessionDependencies) {
@@ -353,7 +354,7 @@ export class RemoteGameSession {
     this.ownRevisions.clear();
     this.presentedRevision = -1;
     this.deferredAnnouncements = [];
-    this.pingTimes.clear();
+    this.pingSentAt = undefined;
     this.replayTransfer = undefined;
     this.options = {
       url: options.url,
@@ -498,19 +499,26 @@ export class RemoteGameSession {
     return sent;
   }
 
+  /**
+   * Asks the room for a sign of life. Always the same frame
+   * (HEARTBEAT_PING_FRAME), which the Worker's runtime answers without
+   * waking the room (ADR-051); so one Ping is out at a time, and its Pong
+   * times the connection.
+   */
   ping(): number | undefined {
     if (this.state.phase !== 'ready') return undefined;
-    const id = this.nextPingId++;
-    this.pingTimes.set(id, this.now());
-    if (this.pingTimes.size > 32) {
-      const oldest = this.pingTimes.keys().next().value;
-      if (oldest !== undefined) this.pingTimes.delete(oldest);
-    }
-    if (!this.send({ type: 'Ping', protocolVersion: PROTOCOL_VERSION, id })) {
-      this.pingTimes.delete(id);
+    const sentAt = this.now();
+    if (
+      !this.send({
+        type: 'Ping',
+        protocolVersion: PROTOCOL_VERSION,
+        id: HEARTBEAT_PING_ID,
+      })
+    ) {
       return undefined;
     }
-    return id;
+    this.pingSentAt = sentAt;
+    return HEARTBEAT_PING_ID;
   }
 
   /**
@@ -741,9 +749,9 @@ export class RemoteGameSession {
         });
         return;
       case 'Pong': {
-        const started = this.pingTimes.get(message.id);
-        if (started === undefined) return;
-        this.pingTimes.delete(message.id);
+        const started = this.pingSentAt;
+        if (message.id !== HEARTBEAT_PING_ID || started === undefined) return;
+        this.pingSentAt = undefined;
         this.updateState({ latencyMs: Math.max(0, this.now() - started) });
         return;
       }

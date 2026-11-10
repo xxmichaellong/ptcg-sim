@@ -1,4 +1,6 @@
 import {
+  HEARTBEAT_PING_FRAME,
+  HEARTBEAT_PONG_FRAME,
   MAX_SERVER_FRAME_CODE_UNITS,
   PRESENTATION_LEVEL,
   PROTOCOL_VERSION,
@@ -1735,14 +1737,11 @@ describe('RemoteGameSession', () => {
       expect.objectContaining({ delayMs: 25_000 }),
     ]);
     test.scheduler.runNext();
-    const ping = clientFrame(socket, socket.sent.length - 1);
-    expect(ping).toMatchObject({ type: 'Ping' });
+    // Always the exact frame the Worker's runtime answers itself, so the
+    // heartbeat never wakes the room (ADR-051).
+    expect(socket.sent.at(-1)).toBe(HEARTBEAT_PING_FRAME);
     // Answered: alive, and asked again only after another quiet while.
-    socket.serverMessage({
-      type: 'Pong',
-      protocolVersion: PROTOCOL_VERSION,
-      id: (ping as Extract<ClientMessage, { type: 'Ping' }>).id,
-    });
+    socket.serverMessage(HEARTBEAT_PONG_FRAME);
     expect([...test.scheduler.tasks.values()]).toEqual([
       expect.objectContaining({ delayMs: 25_000 }),
     ]);

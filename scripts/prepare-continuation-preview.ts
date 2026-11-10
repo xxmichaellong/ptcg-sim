@@ -49,10 +49,15 @@ const EXPECTED_SOURCE_CONFIG_KEYS = Object.freeze([
   'name',
   'observability',
   'ratelimits',
+  // The beta's Custom Domain and no workers.dev address (ADR-051). Not
+  // copied: a continuation preview is its own Worker on workers.dev alone,
+  // and must never take the beta's domain.
+  'routes',
   // The daily current-decks refresh (ADR-029). Not copied: a short-lived
   // continuation preview has no use for a scheduled Limitless fetch.
   'triggers',
   'vars',
+  'workers_dev',
 ]);
 const EXPECTED_RATE_LIMIT_BINDINGS = Object.freeze([
   'ROOM_CREATION_RATE_LIMITER',

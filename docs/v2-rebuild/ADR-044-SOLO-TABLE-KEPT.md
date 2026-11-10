@@ -6,6 +6,8 @@
   means that solo rooms could just be turned into multiplayer rooms without
   the player actually needing to leave and join a new room").
 - Decision date: 2026-11-05
+- Amended by ADR-051 (2026-11-10): the room is kept a day after its last
+  use, then deleted; the next visit opens a new table.
 - Number: 044; its parity exception is PX-085.
 - Amends: ADR-018 (a seat capability may now outlive the page that was
   given it), ADR-020 (the creator's custody keeps one claim beyond memory).

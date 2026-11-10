@@ -5,9 +5,11 @@ import {
   RoomAuthorityCoordinator,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
-import type {
-  RoomCreationRequest,
-  RoomCreationResponse,
+import {
+  HEARTBEAT_PING_FRAME,
+  HEARTBEAT_PONG_FRAME,
+  type RoomCreationRequest,
+  type RoomCreationResponse,
 } from '@ptcgsim/protocol';
 
 import { handleAdmissionTicketRequest } from './admission-ticket-http.js';
@@ -555,6 +557,14 @@ export class PtcgRoom extends DurableObject<Env> {
       nextSaveId: createContinuationSaveId,
     });
     this.telemetry = createTelemetry('room', env.BUILD_ID);
+    // A quiet client's heartbeat is answered by the runtime, so it never
+    // wakes the room or keeps it awake: a room asleep isn't billed (ADR-051).
+    ctx.setWebSocketAutoResponse(
+      new WebSocketRequestResponsePair(
+        HEARTBEAT_PING_FRAME,
+        HEARTBEAT_PONG_FRAME
+      )
+    );
     this.runtimePromise = this.restoreRuntime();
   }
 
@@ -961,14 +971,22 @@ export class PtcgRoom extends DurableObject<Env> {
     const nextSocketAdmission = await this.expireSocketAdmissions(now, runtime);
     await runtime?.hub.expireDisconnectedSessions(now);
     const nextReconnect = runtime?.hub.nextReconnectExpiry();
+    // Read before the room can go: deleting it gives its code back.
+    const alias = await this.ctx.storage.get<string>(ROOM_ALIAS_STORAGE_KEY);
     let result;
+    let idleDeadline;
     try {
-      result = await this.store.expireUnclaimedRoom(now);
+      result = await this.store.expireUnclaimedRoom(
+        now,
+        this.ctx.getWebSockets().length > 0
+      );
+      idleDeadline =
+        result === 'claimed' ? await this.store.roomIdleDeadline() : undefined;
     } catch (error) {
       this.telemetry.failure({ subsystem: 'room_alarm', retryable: true });
       throw error;
     }
-    const nextDeadline = [nextSocketAdmission, nextReconnect].reduce<
+    const nextDeadline = [nextSocketAdmission, nextReconnect, idleDeadline].reduce<
       number | undefined
     >(
       (next, deadline) =>
@@ -1001,6 +1019,15 @@ export class PtcgRoom extends DurableObject<Env> {
     this.runtimePromise = Promise.resolve(undefined);
     for (const socket of this.ctx.getWebSockets()) {
       socket.close(4404, 'Room expired before admission');
+    }
+    if (alias) {
+      try {
+        await this.env.PTCG_ROOM_CODE.getByName(alias).release(
+          this.ctx.id.name ?? ''
+        );
+      } catch {
+        // Its lease runs out on its own (ROOM_ALIAS_LEASE_MS).
+      }
     }
     this.telemetry.roomLifecycle({
       outcome: 'expired',
@@ -1074,12 +1101,18 @@ export class PtcgRoom extends DurableObject<Env> {
   ): Promise<void> {
     const nextDeadline = await this.expireSocketAdmissions(now, runtime);
     const nextReconnect = runtime.hub.nextReconnectExpiry();
-    const earliest =
-      nextDeadline === undefined
-        ? nextReconnect
-        : nextReconnect === undefined
-          ? nextDeadline
-          : Math.min(nextDeadline, nextReconnect);
+    const idleDeadline = await this.store.roomIdleDeadline();
+    const earliest = [nextDeadline, nextReconnect, idleDeadline].reduce<
+      number | undefined
+    >(
+      (next, deadline) =>
+        deadline === undefined
+          ? next
+          : next === undefined
+            ? deadline
+            : Math.min(next, deadline),
+      undefined
+    );
     if (earliest === undefined) {
       await this.ctx.storage.deleteAlarm();
     } else {

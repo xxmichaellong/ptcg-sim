@@ -83,11 +83,9 @@ describe('representative runtime payload budgets', () => {
     expect(storage.serializedBytes).toBeLessThanOrEqual(
       PAYLOAD_BUDGETS.durableStorageBytes
     );
+    // No journal of moves or admissions (ADR-051).
     expect(Object.keys(storage.categories).sort()).toEqual([
-      'authority:admission:*',
       'authority:frontier',
-      'authority:journal-retention',
-      'authority:journal:*',
       'authority:snapshot',
       'room:lifecycle',
       'room:rate-limits',

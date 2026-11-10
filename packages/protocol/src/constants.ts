@@ -1,4 +1,20 @@
 export const PROTOCOL_VERSION = 2 as const;
+/**
+ * A quiet connection's sign of life, always this exact frame, and its
+ * answer (ADR-051). The Worker's runtime answers it itself, so a heartbeat
+ * never wakes the room: a room asleep between moves isn't billed.
+ */
+export const HEARTBEAT_PING_ID = 0;
+export const HEARTBEAT_PING_FRAME = JSON.stringify({
+  type: 'Ping',
+  protocolVersion: PROTOCOL_VERSION,
+  id: HEARTBEAT_PING_ID,
+});
+export const HEARTBEAT_PONG_FRAME = JSON.stringify({
+  type: 'Pong',
+  protocolVersion: PROTOCOL_VERSION,
+  id: HEARTBEAT_PING_ID,
+});
 export const MAX_CLIENT_FRAME_CODE_UNITS = 64 * 1024;
 export const MAX_SERVER_FRAME_CODE_UNITS = 512 * 1024;
 export const MAX_CHAT_CODE_UNITS = 1_000;

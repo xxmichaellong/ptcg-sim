@@ -4,6 +4,12 @@
   "main": "src/worker.ts",
   "compatibility_date": "2026-08-31",
   "compatibility_flags": ["nodejs_compat"],
+  // Production is the public beta (ADR-051), at a Custom Domain: Cloudflare
+  // keeps its DNS record and certificate. ptcgsim.online and www stay v1's.
+  // Only the zone's address, so the zone's rate limit sees every request:
+  // no workers.dev address beside it.
+  "routes": [{ "pattern": "beta.ptcgsim.online", "custom_domain": true }],
+  "workers_dev": false,
   "vars": {
     "BUILD_ID": "local-development",
     // The tournament deck index stays off until the account is on Workers
@@ -192,6 +198,10 @@
   "env": {
     "preview": {
       "name": "ptcgsim-v2-preview",
+      // Never the beta's domain (routes are inherited): its workers.dev
+      // address alone.
+      "routes": [],
+      "workers_dev": true,
       "vars": {
         "BUILD_ID": "local-development",
         // Off until Workers Paid, as in production (ADR-037).

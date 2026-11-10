@@ -24,10 +24,11 @@ import {
 import {
   JOURNAL_RETENTION_STORAGE_KEY,
   initialJournalRetentionIndex,
-  journalStorageKey,
-  prepareJournalRetention,
 } from './journal-retention.js';
-import type { DurableStorageLike } from './durable-storage-types.js';
+import type {
+  DurableStorageLike,
+  DurableStorageTransactionLike,
+} from './durable-storage-types.js';
 export type {
   DurableStorageLike,
   DurableStorageTransactionLike,
@@ -39,6 +40,16 @@ import { chunkedSnapshotStorage } from './snapshot-storage.js';
 export const AUTHORITY_SNAPSHOT_STORAGE_KEY = 'authority:snapshot';
 export const AUTHORITY_FRONTIER_STORAGE_KEY = 'authority:frontier';
 export const ROOM_LIFECYCLE_STORAGE_KEY = 'room:lifecycle';
+/**
+ * A claimed room nobody has used for this long is deleted, and its data
+ * with it (ADR-051): rooms are kept for the game being played, not after.
+ */
+export const ROOM_IDLE_LIFETIME_MS = 24 * 60 * 60_000;
+/**
+ * How far a claimed room's idle deadline may fall behind before a use
+ * moves it on: a busy room writes it about once an hour, not every move.
+ */
+export const ROOM_IDLE_REFRESH_MS = 60 * 60_000;
 const ROOM_CONTINUATION_ORIGIN_STORAGE_KEY = 'room:continuation-origin';
 const LEGACY_STORAGE_FORMAT = 'ptcgsim-room-authority-v1';
 const PREVIOUS_STORAGE_FORMAT = 'ptcgsim-room-authority-v2';
@@ -67,6 +78,8 @@ type StoredRoomLifecycle =
       readonly state: 'claimed';
       readonly createdAt: number;
       readonly claimedAtAuthorityVersion: number;
+      /** Deleted from here on if nobody uses it meanwhile (ADR-051). */
+      readonly idleExpiresAt?: number;
     }
   | {
       readonly format: 'ptcgsim-room-lifecycle-v1';
@@ -311,8 +324,10 @@ const readStoredRoomLifecycle = (
   const state = Reflect.get(value, 'state');
   const createdAt = Reflect.get(value, 'createdAt');
   if (state === 'claimed') {
+    const idleExpiresAt = Reflect.get(value, 'idleExpiresAt');
     if (
-      !safeNonNegativeInteger(Reflect.get(value, 'claimedAtAuthorityVersion'))
+      !safeNonNegativeInteger(Reflect.get(value, 'claimedAtAuthorityVersion')) ||
+      (idleExpiresAt !== undefined && !safeNonNegativeInteger(idleExpiresAt))
     ) {
       throw new Error('Stored room lifecycle is malformed');
     }
@@ -330,10 +345,45 @@ const readStoredRoomLifecycle = (
   return value as StoredRoomLifecycle;
 };
 
+/**
+ * Makes sure an alarm will come by a claimed room's new idle deadline. Any
+ * alarm already set comes sooner (the old deadline, or a socket's), and
+ * the alarm then sets the next one; only a room with none needs it set.
+ */
+const armIdleDeadline = async (
+  transaction: Pick<DurableStorageTransactionLike, 'getAlarm' | 'setAlarm'>,
+  lifecycle: Extract<StoredRoomLifecycle, { state: 'claimed' }>
+): Promise<void> => {
+  if (lifecycle.idleExpiresAt === undefined) return;
+  if ((await transaction.getAlarm()) === null) {
+    await transaction.setAlarm(lifecycle.idleExpiresAt);
+  }
+};
+
 export const storedRoomLifecycleState = (
   value: unknown
 ): StoredRoomLifecycle['state'] | undefined =>
   readStoredRoomLifecycle(value)?.state;
+
+/**
+ * A claimed room's lifecycle with its idle deadline moved on, when a use at
+ * `now` should move it (it has none, or it is an hour stale); else
+ * undefined, and nothing is written.
+ */
+const refreshedIdleLifecycle = (
+  lifecycle: StoredRoomLifecycle | undefined,
+  now: number | undefined
+): Extract<StoredRoomLifecycle, { state: 'claimed' }> | undefined => {
+  if (lifecycle?.state !== 'claimed' || now === undefined) return undefined;
+  const idleExpiresAt = now + ROOM_IDLE_LIFETIME_MS;
+  if (
+    lifecycle.idleExpiresAt !== undefined &&
+    idleExpiresAt - lifecycle.idleExpiresAt < ROOM_IDLE_REFRESH_MS
+  ) {
+    return undefined;
+  }
+  return { ...lifecycle, idleExpiresAt };
+};
 
 const validInitializationLifecycle = (
   lifecycle: RoomInitializationLifecycle
@@ -627,7 +677,9 @@ export class DurableRoomSnapshotStore
   constructor(
     storage: DurableStorageLike,
     private readonly monotonicNow: () => number = () => performance.now(),
-    private readonly nextAuthorityGeneration: () => string = defaultAuthorityGeneration
+    private readonly nextAuthorityGeneration: () => string = defaultAuthorityGeneration,
+    /** The wall clock a claimed room's idle deadline is set by. */
+    private readonly wallClock: () => number = Date.now
   ) {
     this.storage = chunkedSnapshotStorage(
       storage,
@@ -745,9 +797,6 @@ export class DurableRoomSnapshotStore
           snapshot,
         } satisfies StoredAuthoritySnapshot,
         [AUTHORITY_FRONTIER_STORAGE_KEY]: frontier,
-        [JOURNAL_RETENTION_STORAGE_KEY]: initialJournalRetentionIndex(
-          snapshot.authorityVersion
-        ),
         ...(lifecycle
           ? {
               [ROOM_LIFECYCLE_STORAGE_KEY]: {
@@ -861,7 +910,10 @@ export class DurableRoomSnapshotStore
         rawLifecycle === undefined ||
         rawRetention === undefined ||
         authorityJournal.size > 0 ||
-        admissionJournal.size > 0
+        admissionJournal.size > 0 ||
+        // Played or joined since: no journal says so now (ADR-051), its
+        // frontier does.
+        readStoredFrontier(rawFrontier)?.authorityVersion !== 0
       ) {
         throw new Error('Stored continuation target is incomplete');
       }
@@ -900,6 +952,28 @@ export class DurableRoomSnapshotStore
     return result.created;
   }
 
+  /** The wall clock's reading, or undefined if it gives no usable time. */
+  private wallTime(): number | undefined {
+    try {
+      const now = this.wallClock();
+      return safeNonNegativeInteger(now) ? now : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * When a claimed room is deleted unless it is used before then
+   * (ADR-051): undefined for a room not yet claimed, or one claimed
+   * before rooms had the deadline.
+   */
+  async roomIdleDeadline(): Promise<number | undefined> {
+    const lifecycle = readStoredRoomLifecycle(
+      await this.storage.get<unknown>(ROOM_LIFECYCLE_STORAGE_KEY)
+    );
+    return lifecycle?.state === 'claimed' ? lifecycle.idleExpiresAt : undefined;
+  }
+
   private createGeneration(): string {
     const generation = this.nextAuthorityGeneration();
     if (!validGeneration(generation)) {
@@ -908,7 +982,17 @@ export class DurableRoomSnapshotStore
     return generation;
   }
 
-  async expireUnclaimedRoom(now: number): Promise<UnclaimedRoomExpiryResult> {
+  /**
+   * The room's alarm, for its lifecycle: a room nobody claimed in time is
+   * deleted, and so is a claimed one past its idle deadline with nobody
+   * connected (`occupied` false; ADR-051). Someone still connected keeps
+   * it another day. 'claimed' leaves the alarm unset for the Worker to set
+   * by the soonest of the room's deadlines (roomIdleDeadline among them).
+   */
+  async expireUnclaimedRoom(
+    now: number,
+    occupied = false
+  ): Promise<UnclaimedRoomExpiryResult> {
     if (!safeNonNegativeInteger(now)) {
       throw new Error('Room expiry clock is invalid');
     }
@@ -976,7 +1060,29 @@ export class DurableRoomSnapshotStore
 
       if (lifecycle.state === 'claimed') {
         await transaction.deleteAlarm();
-        return { status: 'claimed' as const, deleteRoom: false, pairChanged };
+        const idleExpiresAt = lifecycle.idleExpiresAt;
+        if (idleExpiresAt === undefined || now < idleExpiresAt || occupied) {
+          // Claimed before rooms had the deadline, or kept by someone
+          // still there: a day from now. Otherwise still within it.
+          if (idleExpiresAt === undefined || now >= idleExpiresAt) {
+            await transaction.put({
+              [ROOM_LIFECYCLE_STORAGE_KEY]: {
+                ...lifecycle,
+                idleExpiresAt: now + ROOM_IDLE_LIFETIME_MS,
+              } satisfies StoredRoomLifecycle,
+            });
+          }
+          return { status: 'claimed' as const, deleteRoom: false, pairChanged };
+        }
+        await transaction.put({
+          [ROOM_LIFECYCLE_STORAGE_KEY]: {
+            format: 'ptcgsim-room-lifecycle-v1',
+            state: 'expiring',
+            createdAt: lifecycle.createdAt,
+            unclaimedExpiresAt: Math.max(idleExpiresAt, lifecycle.createdAt + 1),
+          } satisfies StoredRoomLifecycle,
+        });
+        return { status: 'expired' as const, deleteRoom: true, pairChanged };
       }
       if (lifecycle.state === 'expiring') {
         return { status: 'expired' as const, deleteRoom: true, pairChanged };
@@ -1135,33 +1241,10 @@ export class DurableRoomSnapshotStore
             'Authority commit did not advance exactly one version'
           );
         }
-        const key = journalStorageKey(
-          'authority',
-          transaction.snapshot.authorityVersion
-        );
-        if ((await storageTransaction.get<unknown>(key)) !== undefined) {
-          throw new Error('Authority journal key collision');
-        }
-        const journalEntry: StoredAuthorityJournalEntry = {
-          format: STORAGE_FORMAT,
-          expectedAuthorityVersion: transaction.expectedAuthorityVersion,
-          resultingAuthorityVersion: transaction.snapshot.authorityVersion,
-          expectedRevision: transaction.expectedRevision,
-          resultingRevision: transaction.snapshot.state.revision,
-          sessionId: transaction.sessionId,
-          outcome: transaction.outcome,
-          ...(transaction.eventBatch
-            ? { eventBatch: transaction.eventBatch }
-            : {}),
-        };
-        const retained = await prepareJournalRetention(
-          storageTransaction,
-          'authority',
-          key,
-          journalEntry,
-          current.authorityVersion,
-          transaction.snapshot.authorityVersion
-        );
+        // Two rows a move: the snapshot and its frontier (ADR-051). There
+        // is no journal of moves: nothing ever read it back, and each move
+        // wrote three more rows for it.
+        const idle = refreshedIdleLifecycle(lifecycle, this.wallTime());
         await storageTransaction.put({
           [AUTHORITY_SNAPSHOT_STORAGE_KEY]: {
             format: STORAGE_FORMAT,
@@ -1169,12 +1252,9 @@ export class DurableRoomSnapshotStore
             snapshot: transaction.snapshot,
           } satisfies StoredAuthoritySnapshot,
           [AUTHORITY_FRONTIER_STORAGE_KEY]: nextFrontier,
-          [key]: journalEntry,
-          [JOURNAL_RETENTION_STORAGE_KEY]: retained.index,
+          ...(idle ? { [ROOM_LIFECYCLE_STORAGE_KEY]: idle } : {}),
         });
-        if (retained.staleKeys.length > 0) {
-          await storageTransaction.delete([...retained.staleKeys]);
-        }
+        if (idle) await armIdleDeadline(storageTransaction, idle);
       });
     } catch (error) {
       if (this.validatedHead === capturedHead) this.validatedHead = undefined;
@@ -1247,72 +1327,33 @@ export class DurableRoomSnapshotStore
           );
         }
         assertAdmissionTransactionTransition(current, transaction);
-        const key = journalStorageKey(
-          'admission',
-          transaction.snapshot.authorityVersion
-        );
-        if ((await storageTransaction.get<unknown>(key)) !== undefined) {
-          throw new Error('Admission journal key collision');
-        }
-        const journalEntry: StoredAdmissionJournalEntry = {
-          format: STORAGE_FORMAT,
-          expectedAuthorityVersion: transaction.expectedAuthorityVersion,
-          resultingAuthorityVersion: transaction.snapshot.authorityVersion,
-          kind: transaction.kind,
-          ...(transaction.kind === 'invitation_issued'
-            ? { invitationDigest: transaction.invitationDigest }
-            : transaction.kind === 'ticket_issued'
-              ? {
-                  ticketDigest: transaction.ticketDigest,
-                  ...(transaction.sourceInvitationDigest
-                    ? {
-                        sourceInvitationDigest:
-                          transaction.sourceInvitationDigest,
-                      }
-                    : {}),
-                }
-              : transaction.kind === 'sessions_expired'
-                ? {
-                    sessionIds: transaction.sessionIds,
-                    expiredAt: transaction.expiredAt,
-                  }
-                : transaction.kind === 'room_opened' ||
-                    transaction.kind === 'room_reopened'
-                  ? {}
-                  : {
-                    sessionId: transaction.sessionId,
-                    ...(transaction.kind === 'session_disconnected'
-                      ? {
-                          disconnectedAt: transaction.disconnectedAt,
-                          reconnectExpiresAt: transaction.reconnectExpiresAt,
-                        }
-                      : {}),
-                    ...(transaction.admissionTicketDigest
-                      ? {
-                          admissionTicketDigest:
-                            transaction.admissionTicketDigest,
-                        }
-                      : {}),
-                    ...(transaction.invitationDigest
-                      ? { invitationDigest: transaction.invitationDigest }
-                      : {}),
-                    ...(transaction.resumedAt !== undefined
-                      ? { resumedAt: transaction.resumedAt }
-                      : {}),
-                  }),
-        };
-        const retained = await prepareJournalRetention(
-          storageTransaction,
-          'admission',
-          key,
-          journalEntry,
-          current.authorityVersion,
-          transaction.snapshot.authorityVersion
-        );
         const claimsRoom =
           transaction.kind === 'seat_claimed' ||
           transaction.kind === 'spectator_joined' ||
           transaction.kind === 'session_resumed';
+        const now = this.wallTime();
+        const claimed =
+          claimsRoom && lifecycle?.state === 'unclaimed'
+            ? ({
+                format: 'ptcgsim-room-lifecycle-v1',
+                state: 'claimed',
+                createdAt: lifecycle.createdAt,
+                claimedAtAuthorityVersion:
+                  transaction.snapshot.authorityVersion,
+                ...(now === undefined
+                  ? {}
+                  : { idleExpiresAt: now + ROOM_IDLE_LIFETIME_MS }),
+              } satisfies StoredRoomLifecycle)
+            : undefined;
+        // A player arriving or coming back uses the room; the room's own
+        // bookkeeping (a dropped connection, a seat given up) does not.
+        const idle =
+          claimed ??
+          (transaction.kind === 'session_disconnected' ||
+          transaction.kind === 'sessions_expired'
+            ? undefined
+            : refreshedIdleLifecycle(lifecycle, now));
+        // No journal of admissions either (ADR-051): nothing read it back.
         await storageTransaction.put({
           [AUTHORITY_SNAPSHOT_STORAGE_KEY]: {
             format: STORAGE_FORMAT,
@@ -1320,19 +1361,7 @@ export class DurableRoomSnapshotStore
             snapshot: transaction.snapshot,
           } satisfies StoredAuthoritySnapshot,
           [AUTHORITY_FRONTIER_STORAGE_KEY]: frontier,
-          [key]: journalEntry,
-          [JOURNAL_RETENTION_STORAGE_KEY]: retained.index,
-          ...(claimsRoom && lifecycle?.state === 'unclaimed'
-            ? {
-                [ROOM_LIFECYCLE_STORAGE_KEY]: {
-                  format: 'ptcgsim-room-lifecycle-v1',
-                  state: 'claimed',
-                  createdAt: lifecycle.createdAt,
-                  claimedAtAuthorityVersion:
-                    transaction.snapshot.authorityVersion,
-                } satisfies StoredRoomLifecycle,
-              }
-            : {}),
+          ...(idle ? { [ROOM_LIFECYCLE_STORAGE_KEY]: idle } : {}),
         });
         if (transaction.kind === 'session_disconnected') {
           const currentAlarm = await storageTransaction.getAlarm();
@@ -1343,11 +1372,16 @@ export class DurableRoomSnapshotStore
             await storageTransaction.setAlarm(transaction.reconnectExpiresAt);
           }
         }
-        if (claimsRoom && lifecycle?.state === 'unclaimed') {
-          await storageTransaction.deleteAlarm();
-        }
-        if (retained.staleKeys.length > 0) {
-          await storageTransaction.delete([...retained.staleKeys]);
+        if (claimed) {
+          // The unclaimed room's deadline gives way to the idle one; the
+          // Worker brings it forward for any socket's sooner deadline.
+          if (claimed.idleExpiresAt === undefined) {
+            await storageTransaction.deleteAlarm();
+          } else {
+            await storageTransaction.setAlarm(claimed.idleExpiresAt);
+          }
+        } else if (idle) {
+          await armIdleDeadline(storageTransaction, idle);
         }
       });
     } catch (error) {

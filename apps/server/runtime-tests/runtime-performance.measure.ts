@@ -2,7 +2,6 @@ import { PROTOCOL_VERSION } from '@ptcgsim/protocol';
 import { evictDurableObject } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { MAX_AUTHORITY_JOURNAL_ENTRIES } from '../src/journal-retention.js';
 import type { AcceptedCommandPerformanceObservation } from '../src/session-hub.js';
 import {
   nextServerFrames,
@@ -23,6 +22,12 @@ const REPORT_MARKER = 'PTCGSIM_PERFORMANCE_REPORT=';
 const FLIP_COIN_SAMPLES = 24;
 const HIBERNATION_WAKE_SAMPLES = 9;
 const JOURNAL_PLATEAU_ADVANCE_COMMANDS = 32;
+/**
+ * The commands that once filled the room's journal window. Rooms keep no
+ * journal now (ADR-051); the run still fills the actor's outcome window
+ * and advances past it, and checks the room's rows stay flat.
+ */
+const OUTCOME_WINDOW_COMMANDS = 128;
 
 interface Distribution {
   readonly samples: number;
@@ -183,7 +188,7 @@ describe('local workerd performance observation', () => {
     );
     const actorOutcomesAfterSamples = actor.nextClientSequence - 1;
     const commandsToFillOutcomeWindow =
-      MAX_AUTHORITY_JOURNAL_ENTRIES - actorOutcomesAfterSamples;
+      OUTCOME_WINDOW_COMMANDS - actorOutcomesAfterSamples;
     const journalFillMeasurements: RuntimeCommandMeasurement[] = [];
     for (let index = 0; index < commandsToFillOutcomeWindow; index += 1) {
       journalFillMeasurements.push(
@@ -423,18 +428,18 @@ describe('local workerd performance observation', () => {
     expect(
       report.durableResources.atRetentionBoundary.storageByCategory[
         'authority:journal:*'
-      ]?.count
-    ).toBe(MAX_AUTHORITY_JOURNAL_ENTRIES);
+      ]
+    ).toBeUndefined();
     expect(
       report.durableResources.afterPlateauAdvance.storageByCategory[
         'authority:journal:*'
-      ]?.count
-    ).toBe(MAX_AUTHORITY_JOURNAL_ENTRIES);
+      ]
+    ).toBeUndefined();
     expect(
       report.durableResources.afterPostHibernationCommit.storageByCategory[
         'authority:journal:*'
-      ]?.count
-    ).toBe(MAX_AUTHORITY_JOURNAL_ENTRIES);
+      ]
+    ).toBeUndefined();
     expect(report.durableResources.afterPlateauAdvance.storageEntryCount).toBe(
       report.durableResources.atRetentionBoundary.storageEntryCount
     );

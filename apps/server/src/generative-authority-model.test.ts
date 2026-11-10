@@ -27,6 +27,7 @@ import {
   type AuthorityPolicy,
   type AuthorityProcessResult,
   type OpaqueIdSource,
+  type PersistedAuthorityTransaction,
   type RoomAuthoritySnapshot,
 } from '@ptcgsim/room-authority';
 import {
@@ -42,9 +43,7 @@ import {
   DurableRoomSnapshotStore,
   AUTHORITY_SNAPSHOT_STORAGE_KEY,
   type DurableRoomSnapshotStore as DurableStore,
-  type StoredAuthorityJournalEntry,
 } from './durable-storage.js';
-import { journalStorageKey } from './journal-retention.js';
 import {
   GENERATED_MODEL_COMMAND_TYPES,
   MODEL_COMMAND_GENERATORS,
@@ -263,8 +262,30 @@ const initialSnapshot = (
   };
 };
 
+/**
+ * The store, noting what each commit asked it to persist (by the version
+ * it makes) before it tries: rooms keep no journal of moves (ADR-051), so
+ * this is where a commit's outcome and batch are checked.
+ */
+class RecordingSnapshotStore extends DurableRoomSnapshotStore {
+  constructor(
+    storage: MemoryDurableStorage,
+    generation: () => string,
+    private readonly attempted: Map<number, PersistedAuthorityTransaction>
+  ) {
+    super(storage, () => 0, generation);
+  }
+
+  override commit(transaction: PersistedAuthorityTransaction) {
+    this.attempted.set(transaction.snapshot.authorityVersion, transaction);
+    return super.commit(transaction);
+  }
+}
+
 interface ModelHarness {
   readonly seed: number;
+  /** Each commit's transaction, by the authority version it makes. */
+  readonly attempted: Map<number, PersistedAuthorityTransaction>;
   readonly modelRandom: SeededRandom;
   readonly authoritySource: DeterministicAuthoritySource;
   readonly storage: MemoryDurableStorage;
@@ -295,6 +316,7 @@ const createHarness = async (
   const authoritySource = new DeterministicAuthoritySource(seed);
   const harness = {
     seed,
+    attempted: new Map<number, PersistedAuthorityTransaction>(),
     modelRandom: new SeededRandom(seed),
     authoritySource,
     storage,
@@ -316,10 +338,10 @@ const createHarness = async (
     `${seed.toString(16).padStart(8, '0')}${(++harness.generationCounter)
       .toString(16)
       .padStart(24, '0')}`;
-  harness.store = new DurableRoomSnapshotStore(
+  harness.store = new RecordingSnapshotStore(
     storage,
-    () => 0,
-    harness.generation
+    harness.generation,
+    harness.attempted
   );
   const snapshot = initialSnapshot(seed, mode);
   await harness.store.initialize(snapshot);
@@ -990,9 +1012,7 @@ const submitScenarioCommand = async (
   capturePublishedViews(harness, result);
   assertSnapshotProofAndReplay(result);
   if (result.committed) {
-    const journal = harness.storage.values.get(
-      journalStorageKey('authority', result.snapshot.authorityVersion)
-    ) as StoredAuthorityJournalEntry | undefined;
+    const journal = harness.attempted.get(result.snapshot.authorityVersion);
     expect(journal?.outcome).toMatchObject({
       commandId: submitted.commandId,
       accepted: message.accepted,
@@ -1025,10 +1045,10 @@ const reconstructHarness = async (harness: ModelHarness): Promise<void> => {
   const before = harness.coordinator.currentSnapshot();
   const serialized = stableSerialize(before);
   const previousViews = new Map(harness.views);
-  harness.store = new DurableRoomSnapshotStore(
+  harness.store = new RecordingSnapshotStore(
     harness.storage,
-    () => 0,
-    harness.generation
+    harness.generation,
+    harness.attempted
   );
   const restored = await RoomAuthorityCoordinator.restore(harness.store, {
     commandContext: harness.authoritySource,
@@ -1217,9 +1237,7 @@ const runSeed = async (
         expect(harness.storage.transactionCalls).toBe(beforeTransactions + 1);
         expect(result.timing.breakdown.frontierFastPathHit).toBe(1);
         coverage.frontierHits += 1;
-        const journal = harness.storage.values.get(
-          journalStorageKey('authority', after.authorityVersion)
-        ) as StoredAuthorityJournalEntry | undefined;
+        const journal = harness.attempted.get(after.authorityVersion);
         expect(journal?.outcome).toMatchObject({
           commandId: submitted.commandId,
           clientSequence: submitted.clientSequence,
@@ -2414,9 +2432,9 @@ describe('named model scenarios', () => {
     expect(harness.authoritySource.callCounts().randomInts).toBe(
       beforeRetryCalls.randomInts + 1
     );
-    const retryJournal = harness.storage.values.get(
-      journalStorageKey('authority', retried.snapshot.authorityVersion)
-    ) as StoredAuthorityJournalEntry;
+    const retryJournal = harness.attempted.get(
+      retried.snapshot.authorityVersion
+    )!;
     expect(retryJournal.eventBatch).toEqual(
       retried.snapshot.replayHistory.entries.at(-1)?.batch
     );
@@ -2429,7 +2447,7 @@ describe('named model scenarios', () => {
       { type: 'FlipCoin' }
     );
     const beforePrecommitCalls = harness.authoritySource.callCounts();
-    harness.storage.failPutWhenKeyStartsWith = 'authority:journal:';
+    harness.storage.failPutWhenKeyStartsWith = 'authority:frontier';
     await expect(harness.coordinator.submit(precommitEnvelope)).rejects.toThrow(
       'injected transactional put failure'
     );
@@ -2486,25 +2504,20 @@ describe('named model scenarios', () => {
     ]!.recentOutcomes.find(
       (outcome) => outcome.commandId === ambiguousEnvelope.commandId
     )!;
-    const ambiguousJournal = harness.storage.values.get(
-      journalStorageKey('authority', committedAfterFailure.authorityVersion)
-    ) as StoredAuthorityJournalEntry;
+    const ambiguousJournal = harness.attempted.get(
+      committedAfterFailure.authorityVersion
+    )!;
     expect(ambiguousJournal.outcome).toMatchObject(ambiguousOutcome);
     expect(
       stableSerialize(
         applyEventBatch(beforeAmbiguous.state, ambiguousJournal.eventBatch!)
       )
     ).toBe(stableSerialize(committedAfterFailure.state));
+    // Durable once: one outcome for the command in the stored room.
     expect(
-      [...harness.storage.values.values()].filter((value) => {
-        if (typeof value !== 'object' || value === null) return false;
-        const outcome = Reflect.get(value, 'outcome');
-        return (
-          typeof outcome === 'object' &&
-          outcome !== null &&
-          Reflect.get(outcome, 'commandId') === ambiguousEnvelope.commandId
-        );
-      })
+      committedAfterFailure.sessions[playerOneSessionId]!.recentOutcomes.filter(
+        (outcome) => outcome.commandId === ambiguousEnvelope.commandId
+      )
     ).toHaveLength(1);
     const afterAmbiguousCalls = harness.authoritySource.callCounts();
     const beforeDuplicateStorage = stableSerialize([

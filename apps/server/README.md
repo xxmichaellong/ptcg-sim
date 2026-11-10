@@ -20,7 +20,7 @@ Operational patterns are adapted from MagicCircle commit
 `39f871cd63800e2317326425345a26e4d61846de`: bounded ingress, server-derived
 identity, explicit message tracking, admission freeze, and lifecycle race tests.
 PTCG Sim does not reuse MagicCircle's debounced per-user persistence because an
-accepted game command requires an atomic per-room journal commit.
+accepted game command requires an atomic per-room snapshot commit.
 
 Mulligan and deck-view declarations are explicit non-command exceptions: the
 hub derives the actor from the bound active player session and relays one typed
@@ -44,12 +44,12 @@ the refresh set, repairing a peer update that could not be emitted after an
 ambiguously successful admission write; clients accept only identical or
 display-name-only replacements.
 
-Recent audit rows are transactionally bounded independently from the authority
-snapshot: 128 command rows/512 KiB and 64 admission rows/128 KiB. The snapshot,
-new row, retention frontier, and displaced-row deletion commit or roll back
-together. The journal is recent operational evidence; room reconstruction and
+Rooms keep no journal of commands or admissions (ADR-051): nothing read it
+back, and it cost three of every move's five row writes. Room reconstruction and
 exact retries use the validated snapshot's canonical state, replay, sequence
-frontiers, and bounded outcomes.
+frontiers, and bounded outcomes. A move writes two rows, the snapshot and its
+frontier; a claimed room's lifecycle row moves its idle deadline at most hourly,
+and a room nobody has used or stayed in for a day is deleted.
 
 The hot multiplayer command path carries opaque in-process evidence from the
 exact recursively frozen predecessor snapshot into a verified candidate
@@ -70,8 +70,8 @@ has an optional 128-bit generation, while the strict v1 frontier binds that
 generation to the envelope/domain schemas, match, mode, authority version, and
 state revision. A proven multiplayer command whose source object, proof, and
 metadata match both the cache and stored frontier reads no durable snapshot.
-It rotates the generation and atomically writes the snapshot/frontier pair with
-the journal, retention index, and displaced-row deletion. Admissions still read
+It rotates the generation and atomically writes the snapshot/frontier pair.
+Admissions still read
 and fully validate their predecessor, verify that the declared admission kind
 alone explains the candidate delta, and pair lifecycle/alarm changes with the
 same write. Schema-v7 admission also persists the mode-bound player-seat limit;

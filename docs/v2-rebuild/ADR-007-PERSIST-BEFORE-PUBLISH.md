@@ -38,8 +38,9 @@ the command twice.
 returns them only after `persistence.commit`. Its transaction and coordinator
 tests prove commit ordering, failure-before-commit behavior, response-loss retry,
 dedupe, sequence gaps, rejection persistence, and ordered delivery. The Durable
-Object adapter stores snapshot, journal, frontier, retention, and lifecycle
-changes in one SQLite storage transaction.
+Object adapter stores snapshot, frontier, and lifecycle changes in one SQLite
+storage transaction. (It also stored a journal and its retention index until
+ADR-051 dropped them: nothing read them back.)
 
 Storage latency is part of user-visible command latency and stays instrumented.
 Rollback must use the last schema-compatible deployment and may redirect only

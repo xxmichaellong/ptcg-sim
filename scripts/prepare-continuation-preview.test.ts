@@ -424,7 +424,7 @@ describe('continuation managed-preview provisioner', () => {
       driftedConfig,
       checkedIn.replace(
         '"observability": {',
-        '"routes": ["production.example/*"],\n  "observability": {'
+        '"tail_consumers": [{ "service": "production-tail" }],\n  "observability": {'
       )
     );
     await assert.rejects(

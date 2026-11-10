@@ -40,18 +40,13 @@ import {
   AUTHORITY_SNAPSHOT_STORAGE_KEY,
   ConcurrentRoomWriteError,
   DurableRoomSnapshotStore,
+  ROOM_IDLE_LIFETIME_MS,
+  ROOM_IDLE_REFRESH_MS,
   ROOM_LIFECYCLE_STORAGE_KEY,
   RoomAlreadyInitializedError,
   RoomExpiredError,
   type StoredAuthorityFrontier,
 } from './durable-storage.js';
-import {
-  JOURNAL_RETENTION_STORAGE_KEY,
-  MAX_ADMISSION_JOURNAL_BYTES,
-  MAX_ADMISSION_JOURNAL_ENTRIES,
-  MAX_AUTHORITY_JOURNAL_BYTES,
-  MAX_AUTHORITY_JOURNAL_ENTRIES,
-} from './journal-retention.js';
 import { MemoryDurableStorage } from './testing/memory-durable-storage.js';
 
 const p1 = asPlayerId('player-one');
@@ -388,25 +383,7 @@ const expiredTransaction = (
   },
 });
 
-interface ObservedRetentionIndex {
-  readonly frontierAuthorityVersion: number;
-  readonly authority: readonly {
-    readonly key: string;
-    readonly bytes: number;
-    readonly resultingAuthorityVersion: number;
-  }[];
-  readonly admission: readonly {
-    readonly key: string;
-    readonly bytes: number;
-    readonly resultingAuthorityVersion: number;
-  }[];
-}
-
-const observedRetentionIndex = (
-  storage: MemoryDurableStorage
-): ObservedRetentionIndex =>
-  storage.values.get(JOURNAL_RETENTION_STORAGE_KEY) as ObservedRetentionIndex;
-
+/** Keys under a prefix: a refused write leaves none. */
 const storedKeys = (
   storage: MemoryDurableStorage,
   prefix: string
@@ -999,9 +976,15 @@ describe('Durable Object authority snapshot store', () => {
     expect(storage.values.size).toBe(0);
   });
 
-  it('claims the lifecycle and cancels expiry with the first admission commit', async () => {
+  it('claims the lifecycle and trades its expiry for the idle deadline with the first admission commit', async () => {
     const storage = new MemoryDurableStorage();
-    const store = new DurableRoomSnapshotStore(storage);
+    let now = 2_000;
+    const store = new DurableRoomSnapshotStore(
+      storage,
+      undefined,
+      undefined,
+      () => now
+    );
     const initial = admissionSnapshot('lifecycle-admission-room', false);
     await store.initialize(initial, {
       createdAt: 1_000,
@@ -1027,9 +1010,9 @@ describe('Durable Object authority snapshot store', () => {
       },
     } as const;
 
-    storage.failDeleteAlarm = true;
+    storage.failSetAlarm = true;
     await expect(store.commitAdmission(admission)).rejects.toThrow(
-      'injected deleteAlarm failure'
+      'injected setAlarm failure'
     );
     expect((await store.load())?.authorityVersion).toBe(0);
     expect(storage.values.get(ROOM_LIFECYCLE_STORAGE_KEY)).toMatchObject({
@@ -1037,18 +1020,87 @@ describe('Durable Object authority snapshot store', () => {
     });
     expect(storage.alarm).toBe(301_000);
 
-    storage.failDeleteAlarm = false;
+    storage.failSetAlarm = false;
     await store.commitAdmission(admission);
 
-    expect(storage.alarm).toBeNull();
+    const idleExpiresAt = 2_000 + ROOM_IDLE_LIFETIME_MS;
+    expect(storage.alarm).toBe(idleExpiresAt);
     expect(storage.values.get(ROOM_LIFECYCLE_STORAGE_KEY)).toEqual({
       format: 'ptcgsim-room-lifecycle-v1',
       state: 'claimed',
       createdAt: 1_000,
       claimedAtAuthorityVersion: 1,
+      idleExpiresAt,
     });
+    await expect(store.roomIdleDeadline()).resolves.toBe(idleExpiresAt);
+    // Before the deadline the room stays; at it, someone connected keeps it
+    // another day.
     await expect(store.expireUnclaimedRoom(400_000)).resolves.toBe('claimed');
+    expect(storage.alarm).toBeNull();
+    await expect(store.expireUnclaimedRoom(idleExpiresAt, true)).resolves.toBe(
+      'claimed'
+    );
+    await expect(store.roomIdleDeadline()).resolves.toBe(
+      idleExpiresAt + ROOM_IDLE_LIFETIME_MS
+    );
     expect(await store.load()).toBeDefined();
+    now = idleExpiresAt;
+  });
+
+  it('moves a claimed room\'s idle deadline with its moves at most hourly, and deletes it after a day nobody used or stayed in it', async () => {
+    const storage = new MemoryDurableStorage();
+    let now = 5_000;
+    const initial = initialSnapshot('idle-room');
+    await new DurableRoomSnapshotStore(storage).initialize(initial);
+    // Claimed before rooms had an idle deadline.
+    storage.values.set(ROOM_LIFECYCLE_STORAGE_KEY, {
+      format: 'ptcgsim-room-lifecycle-v1',
+      state: 'claimed',
+      createdAt: 1_000,
+      claimedAtAuthorityVersion: 0,
+    });
+    const store = new DurableRoomSnapshotStore(
+      storage,
+      undefined,
+      undefined,
+      () => now
+    );
+    const lifecycle = () =>
+      storage.values.get(ROOM_LIFECYCLE_STORAGE_KEY) as {
+        readonly idleExpiresAt?: number;
+      };
+
+    // The first move gives it one, and an alarm by then.
+    const first = acceptedTransaction(initial);
+    await store.commit(first);
+    expect(lifecycle().idleExpiresAt).toBe(5_000 + ROOM_IDLE_LIFETIME_MS);
+    expect(storage.alarm).toBe(5_000 + ROOM_IDLE_LIFETIME_MS);
+
+    // Within the hour a move writes the snapshot and frontier alone.
+    now = 5_000 + ROOM_IDLE_REFRESH_MS - 1;
+    const second = rejectedTransaction(first.snapshot);
+    await store.commit(second);
+    expect(lifecycle().idleExpiresAt).toBe(5_000 + ROOM_IDLE_LIFETIME_MS);
+
+    // After it, the deadline moves on; the alarm already set comes sooner
+    // and stays, to set the next when it rings.
+    now = 5_000 + ROOM_IDLE_REFRESH_MS;
+    await store.commit(rejectedTransaction(second.snapshot));
+    const idleExpiresAt = now + ROOM_IDLE_LIFETIME_MS;
+    expect(lifecycle().idleExpiresAt).toBe(idleExpiresAt);
+    expect(storage.alarm).toBe(5_000 + ROOM_IDLE_LIFETIME_MS);
+
+    // That alarm, early: nothing to do but wait.
+    await expect(
+      store.expireUnclaimedRoom(5_000 + ROOM_IDLE_LIFETIME_MS)
+    ).resolves.toBe('claimed');
+    await expect(store.roomIdleDeadline()).resolves.toBe(idleExpiresAt);
+    // Past the deadline with nobody connected: deleted.
+    await expect(store.expireUnclaimedRoom(idleExpiresAt)).resolves.toBe(
+      'expired'
+    );
+    expect(storage.values.size).toBe(0);
+    expect(await store.load()).toBeUndefined();
   });
 
   it('repairs a stale unclaimed marker when durable sessions already exist', async () => {
@@ -1326,7 +1378,7 @@ describe('Durable Object authority snapshot store', () => {
     expect(authoritySnapshotValidationFor(restored!)).toBeDefined();
   });
 
-  it('atomically writes the snapshot and resolved journal record', async () => {
+  it('writes two rows a move, the snapshot and its frontier, and no journal', async () => {
     const storage = new MemoryDurableStorage();
     const initial = initialSnapshot();
     await new DurableRoomSnapshotStore(storage).initialize(initial);
@@ -1346,19 +1398,10 @@ describe('Durable Object authority snapshot store', () => {
     expect(marks).toEqual([]);
 
     expect((await store.load())?.state.revision).toBe(1);
-    const journalKeys = [...storage.values.keys()].filter((key) =>
-      key.startsWith('authority:journal:')
-    );
-    expect(journalKeys).toHaveLength(1);
-    expect(storage.values.get(journalKeys[0]!)).toMatchObject({
-      expectedAuthorityVersion: 0,
-      resultingAuthorityVersion: 1,
-      expectedRevision: 0,
-      resultingRevision: 1,
-      sessionId: 'session',
-      outcome: { commandId: 'command-1', accepted: true },
-      eventBatch: { revision: 1 },
-    });
+    expect([...storage.values.keys()].sort()).toEqual([
+      AUTHORITY_FRONTIER_STORAGE_KEY,
+      AUTHORITY_SNAPSHOT_STORAGE_KEY,
+    ]);
 
     const clockFailureStore = new DurableRoomSnapshotStore(storage, () => {
       throw new Error('observation clock failed');
@@ -1512,9 +1555,6 @@ describe('Durable Object authority snapshot store', () => {
     );
     expect(storedFrontier(storage).generation).not.toBe(firstGeneration);
 
-    const journal = [...storage.values.entries()].find(([key]) =>
-      key.startsWith('authority:journal:')
-    )?.[1] as { eventBatch?: unknown } | undefined;
     const outcome = result.snapshot.sessions.session?.recentOutcomes.at(-1);
     const eventBatch = result.snapshot.replayHistory.entries.at(-1)?.batch;
     expect(outcome).toBeDefined();
@@ -1531,7 +1571,13 @@ describe('Durable Object authority snapshot store', () => {
         eventBatch
       )
     ).toBe(true);
-    expect(journal?.eventBatch).toEqual(eventBatch);
+    expect(
+      (
+        storage.values.get(AUTHORITY_SNAPSHOT_STORAGE_KEY) as {
+          readonly snapshot: RoomAuthoritySnapshot;
+        }
+      ).snapshot.replayHistory.entries.at(-1)?.batch
+    ).toEqual(eventBatch);
     expect(JSON.stringify([...storage.values.values()])).not.toContain(
       'snapshotValidation'
     );
@@ -1593,10 +1639,7 @@ describe('Durable Object authority snapshot store', () => {
     expect(storage.transactionGetKeys).not.toContain(
       AUTHORITY_SNAPSHOT_STORAGE_KEY
     );
-    const journal = [...storage.values.entries()].find(([key]) =>
-      key.startsWith('authority:journal:')
-    )?.[1] as { eventBatch?: { revision: number } } | undefined;
-    expect(journal?.eventBatch?.revision).toBe(1);
+    expect((await store.load())?.state.revision).toBe(1);
   });
 
   it('lets a proven solo command take the frontier fast path, as multiplayer does', async () => {
@@ -1645,177 +1688,7 @@ describe('Durable Object authority snapshot store', () => {
     );
   });
 
-  it('bounds recent room audit rows while retaining the snapshot idempotency frontier', async () => {
-    const storage = new MemoryDurableStorage();
-    const store = new DurableRoomSnapshotStore(storage);
-    let current = initialSnapshot();
-    await store.initialize(current);
-
-    for (
-      let index = 0;
-      index < MAX_AUTHORITY_JOURNAL_ENTRIES + 32;
-      index += 1
-    ) {
-      const transaction = rejectedTransaction(current);
-      await store.commit(transaction);
-      current = transaction.snapshot;
-    }
-
-    const keys = storedKeys(storage, 'authority:journal:');
-    const retention = observedRetentionIndex(storage);
-    expect(keys).toHaveLength(MAX_AUTHORITY_JOURNAL_ENTRIES);
-    expect(retention).toMatchObject({
-      frontierAuthorityVersion: MAX_AUTHORITY_JOURNAL_ENTRIES + 32,
-      admission: [],
-    });
-    expect(retention.authority).toHaveLength(MAX_AUTHORITY_JOURNAL_ENTRIES);
-    expect(
-      retention.authority.reduce((total, entry) => total + entry.bytes, 0)
-    ).toBeLessThanOrEqual(MAX_AUTHORITY_JOURNAL_BYTES);
-    expect(retention.authority[0]?.resultingAuthorityVersion).toBe(33);
-    expect(retention.authority.at(-1)?.resultingAuthorityVersion).toBe(160);
-    expect(keys).toEqual(retention.authority.map((entry) => entry.key));
-
-    const restored = await store.load();
-    expect(restored).toEqual(current);
-    expect(restored?.sessions.session?.recentOutcomes).toHaveLength(
-      DEFAULT_AUTHORITY_POLICY.maximumRecentOutcomesPerSession
-    );
-    expect(restored?.sessions.session?.recentOutcomes[0]).toMatchObject({
-      clientSequence: 33,
-    });
-  });
-
-  it('bounds admission audit rows independently from command rows', async () => {
-    const storage = new MemoryDurableStorage();
-    const store = new DurableRoomSnapshotStore(storage);
-    let current = admissionSnapshot('admission-retention-room');
-    await store.initialize(current);
-
-    for (
-      let index = 0;
-      index < MAX_ADMISSION_JOURNAL_ENTRIES + 16;
-      index += 1
-    ) {
-      const transaction = resumedTransaction(current);
-      await store.commitAdmission(transaction);
-      current = transaction.snapshot;
-    }
-
-    const keys = storedKeys(storage, 'authority:admission:');
-    const retention = observedRetentionIndex(storage);
-    expect(keys).toHaveLength(MAX_ADMISSION_JOURNAL_ENTRIES);
-    expect(retention).toMatchObject({
-      frontierAuthorityVersion: MAX_ADMISSION_JOURNAL_ENTRIES + 16,
-      authority: [],
-    });
-    expect(retention.admission).toHaveLength(MAX_ADMISSION_JOURNAL_ENTRIES);
-    expect(
-      retention.admission.reduce((total, entry) => total + entry.bytes, 0)
-    ).toBeLessThanOrEqual(MAX_ADMISSION_JOURNAL_BYTES);
-    expect(retention.admission[0]?.resultingAuthorityVersion).toBe(17);
-    expect(retention.admission.at(-1)?.resultingAuthorityVersion).toBe(80);
-    expect(keys).toEqual(retention.admission.map((entry) => entry.key));
-    expect(await store.load()).toEqual(current);
-  });
-
-  it('rebuilds a malformed retention index and prunes a paginated legacy tail', async () => {
-    const storage = new MemoryDurableStorage();
-    const store = new DurableRoomSnapshotStore(storage);
-    const initial = initialSnapshot();
-    await store.initialize(initial);
-    const legacyFrontier = 200;
-    const legacySnapshot = {
-      ...initial,
-      authorityVersion: legacyFrontier,
-    };
-    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
-      format: 'ptcgsim-room-authority-v6',
-      snapshot: legacySnapshot,
-    });
-    storage.values.set(JOURNAL_RETENTION_STORAGE_KEY, {
-      format: 'corrupt-retention-index',
-      frontierAuthorityVersion: legacyFrontier,
-    });
-    for (let version = 1; version <= legacyFrontier; version += 1) {
-      storage.values.set(`authority:journal:legacy-${version}`, {
-        format: 'ptcgsim-room-authority-v6',
-        resultingAuthorityVersion: version,
-      });
-    }
-
-    const transaction = rejectedTransaction(legacySnapshot);
-    await store.commit(transaction);
-
-    const retention = observedRetentionIndex(storage);
-    expect(retention.frontierAuthorityVersion).toBe(legacyFrontier + 1);
-    expect(retention.authority).toHaveLength(MAX_AUTHORITY_JOURNAL_ENTRIES);
-    expect(retention.authority[0]?.resultingAuthorityVersion).toBe(74);
-    expect(retention.authority.at(-1)?.resultingAuthorityVersion).toBe(201);
-    expect(storedKeys(storage, 'authority:journal:')).toEqual(
-      retention.authority.map((entry) => entry.key).sort()
-    );
-    expect(await store.load()).toEqual(transaction.snapshot);
-  });
-
-  it('uses the byte ceiling while rebuilding oversized legacy audit rows', async () => {
-    const storage = new MemoryDurableStorage();
-    const store = new DurableRoomSnapshotStore(storage);
-    const initial = initialSnapshot();
-    await store.initialize(initial);
-    const legacyFrontier = 8;
-    const legacySnapshot = { ...initial, authorityVersion: legacyFrontier };
-    storage.values.set(AUTHORITY_SNAPSHOT_STORAGE_KEY, {
-      format: 'ptcgsim-room-authority-v6',
-      snapshot: legacySnapshot,
-    });
-    storage.values.delete(JOURNAL_RETENTION_STORAGE_KEY);
-    for (let version = 1; version <= legacyFrontier; version += 1) {
-      storage.values.set(`authority:journal:large-${version}`, {
-        format: 'ptcgsim-room-authority-v6',
-        resultingAuthorityVersion: version,
-        padding: 'x'.repeat(96 * 1024),
-      });
-    }
-
-    const transaction = rejectedTransaction(legacySnapshot);
-    await store.commit(transaction);
-
-    const retention = observedRetentionIndex(storage);
-    expect(retention.authority.length).toBeLessThan(legacyFrontier + 1);
-    expect(
-      retention.authority.reduce((total, entry) => total + entry.bytes, 0)
-    ).toBeLessThanOrEqual(MAX_AUTHORITY_JOURNAL_BYTES);
-    expect(retention.authority.at(-1)?.resultingAuthorityVersion).toBe(9);
-    expect(storedKeys(storage, 'authority:journal:')).toEqual(
-      retention.authority.map((entry) => entry.key).sort()
-    );
-  });
-
-  it('rolls snapshot, journal, and retention index back when pruning fails', async () => {
-    const storage = new MemoryDurableStorage();
-    const store = new DurableRoomSnapshotStore(storage);
-    let current = initialSnapshot();
-    await store.initialize(current);
-    for (let index = 0; index < MAX_AUTHORITY_JOURNAL_ENTRIES; index += 1) {
-      const transaction = rejectedTransaction(current);
-      await store.commit(transaction);
-      current = transaction.snapshot;
-    }
-    const beforeIndex = structuredClone(observedRetentionIndex(storage));
-    const beforeKeys = storedKeys(storage, 'authority:journal:');
-    storage.failDeleteWhenKeyStartsWith = 'authority:journal:';
-
-    await expect(store.commit(rejectedTransaction(current))).rejects.toThrow(
-      'injected transactional delete failure'
-    );
-
-    expect(await store.load()).toEqual(current);
-    expect(observedRetentionIndex(storage)).toEqual(beforeIndex);
-    expect(storedKeys(storage, 'authority:journal:')).toEqual(beforeKeys);
-  });
-
-  it('atomically persists admission metadata on the authority frontier', async () => {
+  it('persists an admission as the snapshot and its frontier, with no journal', async () => {
     const storage = new MemoryDurableStorage();
     const store = new DurableRoomSnapshotStore(storage);
     const initial = admissionSnapshot('admission-metadata-room', false);
@@ -1844,19 +1717,14 @@ describe('Durable Object authority snapshot store', () => {
     });
 
     expect((await store.load())?.authorityVersion).toBe(1);
-    const admissionKeys = [...storage.values.keys()].filter((key) =>
-      key.startsWith('authority:admission:')
-    );
-    expect(admissionKeys).toHaveLength(1);
-    expect(storage.values.get(admissionKeys[0]!)).toMatchObject({
-      expectedAuthorityVersion: 0,
-      resultingAuthorityVersion: 1,
-      kind: 'spectator_joined',
-      sessionId: spectatorSession.id,
-    });
+    expect(storedFrontier(storage).authorityVersion).toBe(1);
+    expect([...storage.values.keys()].sort()).toEqual([
+      AUTHORITY_FRONTIER_STORAGE_KEY,
+      AUTHORITY_SNAPSHOT_STORAGE_KEY,
+    ]);
   });
 
-  it('journals ticket issuance and redemption without persisting the bearer', async () => {
+  it('persists ticket issuance and redemption without the bearer', async () => {
     const storage = new MemoryDurableStorage();
     const store = new DurableRoomSnapshotStore(storage);
     const ticket = 'socket-ticket-never-persisted-000000000001';
@@ -1922,7 +1790,7 @@ describe('Durable Object authority snapshot store', () => {
         tickets: {},
       },
     };
-    storage.failPutWhenKeyStartsWith = 'authority:admission:';
+    storage.failPutWhenKeyStartsWith = AUTHORITY_FRONTIER_STORAGE_KEY;
     await expect(
       store.commitAdmission({
         expectedAuthorityVersion: 1,
@@ -1945,27 +1813,14 @@ describe('Durable Object authority snapshot store', () => {
       admissionTicketDigest: ticketDigest,
     });
 
-    expect((await store.load())?.admission?.tickets).toEqual({});
+    const restored = await store.load();
+    expect(restored?.admission?.tickets).toEqual({});
+    expect(restored?.admission?.seats[p1]?.claimedSessionId).toBe(sessionId);
     const serialized = JSON.stringify([...storage.values]);
     expect(serialized).not.toContain(ticket);
-    const entries = [...storage.values.values()].filter(
-      (value) =>
-        typeof value === 'object' &&
-        value !== null &&
-        'kind' in value &&
-        (value.kind === 'ticket_issued' || value.kind === 'seat_claimed')
-    );
-    expect(entries).toEqual([
-      expect.objectContaining({ kind: 'ticket_issued', ticketDigest }),
-      expect.objectContaining({
-        kind: 'seat_claimed',
-        sessionId,
-        admissionTicketDigest: ticketDigest,
-      }),
-    ]);
   });
 
-  it('atomically journals an invitation digest without persisting its bearer', async () => {
+  it('persists an invitation digest without its bearer', async () => {
     const storage = new MemoryDurableStorage();
     const store = new DurableRoomSnapshotStore(storage);
     const invitation = 'room-invitation-never-persisted-000000001';
@@ -2008,20 +1863,6 @@ describe('Durable Object authority snapshot store', () => {
       issued.admission?.invitations
     );
     expect(JSON.stringify([...storage.values])).not.toContain(invitation);
-    expect(
-      [...storage.values.values()].find(
-        (value) =>
-          typeof value === 'object' &&
-          value !== null &&
-          'kind' in value &&
-          value.kind === 'invitation_issued'
-      )
-    ).toMatchObject({
-      expectedAuthorityVersion: 0,
-      resultingAuthorityVersion: 1,
-      kind: 'invitation_issued',
-      invitationDigest,
-    });
   });
 
   it('migrates v4 admission state with an empty ticket registry', async () => {
@@ -2275,7 +2116,7 @@ describe('Durable Object authority snapshot store', () => {
     expect((await store.load())?.state.revision).toBe(1);
   });
 
-  it('rejects skipped authority frontiers before writing either journal lane', async () => {
+  it('rejects skipped authority frontiers before writing', async () => {
     const storage = new MemoryDurableStorage();
     const store = new DurableRoomSnapshotStore(storage);
     const initial = initialSnapshot();
@@ -2297,13 +2138,7 @@ describe('Durable Object authority snapshot store', () => {
     ).rejects.toThrow('advance exactly one version');
 
     expect(await store.load()).toEqual(initial);
-    expect(storedKeys(storage, 'authority:journal:')).toEqual([]);
-    expect(storedKeys(storage, 'authority:admission:')).toEqual([]);
-    expect(observedRetentionIndex(storage)).toMatchObject({
-      frontierAuthorityVersion: 0,
-      authority: [],
-      admission: [],
-    });
+    expect(storedFrontier(storage).authorityVersion).toBe(0);
   });
 
   it('validates each admission kind against its durable predecessor', async () => {
@@ -2460,28 +2295,38 @@ describe('Durable Object authority snapshot store', () => {
     await store.commitAdmission(disconnected);
     expect(storage.alarm).toBe(40_000);
     expect(await store.load()).toEqual(disconnected.snapshot);
-    const [disconnectedJournalKey] = storedKeys(
-      storage,
-      'authority:admission:'
-    );
-    expect(storage.values.get(disconnectedJournalKey!)).toMatchObject({
-      kind: 'session_disconnected',
-      sessionId: 'session',
-      disconnectedAt: 10_000,
-      reconnectExpiresAt: 40_000,
-    });
 
     const expired = expiredTransaction(disconnected.snapshot);
     await store.commitAdmission(expired);
     expect(await store.load()).toEqual(expired.snapshot);
-    const expiredJournalKey = storedKeys(storage, 'authority:admission:').at(
-      -1
+  });
+
+  it('leaves a claimed room\'s idle deadline alone for its own bookkeeping', async () => {
+    const storage = new MemoryDurableStorage();
+    let now = 5_000;
+    const store = new DurableRoomSnapshotStore(
+      storage,
+      undefined,
+      undefined,
+      () => now
     );
-    expect(storage.values.get(expiredJournalKey!)).toMatchObject({
-      kind: 'sessions_expired',
-      sessionIds: ['session'],
-      expiredAt: 40_000,
-    });
+    const current = admissionSnapshot('bookkeeping-room');
+    await store.initialize(current);
+    const lifecycle = {
+      format: 'ptcgsim-room-lifecycle-v1',
+      state: 'claimed',
+      createdAt: 1_000,
+      claimedAtAuthorityVersion: 0,
+      idleExpiresAt: 1_000 + ROOM_IDLE_LIFETIME_MS,
+    } as const;
+    storage.values.set(ROOM_LIFECYCLE_STORAGE_KEY, lifecycle);
+    now = 1_000 + ROOM_IDLE_LIFETIME_MS - 1;
+
+    // A dropped connection and its seat given up are not uses.
+    const disconnected = disconnectedTransaction(current, 40_000);
+    await store.commitAdmission(disconnected);
+    await store.commitAdmission(expiredTransaction(disconnected.snapshot));
+    expect(storage.values.get(ROOM_LIFECYCLE_STORAGE_KEY)).toEqual(lifecycle);
   });
 
   it('rejects forged disconnect and expiry lifecycle transitions', async () => {
@@ -2734,22 +2579,19 @@ describe('Durable Object authority snapshot store', () => {
     expect(storedKeys(storage, 'authority:admission:')).toEqual([]);
   });
 
-  it('rolls back the snapshot when the journal write fails', async () => {
+  it('rolls back the snapshot when the frontier write fails', async () => {
     const storage = new MemoryDurableStorage();
     const store = new DurableRoomSnapshotStore(storage);
     const initial = initialSnapshot();
     await store.initialize(initial);
-    storage.failPutWhenKeyStartsWith = 'authority:journal:';
+    storage.failPutWhenKeyStartsWith = AUTHORITY_FRONTIER_STORAGE_KEY;
 
     await expect(store.commit(acceptedTransaction(initial))).rejects.toThrow(
       'injected transactional put failure'
     );
+    storage.failPutWhenKeyStartsWith = undefined;
     expect((await store.load())?.state.revision).toBe(0);
-    expect(
-      [...storage.values.keys()].filter((key) =>
-        key.startsWith('authority:journal:')
-      )
-    ).toHaveLength(0);
+    expect(storedFrontier(storage).authorityVersion).toBe(0);
   });
 
   it('rotates the frontier for every admission kind while fully reading its predecessor', async () => {
@@ -2832,7 +2674,7 @@ describe('Durable Object authority snapshot store', () => {
     await store.initialize(initial);
     const first = acceptedTransaction(initial);
 
-    storage.failPutWhenKeyStartsWith = 'authority:journal:';
+    storage.failPutWhenKeyStartsWith = AUTHORITY_FRONTIER_STORAGE_KEY;
     await expect(store.commit(first)).rejects.toThrow(
       'injected transactional put failure'
     );
@@ -3096,19 +2938,12 @@ describe('Durable Object authority snapshot store', () => {
       frontierFastPathHit: 0,
       transactionMs: expect.any(Number),
     });
-    expect((await store.load())?.state).toEqual(transaction.snapshot.state);
-    const journal = [...storage.values.entries()].find(([key]) =>
-      key.startsWith('authority:journal:')
-    )?.[1];
-    expect(journal).toMatchObject({
-      expectedAuthorityVersion: transaction.expectedAuthorityVersion,
-      resultingAuthorityVersion: compacted.snapshot.authorityVersion,
-      expectedRevision: transaction.expectedRevision,
-      resultingRevision: compacted.snapshot.state.revision,
-      sessionId: transaction.sessionId,
-      outcome: transaction.outcome,
-      eventBatch: transaction.eventBatch,
-    });
+    const restored = await store.load();
+    expect(restored?.state).toEqual(transaction.snapshot.state);
+    expect(restored?.authorityVersion).toBe(compacted.snapshot.authorityVersion);
+    expect(restored?.sessions[transaction.sessionId]?.recentOutcomes.at(-1)).toEqual(
+      transaction.outcome
+    );
   });
 
   it('does not accept a command proof minted for another room at the same frontier', async () => {
@@ -3181,12 +3016,6 @@ describe('Durable Object authority snapshot store', () => {
       )
     ).toBe(true);
     expect(authoritySnapshotValidationFor(transaction.snapshot)).toBeDefined();
-    const authorityJournal = [...storage.values.entries()].find(([key]) =>
-      key.startsWith('authority:journal:')
-    )?.[1] as { eventBatch?: unknown } | undefined;
-    expect(authorityJournal?.eventBatch).toEqual(
-      transaction.snapshot.replayHistory.entries.at(-1)?.batch
-    );
     expect(JSON.stringify([...storage.values.values()])).not.toContain(
       'snapshotValidation'
     );

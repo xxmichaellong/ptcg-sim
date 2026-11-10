@@ -58,6 +58,7 @@ export interface StoredLifecycle {
   readonly createdAt: number;
   readonly unclaimedExpiresAt?: number;
   readonly claimedAtAuthorityVersion?: number;
+  readonly idleExpiresAt?: number;
 }
 
 interface SocketAttachment {

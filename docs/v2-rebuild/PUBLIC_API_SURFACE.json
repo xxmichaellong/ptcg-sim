@@ -1598,6 +1598,18 @@
               "kind": "type"
             },
             {
+              "name": "HEARTBEAT_PING_FRAME",
+              "kind": "value"
+            },
+            {
+              "name": "HEARTBEAT_PING_ID",
+              "kind": "value"
+            },
+            {
+              "name": "HEARTBEAT_PONG_FRAME",
+              "kind": "value"
+            },
+            {
               "name": "hydrateMatchViewState",
               "kind": "value"
             },
@@ -3783,6 +3795,14 @@
             },
             {
               "name": "ROOM_CREATION_RATE_LIMIT_RETRY_SECONDS",
+              "kind": "value"
+            },
+            {
+              "name": "ROOM_IDLE_LIFETIME_MS",
+              "kind": "value"
+            },
+            {
+              "name": "ROOM_IDLE_REFRESH_MS",
               "kind": "value"
             },
             {

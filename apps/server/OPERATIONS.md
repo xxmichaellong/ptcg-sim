@@ -402,6 +402,24 @@ authorizes automatic room shutdown, runtime removal, or stored-data deletion.
 Image-provider, save/import, and client/renderer incident procedures will be
 added with those production slices; their absence still blocks external beta.
 
+## The beta and the free plan (ADR-051)
+
+Production is the public beta at `beta.ptcgsim.online`, a Custom Domain on
+the `ptcgsim-v2` Worker; it has no workers.dev address. v1 keeps
+`ptcgsim.online` and `www` (DNS-only, Linode) and the Zoho mail records.
+
+The account is on Workers Free. Its Durable Object limits are daily and shared
+by every Worker in the account, the preview included: testing on the preview
+spends the beta's budget. A move writes two rows; rooms are deleted a day after
+their last use. Check the day's rows written with the GraphQL query in the
+hosting notes (`durableObjectsPeriodicGroups`, `sum { rowsWritten }`) before
+calling a 1101 error a bug: past 100,000 rows the rooms fail until 00:00 UTC.
+
+The edge rule (ADR-025) is set by hand, once, in the dashboard: zone
+`ptcgsim.online`, Security, Security rules, create a rate limiting rule. Match
+URI Path starts with `/v2/rooms/`; count by IP; more than 30 requests in 10
+seconds; Block for 10 seconds. Wrangler's OAuth token can't write zone rules.
+
 ## Deploying and rolling back
 
 Deploys run through `.github/workflows/deploy.yml`, and only by dispatch: there
@@ -493,12 +511,11 @@ generation. Larger heads use the bounded physical format documented in
 that chunk reader. The record binds that generation to the envelope/domain
 schemas, match, mode, authority version, and state revision. An exact
 cache/proof/frontier hit lets a multiplayer command read lifecycle, the small
-frontier, and the tiny chunk index, not the complete snapshot; its rotated snapshot/frontier pair, journal,
-retention index, and pruning are one transaction. Missing or malformed frontier
+frontier, and the tiny chunk index, not the complete snapshot; its rotated
+snapshot/frontier pair is one transaction (no journal since ADR-051). Missing or malformed frontier
 data and an old writer's generation-free v6 envelope take a full-validation
 repair path. A well-formed divergent pair fails closed. Admissions retain a full
-predecessor read and pair the new frontier with journal, retention,
-lifecycle/alarm, and pruning changes. Expiry validates and repairs the pair
+predecessor read and pair the new frontier with lifecycle/alarm changes. Expiry validates and repairs the pair
 before acting. This follows Cloudflare's documented
 [storage transaction](https://developers.cloudflare.com/durable-objects/api/storage-api/)
 and [alarm](https://developers.cloudflare.com/durable-objects/api/alarms/)

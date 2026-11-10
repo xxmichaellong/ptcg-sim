@@ -1,5 +1,7 @@
 import { env, exports } from 'cloudflare:workers';
 import {
+  HEARTBEAT_PING_FRAME,
+  HEARTBEAT_PONG_FRAME,
   PROTOCOL_VERSION,
   SESSION_RECONNECT_GRACE_MS,
 } from '@ptcgsim/protocol';
@@ -14,6 +16,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AUTHORITY_SNAPSHOT_STORAGE_KEY,
   DurableRoomSnapshotStore,
+  ROOM_IDLE_LIFETIME_MS,
   ROOM_LIFECYCLE_STORAGE_KEY,
 } from '../src/durable-storage.js';
 import {
@@ -33,6 +36,21 @@ import {
   runtimeCommandPerformanceEvidence,
   runtimeEvidence,
 } from './runtime-harness.js';
+
+/**
+ * A claimed room's alarm: by its idle deadline, a day from its last use at
+ * least (ADR-051), when nothing sooner is due.
+ */
+const expectIdleAlarm = (
+  evidence: Awaited<ReturnType<typeof runtimeEvidence>>
+): void => {
+  const idleExpiresAt = evidence.lifecycle?.idleExpiresAt;
+  expect(idleExpiresAt).toBeGreaterThanOrEqual(
+    (evidence.lifecycle?.createdAt ?? Number.POSITIVE_INFINITY) +
+      ROOM_IDLE_LIFETIME_MS
+  );
+  expect(evidence.alarm).toBe(idleExpiresAt);
+};
 
 const openSockets = new Set<WebSocket>();
 const connect = async (
@@ -688,9 +706,111 @@ describe('Cloudflare Worker runtime', () => {
     await expect(pong).resolves.toMatchObject({ type: 'Pong', id: 92 });
     const afterExpiry = await runtimeEvidence(created);
     expect(afterExpiry.socketCount).toBe(1);
-    expect(afterExpiry.alarm).toBeNull();
+    expectIdleAlarm(afterExpiry);
     expect(afterExpiry.lifecycle).toMatchObject({ state: 'claimed' });
     expect(afterExpiry.attachment?.sessionId).toBeDefined();
+  });
+
+  it('deletes a claimed room a day after its last use once nobody is in it, and gives its code back (ADR-051)', async () => {
+    const created = await createRoom();
+    const ticket = await issuePlayerTicket(created, 'one', 'Blue');
+    const socket = await connect(created);
+    const welcome = nextServerMessage(socket);
+    socket.send(helloFrame(created, ticket, 'Blue'));
+    expect((await welcome).type).toBe('Welcome');
+    const code = await exports.default.fetch(
+      new Request(`${ORIGIN}/v2/rooms/${created.roomCode}/code`, {
+        method: 'POST',
+        headers: {
+          'CF-Connecting-IP': '198.51.100.21',
+          'Content-Type': 'application/json',
+          Origin: ORIGIN,
+        },
+        body: JSON.stringify({ resumeToken: ticket.resumeToken }),
+      })
+    );
+    const alias = ((await code.json()) as { readonly code: string }).code;
+    const record = env.PTCG_ROOM_CODE.getByName(alias);
+    expect(await record.resolve(Date.now())).toBe(created.roomCode);
+
+    const room = roomStub(created);
+    const passDeadline = () =>
+      runInDurableObject(room, async (_instance, state) => {
+        const lifecycle = await state.storage.get<StoredLifecycle>(
+          ROOM_LIFECYCLE_STORAGE_KEY
+        );
+        if (!lifecycle) throw new Error('Missing lifecycle');
+        await state.storage.put(ROOM_LIFECYCLE_STORAGE_KEY, {
+          ...lifecycle,
+          idleExpiresAt: Date.now() - 1,
+        });
+        // Keep automatic local delivery from racing the explicit test helper.
+        await state.storage.setAlarm(Date.now() + 60_000);
+      });
+
+    // Someone is still in it: kept another day.
+    await passDeadline();
+    expect(await runDurableObjectAlarm(room)).toBe(true);
+    const kept = await runtimeEvidence(created);
+    expect(kept.snapshot).toBeDefined();
+    expect(kept.lifecycle?.idleExpiresAt).toBeGreaterThan(Date.now());
+    expect(kept.alarm).toBe(kept.lifecycle?.idleExpiresAt);
+
+    // Nobody: deleted, every row of it, and its code given back.
+    const closed = nextSocketClose(socket);
+    socket.close(1000, 'Done');
+    await closed;
+    await vi.waitFor(async () =>
+      expect((await runtimeEvidence(created)).socketCount).toBe(0)
+    );
+    await passDeadline();
+    expect(await runDurableObjectAlarm(room)).toBe(true);
+    const gone = await runInDurableObject(room, async (_instance, state) => ({
+      rows: (await state.storage.list()).size,
+      alarm: await state.storage.getAlarm(),
+    }));
+    expect(gone).toEqual({ rows: 0, alarm: null });
+    expect(await record.resolve(Date.now())).toBeNull();
+    // A ticket for it is refused at once, so a remembered table moves on.
+    const refused = await exports.default.fetch(
+      new Request(
+        `${ORIGIN}/v2/rooms/${created.roomCode}/admission-tickets`,
+        {
+          method: 'POST',
+          headers: {
+            'CF-Connecting-IP': '198.51.100.22',
+            'Content-Type': 'application/json',
+            Origin: ORIGIN,
+          },
+          body: JSON.stringify({}),
+        }
+      )
+    );
+    expect(refused.status).toBe(404);
+  });
+
+  it('answers the heartbeat in the runtime, without the room', async () => {
+    const created = await createRoom();
+    const ticket = await issuePlayerTicket(created);
+    const socket = await connect(created);
+    const welcome = nextServerMessage(socket);
+    socket.send(helloFrame(created, ticket));
+    await expect(welcome).resolves.toMatchObject({ type: 'Welcome' });
+
+    const pong = nextServerFrames(socket, 1, { ignorePresence: true });
+    socket.send(HEARTBEAT_PING_FRAME);
+    const [frame] = await pong;
+    expect(frame?.raw).toBe(HEARTBEAT_PONG_FRAME);
+    const answeredByRuntime = await runInDurableObject(
+      roomStub(created),
+      (_instance, state) => {
+        const [serverSocket] = state.getWebSockets();
+        return serverSocket
+          ? state.getWebSocketAutoResponseTimestamp(serverSocket)
+          : null;
+      }
+    );
+    expect(answeredByRuntime).toBeInstanceOf(Date);
   });
 
   it('serializes concurrent socket leases and retains the remaining idle deadline after admission', async () => {
@@ -736,7 +856,7 @@ describe('Cloudflare Worker runtime', () => {
 
     const beforeEviction = await runtimeEvidence(created);
     if (!beforeEviction.snapshot) throw new Error('Snapshot was not persisted');
-    expect(beforeEviction.alarm).toBeNull();
+    expectIdleAlarm(beforeEviction);
     expect(beforeEviction.lifecycle).toMatchObject({
       format: 'ptcgsim-room-lifecycle-v1',
       state: 'claimed',
@@ -797,7 +917,7 @@ describe('Cloudflare Worker runtime', () => {
     const afterEviction = await runtimeEvidence(created);
     expect(afterEviction.snapshot).toEqual(beforeEviction.snapshot);
     expect(afterEviction.lifecycle).toEqual(beforeEviction.lifecycle);
-    expect(afterEviction.alarm).toBeNull();
+    expectIdleAlarm(afterEviction);
     expect(afterEviction.socketCount).toBe(1);
     expect(afterEviction.attachment).toEqual(beforeEviction.attachment);
     expect(afterEviction.authorityStorage).toEqual(
@@ -992,7 +1112,7 @@ describe('Cloudflare Worker runtime', () => {
       displayName: 'Runtime Red',
       status: 'reconnected',
     });
-    expect((await runtimeEvidence(created)).alarm).toBeNull();
+    expectIdleAlarm(await runtimeEvidence(created));
     await expect(firstSeesReconnect).resolves.toEqual([
       expect.objectContaining({
         message: expect.objectContaining({
@@ -1114,7 +1234,7 @@ describe('Cloudflare Worker runtime', () => {
         ?.claimedSessionId
     ).toBeNull();
     expect(expired.snapshot?.state).toEqual(preservedState);
-    expect(expired.alarm).toBeNull();
+    expectIdleAlarm(expired);
 
     const lateSocket = await connect(created);
     const lateRejection = nextServerMessage(lateSocket);
@@ -1196,7 +1316,7 @@ describe('Cloudflare Worker runtime', () => {
 
     const afterRetry = await runtimeEvidence(created);
     expect(afterRetry.lifecycle).toMatchObject({ state: 'claimed' });
-    expect(afterRetry.alarm).toBeNull();
+    expectIdleAlarm(afterRetry);
     expect(Object.keys(afterRetry.snapshot?.sessions ?? {})).toEqual([
       retriedAdmission.sessionId,
     ]);
