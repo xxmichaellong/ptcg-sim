@@ -725,6 +725,24 @@ describe('DeckBuilderSession', () => {
     expect(session.commands).toHaveLength(0);
   });
 
+  it("rings only the open seat's unsaved deck in Solo", async () => {
+    const session = new FakeSession();
+    const store = new DeckBuilderStore({
+      mainDeck: [{ card: card('P1 mon'), count: 1 }],
+      alternateDeck: [{ card: card('P2 mon'), count: 1 }],
+    });
+    await renderSession({ session, store, open: true, alternateEnabled: true });
+    const ringed = (): (string | null)[] =>
+      Array.from(
+        host.querySelectorAll('.deck-tile[data-current="true"]'),
+        (tile) => tile.querySelector('.deck-tile__seat')?.textContent ?? null
+      );
+    expect(host.querySelectorAll('.deck-tile[data-unsaved]')).toHaveLength(2);
+    expect(ringed()).toEqual(['On P1']);
+    await click('#nativeDeckBuilderTargetAlt');
+    expect(ringed()).toEqual(['On P2']);
+  });
+
   it.each(['main', 'alternate'] as const)(
     'keeps restored %s looks when mounting a saved deck association',
     async (target) => {

@@ -459,7 +459,13 @@ const UnsavedSeatTile = ({
   // Its name over its finish, as the lists it came from show them.
   const [title, finish] = splitFinish(slot.label?.name ?? name);
   return (
-    <li className="deck-tile" data-current="true" data-unsaved="true">
+    <li
+      className="deck-tile"
+      // Ringed, as saved decks are, only while its seat is the one being
+      // worked on: the ring takes that seat's colour, not this deck's.
+      data-current={target === seats.target ? 'true' : undefined}
+      data-unsaved="true"
+    >
       <div
         className="deck-tile__choose"
         role="group"
