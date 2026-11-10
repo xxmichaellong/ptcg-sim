@@ -41,11 +41,13 @@ const collectRuntimeErrors = (page: Page): string[] => {
 // are served from the same Worker but are not the room authority.
 // Read-only data beside the rooms: public art, the card catalog, the
 // current decks and the tournament deck index (ADR-037).
+// The account (ADR-052) is read once as the app starts; it is not a room's.
 const NOT_AUTHORITY = [
   '/v2/assets/',
   '/v2/cards/catalog',
   '/v2/decks/',
   '/v2/tournaments',
+  '/v2/account',
 ];
 
 const authorityPath = (request: Request): string | undefined => {
