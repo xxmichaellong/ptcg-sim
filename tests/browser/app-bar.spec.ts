@@ -320,13 +320,13 @@ test.describe('on a phone', () => {
     for (const rect of await tableBoxes(page)) {
       expect(overlaps(rect, barBox), rect.what).toBe(false);
     }
-    // The deck and Play online lead Settings.
+    // The deck and Play online lead Settings, after the account's row.
     await page.locator('#settingsButton').tap();
     const settings = page.locator('#settings');
     await expect(settings.locator('#deckImportButton')).toBeVisible();
     expect(
       await settings
-        .locator('.settings-row[id]')
+        .locator('.settings-row[id]:not(.account-row)')
         .evaluateAll((nodes) => nodes.slice(0, 2).map((node) => node.id))
     ).toEqual(['deckImportButton', 'p2Button']);
     // Under a finger, no keys to list.
