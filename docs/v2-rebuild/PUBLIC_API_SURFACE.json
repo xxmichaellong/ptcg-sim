@@ -3546,6 +3546,10 @@
               "kind": "type"
             },
             {
+              "name": "ACCOUNT_RATE_LIMIT_RETRY_SECONDS",
+              "kind": "value"
+            },
+            {
               "name": "AdmissionTicketIssuer",
               "kind": "type"
             },
@@ -3584,6 +3588,10 @@
             {
               "name": "ConsoleServerTelemetrySink",
               "kind": "type-value"
+            },
+            {
+              "name": "consumeAccountRateLimit",
+              "kind": "value"
             },
             {
               "name": "consumeContinuationCreationRateLimit",

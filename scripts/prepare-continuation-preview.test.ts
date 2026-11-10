@@ -200,6 +200,9 @@ describe('continuation managed-preview provisioner', () => {
         '260904106',
         '260904107',
         '260904108',
+        // Sign-ins and account changes (ADR-052).
+        '260904109',
+        '260904110',
       ]
     );
     assert.deepEqual(
@@ -232,6 +235,7 @@ describe('continuation managed-preview provisioner', () => {
     assert.deepEqual(config.vars, {
       BUILD_ID: 'preview-abcdef0',
       DECK_INDEX_SOURCE: 'off',
+      AUTH_TEST_PROVIDER: 'off',
     });
     assert.equal(
       (config.main as string).endsWith('/apps/server/src/worker.ts'),
@@ -433,6 +437,22 @@ describe('continuation managed-preview provisioner', () => {
         sourceConfig: driftedConfig,
       }),
       /topology changed/u
+    );
+
+    const signInOn = join(parent, 'wrangler-sign-in-on.jsonc');
+    await writeFile(
+      signInOn,
+      checkedIn.replace(
+        '"AUTH_TEST_PROVIDER": "off"',
+        '"AUTH_TEST_PROVIDER": "on"'
+      )
+    );
+    await assert.rejects(
+      prepareContinuationPreview({
+        ...baseOptions(join(parent, 'sign-in-on')),
+        sourceConfig: signInOn,
+      }),
+      /stand-in sign-in on/u
     );
   });
 

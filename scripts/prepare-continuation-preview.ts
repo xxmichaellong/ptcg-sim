@@ -68,6 +68,9 @@ const EXPECTED_RATE_LIMIT_BINDINGS = Object.freeze([
   'IMAGE_UPLOAD_RATE_LIMITER',
   'IMAGE_IMPORT_RATE_LIMITER',
   'ROOM_CODE_RATE_LIMITER',
+  // Sign-ins and account changes (ADR-052).
+  'SIGN_IN_RATE_LIMITER',
+  'ACCOUNT_RATE_LIMITER',
 ]);
 const MAXIMUM_PREVIOUS_CREDENTIAL_BYTES = 8 * 1024;
 const KEY_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/u;
@@ -427,7 +430,13 @@ const readSourceWranglerConfig = async (
     throw new Error('Checked-in Wrangler production Worker name changed');
   }
   const variables = objectRecord(config.vars, 'Checked-in Wrangler vars');
-  if (!exactKeys(variables, ['BUILD_ID', 'DECK_INDEX_SOURCE'])) {
+  if (
+    !exactKeys(variables, [
+      'AUTH_TEST_PROVIDER',
+      'BUILD_ID',
+      'DECK_INDEX_SOURCE',
+    ])
+  ) {
     throw new Error(
       'Checked-in Wrangler vars changed; preview review is required'
     );
@@ -437,6 +446,13 @@ const readSourceWranglerConfig = async (
   if (variables.DECK_INDEX_SOURCE !== 'off') {
     throw new Error(
       'Checked-in Wrangler vars turn the deck index on; preview review is required'
+    );
+  }
+  // The stand-in sign-in signs anyone in as anyone: never in a deploy
+  // (ADR-052).
+  if (variables.AUTH_TEST_PROVIDER !== 'off') {
+    throw new Error(
+      'Checked-in Wrangler vars turn the stand-in sign-in on; preview review is required'
     );
   }
   return config;
@@ -554,7 +570,11 @@ const buildPreviewWranglerConfig = (
       compatibility_date: cloneJson(source.compatibility_date),
       compatibility_flags: cloneJson(source.compatibility_flags),
       workers_dev: true,
-      vars: { BUILD_ID: arguments_.buildId, DECK_INDEX_SOURCE: 'off' },
+      vars: {
+        BUILD_ID: arguments_.buildId,
+        DECK_INDEX_SOURCE: 'off',
+        AUTH_TEST_PROVIDER: 'off',
+      },
       assets: {
         ...cloneJson(assets),
         directory: resolve(sourceDirectory, assets.directory),

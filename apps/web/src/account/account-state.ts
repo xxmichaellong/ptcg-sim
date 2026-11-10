@@ -256,5 +256,10 @@ export const startSignIn = (
     if (!popup.closed) return;
     window.clearInterval(watch);
     void refreshAccount();
+    // Closed without finishing: this tab no longer waits on it, so a
+    // sign-in finished elsewhere later isn't announced here.
+    window.setTimeout(() => {
+      if (awaiting === provider) awaiting = undefined;
+    }, 2000);
   }, 500);
 };

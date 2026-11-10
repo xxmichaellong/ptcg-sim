@@ -52,11 +52,12 @@ Before generating a bundle, record:
 - the account/profile, test window, cost owner, evidence owner, and teardown
   owner.
 
-The generator maps `--rate-namespace-base` through base plus four, in this
+The generator maps `--rate-namespace-base` through base plus nine, in this
 order: room create, continuation create, continuation restore, continuation
-revoke, room ingress. It proves that those values do not overlap the IDs in
-the checked-in production and preview configurations. It cannot inspect the
-rest of a Cloudflare account, so the operator must verify that all five are otherwise
+revoke, room ingress, image upload, image import, room code, sign-in, account
+(ADR-052). It proves that those values do not overlap the IDs in the
+checked-in production and preview configurations. It cannot inspect the rest
+of a Cloudflare account, so the operator must verify that all ten are otherwise
 unused. Cloudflare documents that a namespace ID is an account-unique positive
 integer and that reuse across Workers deliberately shares counters. See the
 [Rate Limiting binding contract](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/).

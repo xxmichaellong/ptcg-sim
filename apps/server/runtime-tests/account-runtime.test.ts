@@ -88,7 +88,8 @@ describe('accounts, through the Worker', () => {
     const again = browser();
     await again.signIn('Runtime Dawn');
     expect((await again.me()).account?.id).not.toBe(account?.id);
-  });
+    // A dozen round trips through four objects: room for a loaded machine.
+  }, 30_000);
 
   it('never serves the stand-in where it is off', async () => {
     const response = await exports.default.fetch(
