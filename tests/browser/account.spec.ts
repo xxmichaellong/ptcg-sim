@@ -34,11 +34,16 @@ const signIn = async (page: Page, name: string): Promise<void> => {
   await closed;
 };
 
+/** A name of its own for each run: runs side by side never share a person. */
+const someone = (name: string): string =>
+  `${name} ${Math.random().toString(36).slice(2, 7)}`;
+
 test('signs in from Settings, renames, signs out and deletes', async ({
   page,
 }) => {
+  const dawn = someone('Dawn');
   await openTable(page);
-  await signIn(page, 'Dawn');
+  await signIn(page, dawn);
 
   // The Sign in page gives way to Settings' first page, now the account's.
   const row = page.locator('#settings #accountRow');
@@ -71,7 +76,9 @@ test('signs in from Settings, renames, signs out and deletes', async ({
   await page.locator('#settings #accountAvatarRow').click();
   const avatarPage = page.locator('#settings #settingsAccountAvatar');
   await expect(avatarPage).toBeVisible();
-  await avatarPage.locator('input[value="pokemon-25"]').check({ force: true });
+  await avatarPage.locator('.card-back-emblems__search input').fill('25');
+  await avatarPage.locator('[data-emblem="pokemon-25"]').click();
+  await expect(avatarPage.locator('input[value="pokemon-25"]')).toBeChecked();
   await page.locator('#settingsBackButton').click();
   await expect(
     page.locator('#settings #settingsAccount .account-avatar img')
@@ -88,7 +95,7 @@ test('signs in from Settings, renames, signs out and deletes', async ({
   // Sign out leaves the account; signing in again finds it.
   await page.locator('#settings #signOutButton').click();
   await expect(page.locator('#settings #signInRow')).toBeVisible();
-  await signIn(page, 'Dawn');
+  await signIn(page, dawn);
   await expect(page.locator('#settings #accountRow')).toContainText(
     'Dawn Berlitz'
   );
@@ -114,7 +121,7 @@ test('signs in from Settings, renames, signs out and deletes', async ({
   ).toBeVisible();
 
   // A new sign-in as the same person is a new account.
-  await signIn(page, 'Dawn');
+  await signIn(page, dawn);
   await expect(page.locator('#settings #accountRow')).toContainText('Dawn');
   await expect(page.locator('#settings #accountRow')).not.toContainText(
     'Berlitz'
@@ -128,10 +135,11 @@ test('a sign-in finished in one tab shows in another', async ({ page }) => {
   await expect(
     other.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
   ).toBeVisible({ timeout: 30_000 });
-  await signIn(page, 'Misty');
+  const misty = someone('Misty');
+  await signIn(page, misty);
   await dismissWelcome(other);
   await openAppMenu(other);
-  await expect(other.locator('#settings #accountRow')).toContainText('Misty');
+  await expect(other.locator('#settings #accountRow')).toContainText(misty);
   // Signing out tells the other tab too.
   await page.locator('#settings #accountRow').click();
   await page.locator('#settings #signOutButton').click();

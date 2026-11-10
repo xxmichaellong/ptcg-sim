@@ -646,8 +646,17 @@ export const DeleteAccountPage = ({ back }: { readonly back: () => void }) => {
               toast({ title: t`Account deleted`, id: 'account-sign-in' });
               back();
             },
-            () => {
+            (error: unknown) => {
               setBusy(false);
+              // Signed out meanwhile (or deleted from another device):
+              // the account as it now is says so.
+              if (
+                error instanceof AccountRequestError &&
+                error.status === 401
+              ) {
+                void refreshAccount();
+                return;
+              }
               toast({
                 title: t`Couldn't delete. Try again.`,
                 tone: 'danger',
