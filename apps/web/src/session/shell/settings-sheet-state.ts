@@ -7,6 +7,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  */
 export const SETTINGS_PAGE_PARENTS = {
   home: null,
+  // The account (ADR-052): Sign in, or Account and what it leads to.
+  signIn: 'home',
+  account: 'home',
+  accountAvatar: 'account',
+  signInMethods: 'account',
+  deleteAccount: 'account',
   saves: 'home',
   table: 'home',
   cards: 'home',
@@ -31,6 +37,11 @@ export const SETTINGS_PALETTE_PAGES = [
 /** Each page's element id in the drawer. */
 export const SETTINGS_PAGE_IDS: Readonly<Record<SettingsPage, string>> = {
   home: 'settingsHome',
+  signIn: 'settingsSignIn',
+  account: 'settingsAccount',
+  accountAvatar: 'settingsAccountAvatar',
+  signInMethods: 'settingsSignInMethods',
+  deleteAccount: 'settingsDeleteAccount',
   saves: 'settingsSaves',
   table: 'settingsTable',
   cards: 'settingsCards',

@@ -56,6 +56,10 @@
     "message": "{0, plural, other {Put # Pokémon on the Bench}}",
     "translation": "{0, plural, other {Ilagay ang # Pokémon sa Bench}}"
   },
+  "V90HAM": {
+    "message": "{0} · This session",
+    "translation": "{0} · Sesyon na ito"
+  },
   "yW-SAQ": {
     "message": "{0} ({1})",
     "translation": "{0} ({1})"
@@ -1707,6 +1711,11 @@
     "context": "settings page",
     "translation": "Tungkol dito"
   },
+  "jkSJZu": {
+    "message": "About me",
+    "context": "account",
+    "translation": "Tungkol sa akin"
+  },
   "v0rlF7": {
     "message": "Accent",
     "context": "sleeve",
@@ -1719,6 +1728,19 @@
   "XrUtuo": {
     "message": "Access to early beta testing.",
     "translation": "Access sa maagang beta testing."
+  },
+  "bAnwXR": {
+    "message": "Account",
+    "context": "settings page",
+    "translation": "Account"
+  },
+  "TKFUnX": {
+    "message": "Account deleted",
+    "translation": "Na-delete na ang account"
+  },
+  "F9cvwz": {
+    "message": "Account name",
+    "translation": "Pangalan ng account"
   },
   "7L01XJ": {
     "message": "Actions",
@@ -1787,6 +1809,10 @@
   "E6dCw3": {
     "message": "Add an image.",
     "translation": "Magdagdag ng image."
+  },
+  "n-3Fak": {
+    "message": "Add another sign-in method first. You need at least one.",
+    "translation": "Magdagdag muna ng ibang paraan ng pag-sign in. Kailangan mo ng kahit isa."
   },
   "6ZbKYu": {
     "message": "Add another stadium piece",
@@ -2100,6 +2126,10 @@
   "Dnn2XG": {
     "message": "Automatic",
     "translation": "Awtomatiko"
+  },
+  "kfcRb0": {
+    "message": "Avatar",
+    "translation": "Avatar"
   },
   "USi6Js": {
     "message": "Baby",
@@ -2689,6 +2719,14 @@
     "context": "special condition",
     "translation": "Confused"
   },
+  "iSLIjg": {
+    "message": "Connect",
+    "translation": "I-connect"
+  },
+  "UA993i": {
+    "message": "Connect {name}",
+    "translation": "I-connect ang {name}"
+  },
   "JrFTcr": {
     "message": "Connecting…",
     "translation": "Kumokonekta…"
@@ -2696,6 +2734,19 @@
   "-MkffR": {
     "message": "Connection lost.",
     "translation": "Nawala ang koneksyon."
+  },
+  "lfHbMT": {
+    "message": "Connections",
+    "context": "account",
+    "translation": "Mga koneksyon"
+  },
+  "_zxqXE": {
+    "message": "Continue with {name}",
+    "translation": "Magpatuloy gamit ang {name}"
+  },
+  "6V3Ea3": {
+    "message": "Copied",
+    "translation": "Nakopya"
   },
   "_IjcZC": {
     "message": "Copied",
@@ -2751,6 +2802,10 @@
     "message": "Couldn't change it. Try again.",
     "translation": "Hindi napalitan. Subukan ulit."
   },
+  "pjDAni": {
+    "message": "Couldn't change the avatar. Try again.",
+    "translation": "Hindi napalitan ang avatar. Subukan ulit."
+  },
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
     "translation": "Hindi ito nasuri. Subukan ulit."
@@ -2762,6 +2817,14 @@
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "Hindi nakagawa ng room. Subukan ulit."
+  },
+  "MmYfkc": {
+    "message": "Couldn't delete. Try again.",
+    "translation": "Hindi na-delete. Subukan ulit."
+  },
+  "vighKL": {
+    "message": "Couldn't disconnect. Try again.",
+    "translation": "Hindi na-disconnect. Subukan ulit."
   },
   "2TYlNr": {
     "message": "Couldn't get an image from that link.",
@@ -2806,6 +2869,14 @@
   "ETE6Wl": {
     "message": "Couldn't save the game",
     "translation": "Hindi na-save ang laro"
+  },
+  "VBrK9r": {
+    "message": "Couldn't sign in. Try again.",
+    "translation": "Hindi naka-sign in. Subukan ulit."
+  },
+  "Gg8gpF": {
+    "message": "Couldn't sign out. Try again.",
+    "translation": "Hindi naka-sign out. Subukan ulit."
   },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
@@ -3094,9 +3165,17 @@
     ],
     "translation": "I-delete ang {label} {number}"
   },
+  "ZDGm40": {
+    "message": "Delete account",
+    "translation": "I-delete ang account"
+  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "I-delete ang deck"
+  },
+  "PKW2qT": {
+    "message": "Deletes your account and its sign-in methods for good. Decks on this device stay.",
+    "translation": "Permanenteng dine-delete ang account mo at ang mga paraan ng pag-sign in nito. Mananatili ang mga deck sa device na ito."
   },
   "Y6OAuj": {
     "message": "Denim",
@@ -3218,6 +3297,14 @@
     "message": "Discard pile",
     "context": "zone",
     "translation": "Discard pile"
+  },
+  "-K0AvT": {
+    "message": "Disconnect",
+    "translation": "I-disconnect"
+  },
+  "C2BaaK": {
+    "message": "Disconnect {name}",
+    "translation": "I-disconnect ang {name}"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -3417,6 +3504,11 @@
       "A Trainer's or Energy's text in the card text form."
     ],
     "translation": "Effect"
+  },
+  "93hdsK": {
+    "message": "Emblem",
+    "context": "avatar",
+    "translation": "Emblem"
   },
   "eAabzD": {
     "message": "Emblem",
@@ -3744,6 +3836,10 @@
     ],
     "translation": "Para sa balita at mga paparating na update, i-follow ako sa X: <0>{TWITTER_HANDLE}</0>"
   },
+  "IRbAuL": {
+    "message": "For players 13 and older.",
+    "translation": "Para sa mga player na 13 pataas."
+  },
   "RMPKcE": {
     "message": "Forest",
     "context": "sleeve color",
@@ -4021,6 +4117,10 @@
     "message": "Hide your Prizes",
     "translation": "Itago ang Prizes mo"
   },
+  "0NkY5X": {
+    "message": "Hold to delete",
+    "translation": "Pindutin nang matagal para i-delete"
+  },
   "tgYI8X": {
     "message": "Holographic",
     "translation": "Holographic"
@@ -4150,6 +4250,11 @@
     ],
     "translation": "sa deck"
   },
+  "2LIvOi": {
+    "message": "Initial",
+    "context": "avatar",
+    "translation": "Inisyal"
+  },
   "WYBZ5W": {
     "message": "Ink",
     "context": "sleeve color",
@@ -4231,6 +4336,11 @@
     "message": "Join pieces…",
     "translation": "Pagdugtungin ang mga piraso…"
   },
+  "Ha7muZ": {
+    "message": "Joined",
+    "context": "account",
+    "translation": "Sumali noong"
+  },
   "t8Lc2X": {
     "message": "Joining…",
     "translation": "Sumasali…"
@@ -4243,6 +4353,10 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Panatilihin"
+  },
+  "TaE8k-": {
+    "message": "Keep decks and replays everywhere",
+    "translation": "Itago ang mga deck at replay saanman"
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -5310,6 +5424,10 @@
     "message": "Only Pokémon in play take damage",
     "translation": "Mga Pokémon lang na nasa play ang puwedeng ma-damage"
   },
+  "Z8V1kN": {
+    "message": "Only signs you out on this device",
+    "translation": "Sa device na ito lang ang masa-sign out"
+  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "Player lang ng upuang iyon ang puwede."
@@ -5802,6 +5920,10 @@
     "message": "Prism Star",
     "context": "Pokémon card mechanic",
     "translation": "Prism Star"
+  },
+  "rjGI_Q": {
+    "message": "Privacy",
+    "translation": "Privacy"
   },
   "nT_UTA": {
     "message": "Prize",
@@ -6924,6 +7046,34 @@
     "message": "Sideways scan",
     "translation": "Pahigang scan"
   },
+  "5lWFkC": {
+    "message": "Sign in",
+    "translation": "Mag-sign in"
+  },
+  "fcWrnU": {
+    "message": "Sign out",
+    "translation": "Mag-sign out"
+  },
+  "WzENDu": {
+    "message": "Sign-in method added",
+    "translation": "Naidagdag ang paraan ng pag-sign in"
+  },
+  "2ktC7b": {
+    "message": "Sign-in methods",
+    "translation": "Mga paraan ng pag-sign in"
+  },
+  "q2v4sG": {
+    "message": "Signed in",
+    "translation": "Naka-sign in"
+  },
+  "WM5GrY": {
+    "message": "Signed in as {name}",
+    "translation": "Naka-sign in bilang {name}"
+  },
+  "GxoiaQ": {
+    "message": "Signed out",
+    "translation": "Naka-sign out"
+  },
   "utezqW": {
     "message": "Single Strike",
     "context": "Pokémon card mechanic",
@@ -7414,6 +7564,15 @@
     "context": "Trainer cards by kind",
     "translation": "Mga Technical Machine"
   },
+  "pnSTDX": {
+    "message": "Test",
+    "context": "stand-in sign-in method",
+    "translation": "Test"
+  },
+  "h9MLYh": {
+    "message": "That account already has its own PTCG Sim account",
+    "translation": "May sarili nang PTCG Sim account ang account na iyon"
+  },
   "2DW6tZ": {
     "message": "That code is taken",
     "translation": "Gamit na ang code na iyon"
@@ -7785,6 +7944,10 @@
     "message": "Too many tries. Wait a minute and try again.",
     "translation": "Masyadong maraming subok. Maghintay ng isang minuto at subukan ulit."
   },
+  "SoMNWh": {
+    "message": "Too many tries. Wait a minute.",
+    "translation": "Masyadong maraming subok. Maghintay ng isang minuto."
+  },
   "Xx-Q6M": {
     "message": "Tool",
     "context": "shortcut key caption",
@@ -8100,6 +8263,10 @@
     "context": "an Ability, this turn",
     "translation": "Nagamit na"
   },
+  "GjhOGB": {
+    "message": "User ID",
+    "translation": "User ID"
+  },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
     "translation": "Gumagamit ng search syntax ng Limitless TCG."
@@ -8266,6 +8433,14 @@
     "message": "You're watching",
     "translation": "Nanonood ka"
   },
+  "vblI2b": {
+    "message": "Your account already has a {name} sign-in",
+    "translation": "May {name} sign-in na ang account mo"
+  },
+  "urcldz": {
+    "message": "Your account already has that sign-in",
+    "translation": "May ganoong sign-in na ang account mo"
+  },
   "wkv3p1": {
     "message": "Your Active Spot",
     "translation": "Active Spot mo"
@@ -8291,6 +8466,10 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "Ang mga deck mo"
+  },
+  "zCckVB": {
+    "message": "Your decks and replays, on every device.",
+    "translation": "Ang mga deck at replay mo, sa lahat ng device."
   },
   "S7YY4L": {
     "message": "Your discard pile",

@@ -14,6 +14,8 @@ export default defineConfig({
           CONTINUATION_QUOTA_CONFIGURATION: continuationTestQuotaConfiguration,
           // Off in wrangler.jsonc until Workers Paid; these crawl a stand-in.
           DECK_INDEX_SOURCE: 'on',
+          // The stand-in sign-in (ADR-052), off in wrangler.jsonc.
+          AUTH_TEST_PROVIDER: 'on',
         },
       },
     }),

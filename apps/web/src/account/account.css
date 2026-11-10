@@ -1,0 +1,234 @@
+/* The account's pages in Settings (AccountPages.tsx, ADR-052). */
+
+/* ---- The avatar: an initial on a warm disc, or an emblem ------------- */
+
+.account-avatar {
+  display: inline-grid;
+  flex: none;
+  width: var(--account-avatar-size, 40px);
+  height: var(--account-avatar-size, 40px);
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e0574f, #f2a33a);
+  color: #fff;
+  font-size: calc(var(--account-avatar-size, 40px) * 0.42);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  user-select: none;
+}
+
+.account-avatar[data-kind='emblem'] {
+  background: var(--color-surface-2);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+.account-avatar[data-kind='emblem'] > img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}
+
+.account-avatar[data-kind='empty'] {
+  border: 1px dashed var(--color-border-strong, var(--color-border));
+  background: var(--color-surface-2);
+}
+
+.settings-row.account-row {
+  min-height: 60px;
+}
+
+.settings-row.account-hero {
+  display: flex;
+  align-items: center;
+}
+
+.account-hero > .ds-field {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---- Sign in ---------------------------------------------------------- */
+
+.account-lede {
+  margin: 0;
+  padding-inline: var(--space-3);
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  text-wrap: balance;
+}
+
+.account-providers {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.account-provider {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-1);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-fade);
+}
+
+.account-provider > svg {
+  width: 20px;
+  height: 20px;
+}
+
+.account-provider[data-provider='google'] {
+  border-color: #f7f4f1;
+  background: #f7f4f1;
+  color: #1d1915;
+}
+
+.account-provider[data-provider='discord'] {
+  border-color: #5865f2;
+  background: #5865f2;
+  color: #fff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .account-provider:hover {
+    filter: brightness(1.06);
+  }
+}
+
+.account-provider:focus-visible,
+.account-pill:focus-visible,
+.account-hold:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.account-fine {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+.account-fine a {
+  color: inherit;
+}
+
+/* ---- Rows with a button at their end --------------------------------- */
+
+.settings-row.account-info-row,
+.settings-row.account-method {
+  cursor: auto;
+}
+
+.account-info-row__value {
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.account-pill {
+  flex: none;
+  min-height: 30px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.account-pill[data-accent='true'] {
+  border-color: var(--color-accent-fill);
+  background: var(--color-accent-fill);
+  color: #fff;
+}
+
+.account-pill:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@media (pointer: coarse) {
+  .account-pill {
+    min-height: 38px;
+  }
+}
+
+.account-lock {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-1-5);
+}
+
+.account-lock > svg {
+  flex: none;
+  margin-block-start: 2px;
+}
+
+/* ---- Delete ----------------------------------------------------------- */
+
+.account-warning {
+  margin: 0;
+  padding-inline: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+.account-hold {
+  position: relative;
+  display: grid;
+  min-height: 46px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  font: inherit;
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.account-hold:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* The fill grows from the start while held and drops back when let go. */
+.account-hold__fill {
+  position: absolute;
+  inset: 0;
+  background: var(--color-danger);
+  opacity: 0.35;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 150ms var(--ease-out);
+}
+
+.account-hold:dir(rtl) .account-hold__fill {
+  transform-origin: right center;
+}
+
+.account-hold[data-holding='true'] .account-hold__fill {
+  transform: scaleX(1);
+  transition: transform var(--account-hold-ms, 1200ms) linear;
+}
+
+.account-hold__label {
+  position: relative;
+}

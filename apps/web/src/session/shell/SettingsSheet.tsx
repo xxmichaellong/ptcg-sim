@@ -22,6 +22,9 @@ import { WaveSineIcon } from '@phosphor-icons/react/dist/csr/WaveSine';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { CARD_IMAGE_LANGUAGES, isCardImageLanguage } from '@ptcgsim/deck-core';
 import {
+  lazy,
+  Suspense,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -31,6 +34,13 @@ import {
   type RefObject,
 } from 'react';
 
+import {
+  AccountPage,
+  AccountRow,
+  DeleteAccountPage,
+  SignInMethodsPage,
+  SignInPage,
+} from '../../account/AccountPages.js';
 import { TableArtControls } from '../../board/view/TableArtControls.js';
 import {
   CardViewControls,
@@ -155,6 +165,11 @@ export interface SettingsSheetProps {
     readonly onChange: (allowed: boolean) => void;
   };
 }
+
+/** The avatar page brings the sleeve designer's emblems, so loads with it. */
+const AccountAvatarPage = lazy(
+  () => import('../../account/AccountAvatarPage.js')
+);
 
 /** Opens an outside page in a new tab, keeping this one. */
 const openOutside = (url: string): void => {
@@ -1058,6 +1073,9 @@ export const SettingsSheet = ({
     editCoin: onEditCoin ?? (() => void editBrowserCoin()),
   };
   const top = pages.top;
+  const goBack = useRef(pages.back);
+  goBack.current = pages.back;
+  const back = useCallback(() => void goBack.current(), []);
   const title = settingsPageName(top);
   const leading =
     pages.stack.length > 1 ? (
@@ -1075,6 +1093,7 @@ export const SettingsSheet = ({
       {top === 'home' ? (
         <>
           {' '}
+          <AccountRow navigate={pages.navigate} />
           {playerNames?.length ? (
             <SettingsBlock>
               <PlayerNameControls players={playerNames} />
@@ -1082,6 +1101,18 @@ export const SettingsSheet = ({
           ) : null}
           <HomePage context={context} menu={menu} boardFlip={boardFlip} />
         </>
+      ) : top === 'signIn' ? (
+        <SignInPage back={back} />
+      ) : top === 'account' ? (
+        <AccountPage navigate={pages.navigate} back={back} />
+      ) : top === 'accountAvatar' ? (
+        <Suspense fallback={null}>
+          <AccountAvatarPage />
+        </Suspense>
+      ) : top === 'signInMethods' ? (
+        <SignInMethodsPage />
+      ) : top === 'deleteAccount' ? (
+        <DeleteAccountPage back={back} />
       ) : top === 'saves' ? (
         <SavesPage menu={menu} context={context} />
       ) : top === 'table' ? (

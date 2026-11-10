@@ -128,6 +128,16 @@ export const settingsPageName = (page: SettingsPage): string => {
   switch (page) {
     case 'home':
       return t`Settings`;
+    case 'signIn':
+      return t`Sign in`;
+    case 'account':
+      return t({ message: 'Account', context: 'settings page' });
+    case 'accountAvatar':
+      return t`Avatar`;
+    case 'signInMethods':
+      return t`Sign-in methods`;
+    case 'deleteAccount':
+      return t`Delete account`;
     case 'saves':
       return t`Saves & replays`;
     case 'table':

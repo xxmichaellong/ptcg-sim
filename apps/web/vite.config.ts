@@ -269,7 +269,7 @@ export default defineConfig({
       // Scoped to the authority's own routes. A blanket `/v2` rule would also
       // swallow `/v2/assets/*`, which this app serves from `public/` and which
       // the worker references, but does not serve, as the default card back.
-      '^/v2/(health|rooms|join|continuations|decks|cards|tournaments|images)([/?].*)?$':
+      '^/v2/(health|rooms|join|continuations|decks|cards|tournaments|images|account|auth)([/?].*)?$':
         {
           target: v2ServerTarget,
           changeOrigin: false,

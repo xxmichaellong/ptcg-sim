@@ -56,6 +56,10 @@
     "message": "{0, plural, other {Put # Pokémon on the Bench}}",
     "translation": "{0, plural, one {Стави # Pokémon на клупу} few {Стави # Pokémon-а на клупу} other {Стави # Pokémon-а на клупу}}"
   },
+  "V90HAM": {
+    "message": "{0} · This session",
+    "translation": "{0} · Ова сесија"
+  },
   "yW-SAQ": {
     "message": "{0} ({1})",
     "translation": "{0} ({1})"
@@ -1707,6 +1711,11 @@
     "context": "settings page",
     "translation": "О апликацији"
   },
+  "jkSJZu": {
+    "message": "About me",
+    "context": "account",
+    "translation": "О мени"
+  },
   "v0rlF7": {
     "message": "Accent",
     "context": "sleeve",
@@ -1719,6 +1728,19 @@
   "XrUtuo": {
     "message": "Access to early beta testing.",
     "translation": "Приступ раном бета тестирању."
+  },
+  "bAnwXR": {
+    "message": "Account",
+    "context": "settings page",
+    "translation": "Налог"
+  },
+  "TKFUnX": {
+    "message": "Account deleted",
+    "translation": "Налог је обрисан"
+  },
+  "F9cvwz": {
+    "message": "Account name",
+    "translation": "Име налога"
   },
   "7L01XJ": {
     "message": "Actions",
@@ -1787,6 +1809,10 @@
   "E6dCw3": {
     "message": "Add an image.",
     "translation": "Додај слику."
+  },
+  "n-3Fak": {
+    "message": "Add another sign-in method first. You need at least one.",
+    "translation": "Прво додај други начин пријаве. Потребан ти је бар један."
   },
   "6ZbKYu": {
     "message": "Add another stadium piece",
@@ -2100,6 +2126,10 @@
   "Dnn2XG": {
     "message": "Automatic",
     "translation": "Аутоматски"
+  },
+  "kfcRb0": {
+    "message": "Avatar",
+    "translation": "Аватар"
   },
   "USi6Js": {
     "message": "Baby",
@@ -2689,6 +2719,14 @@
     "context": "special condition",
     "translation": "Збуњен"
   },
+  "iSLIjg": {
+    "message": "Connect",
+    "translation": "Повежи"
+  },
+  "UA993i": {
+    "message": "Connect {name}",
+    "translation": "Повежи {name}"
+  },
   "JrFTcr": {
     "message": "Connecting…",
     "translation": "Повезивање…"
@@ -2696,6 +2734,19 @@
   "-MkffR": {
     "message": "Connection lost.",
     "translation": "Веза је прекинута."
+  },
+  "lfHbMT": {
+    "message": "Connections",
+    "context": "account",
+    "translation": "Везе"
+  },
+  "_zxqXE": {
+    "message": "Continue with {name}",
+    "translation": "Настави преко {name}"
+  },
+  "6V3Ea3": {
+    "message": "Copied",
+    "translation": "Копирано"
   },
   "_IjcZC": {
     "message": "Copied",
@@ -2751,6 +2802,10 @@
     "message": "Couldn't change it. Try again.",
     "translation": "Промена није успела. Покушај поново."
   },
+  "pjDAni": {
+    "message": "Couldn't change the avatar. Try again.",
+    "translation": "Није могуће променити аватар. Покушај поново."
+  },
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
     "translation": "Провера није успела. Пробај поново."
@@ -2762,6 +2817,14 @@
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "Соба није направљена. Покушај поново."
+  },
+  "MmYfkc": {
+    "message": "Couldn't delete. Try again.",
+    "translation": "Брисање није успело. Покушај поново."
+  },
+  "vighKL": {
+    "message": "Couldn't disconnect. Try again.",
+    "translation": "Прекид везе није успео. Покушај поново."
   },
   "2TYlNr": {
     "message": "Couldn't get an image from that link.",
@@ -2806,6 +2869,14 @@
   "ETE6Wl": {
     "message": "Couldn't save the game",
     "translation": "Није успело чување игре"
+  },
+  "VBrK9r": {
+    "message": "Couldn't sign in. Try again.",
+    "translation": "Пријава није успела. Покушај поново."
+  },
+  "Gg8gpF": {
+    "message": "Couldn't sign out. Try again.",
+    "translation": "Одјава није успела. Покушај поново."
   },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
@@ -3094,9 +3165,17 @@
     ],
     "translation": "Обриши {label} {number}"
   },
+  "ZDGm40": {
+    "message": "Delete account",
+    "translation": "Обриши налог"
+  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "Обриши шпил"
+  },
+  "PKW2qT": {
+    "message": "Deletes your account and its sign-in methods for good. Decks on this device stay.",
+    "translation": "Трајно брише твој налог и његове начине пријаве. Шпилови на овом уређају остају."
   },
   "Y6OAuj": {
     "message": "Denim",
@@ -3218,6 +3297,14 @@
     "message": "Discard pile",
     "context": "zone",
     "translation": "Одбачене карте"
+  },
+  "-K0AvT": {
+    "message": "Disconnect",
+    "translation": "Прекини везу"
+  },
+  "C2BaaK": {
+    "message": "Disconnect {name}",
+    "translation": "Прекини везу са {name}"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -3417,6 +3504,11 @@
       "A Trainer's or Energy's text in the card text form."
     ],
     "translation": "Ефекат"
+  },
+  "93hdsK": {
+    "message": "Emblem",
+    "context": "avatar",
+    "translation": "Амблем"
   },
   "eAabzD": {
     "message": "Emblem",
@@ -3744,6 +3836,10 @@
     ],
     "translation": "За новости и планове прати ме на X-у: <0>{TWITTER_HANDLE}</0>"
   },
+  "IRbAuL": {
+    "message": "For players 13 and older.",
+    "translation": "За играче од 13 година и старије."
+  },
   "RMPKcE": {
     "message": "Forest",
     "context": "sleeve color",
@@ -4021,6 +4117,10 @@
     "message": "Hide your Prizes",
     "translation": "Сакриј своје награде"
   },
+  "0NkY5X": {
+    "message": "Hold to delete",
+    "translation": "Држи да обришеш"
+  },
   "tgYI8X": {
     "message": "Holographic",
     "translation": "Холографска"
@@ -4150,6 +4250,11 @@
     ],
     "translation": "у шпилу"
   },
+  "2LIvOi": {
+    "message": "Initial",
+    "context": "avatar",
+    "translation": "Иницијал"
+  },
   "WYBZ5W": {
     "message": "Ink",
     "context": "sleeve color",
@@ -4231,6 +4336,11 @@
     "message": "Join pieces…",
     "translation": "Споји делове…"
   },
+  "Ha7muZ": {
+    "message": "Joined",
+    "context": "account",
+    "translation": "Придружио се"
+  },
   "t8Lc2X": {
     "message": "Joining…",
     "translation": "Придружујем се…"
@@ -4243,6 +4353,10 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Задржи"
+  },
+  "TaE8k-": {
+    "message": "Keep decks and replays everywhere",
+    "translation": "Чувај шпилове и снимке свуда"
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -5310,6 +5424,10 @@
     "message": "Only Pokémon in play take damage",
     "translation": "Штету примају само Pokémon-и у игри"
   },
+  "Z8V1kN": {
+    "message": "Only signs you out on this device",
+    "translation": "Одјављује те само на овом уређају"
+  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "То може само играч са тог места."
@@ -5802,6 +5920,10 @@
     "message": "Prism Star",
     "context": "Pokémon card mechanic",
     "translation": "Prism Star"
+  },
+  "rjGI_Q": {
+    "message": "Privacy",
+    "translation": "Приватност"
   },
   "nT_UTA": {
     "message": "Prize",
@@ -6924,6 +7046,34 @@
     "message": "Sideways scan",
     "translation": "Бочно скенирана карта"
   },
+  "5lWFkC": {
+    "message": "Sign in",
+    "translation": "Пријави се"
+  },
+  "fcWrnU": {
+    "message": "Sign out",
+    "translation": "Одјави се"
+  },
+  "WzENDu": {
+    "message": "Sign-in method added",
+    "translation": "Начин пријаве је додат"
+  },
+  "2ktC7b": {
+    "message": "Sign-in methods",
+    "translation": "Начини пријаве"
+  },
+  "q2v4sG": {
+    "message": "Signed in",
+    "translation": "Пријављен си"
+  },
+  "WM5GrY": {
+    "message": "Signed in as {name}",
+    "translation": "Пријављен као {name}"
+  },
+  "GxoiaQ": {
+    "message": "Signed out",
+    "translation": "Одјављен си"
+  },
   "utezqW": {
     "message": "Single Strike",
     "context": "Pokémon card mechanic",
@@ -7414,6 +7564,15 @@
     "context": "Trainer cards by kind",
     "translation": "Техничке машине"
   },
+  "pnSTDX": {
+    "message": "Test",
+    "context": "stand-in sign-in method",
+    "translation": "Тест"
+  },
+  "h9MLYh": {
+    "message": "That account already has its own PTCG Sim account",
+    "translation": "Тај налог већ има свој PTCG Sim налог"
+  },
   "2DW6tZ": {
     "message": "That code is taken",
     "translation": "Тај код је заузет"
@@ -7785,6 +7944,10 @@
     "message": "Too many tries. Wait a minute and try again.",
     "translation": "Превише покушаја. Сачекај минут и покушај поново."
   },
+  "SoMNWh": {
+    "message": "Too many tries. Wait a minute.",
+    "translation": "Превише покушаја. Сачекај минут."
+  },
   "Xx-Q6M": {
     "message": "Tool",
     "context": "shortcut key caption",
@@ -8100,6 +8263,10 @@
     "context": "an Ability, this turn",
     "translation": "Искоришћено"
   },
+  "GjhOGB": {
+    "message": "User ID",
+    "translation": "ID корисника"
+  },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
     "translation": "Користи синтаксу за претрагу Limitless TCG-а."
@@ -8266,6 +8433,14 @@
     "message": "You're watching",
     "translation": "Гледаш"
   },
+  "vblI2b": {
+    "message": "Your account already has a {name} sign-in",
+    "translation": "Твој налог већ има пријаву преко {name}"
+  },
+  "urcldz": {
+    "message": "Your account already has that sign-in",
+    "translation": "Твој налог већ има ту пријаву"
+  },
   "wkv3p1": {
     "message": "Your Active Spot",
     "translation": "Твоје активно место"
@@ -8291,6 +8466,10 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "Твоји шпилови"
+  },
+  "zCckVB": {
+    "message": "Your decks and replays, on every device.",
+    "translation": "Твоји шпилови и снимци на сваком уређају."
   },
   "S7YY4L": {
     "message": "Your discard pile",

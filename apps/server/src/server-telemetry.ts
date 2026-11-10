@@ -41,6 +41,8 @@ export type ServerHttpRoute =
   | 'room_code_join'
   | 'admission_ticket'
   | 'socket_upgrade'
+  | 'sign_in'
+  | 'account'
   | 'not_found';
 export type ServerHttpOutcome =
   'accepted' | 'rejected' | 'rate_limited' | 'not_found' | 'failed';

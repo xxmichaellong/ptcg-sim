@@ -56,6 +56,10 @@
     "message": "{0, plural, other {Put # Pokémon on the Bench}}",
     "translation": "{0, plural, other {Đặt # Pokémon lên Bench}}"
   },
+  "V90HAM": {
+    "message": "{0} · This session",
+    "translation": "{0} · Phiên này"
+  },
   "yW-SAQ": {
     "message": "{0} ({1})",
     "translation": "{0} ({1})"
@@ -1707,6 +1711,11 @@
     "context": "settings page",
     "translation": "Giới thiệu"
   },
+  "jkSJZu": {
+    "message": "About me",
+    "context": "account",
+    "translation": "Giới thiệu"
+  },
   "v0rlF7": {
     "message": "Accent",
     "context": "sleeve",
@@ -1719,6 +1728,19 @@
   "XrUtuo": {
     "message": "Access to early beta testing.",
     "translation": "Truy cập bản thử nghiệm beta sớm."
+  },
+  "bAnwXR": {
+    "message": "Account",
+    "context": "settings page",
+    "translation": "Tài khoản"
+  },
+  "TKFUnX": {
+    "message": "Account deleted",
+    "translation": "Đã xóa tài khoản"
+  },
+  "F9cvwz": {
+    "message": "Account name",
+    "translation": "Tên tài khoản"
   },
   "7L01XJ": {
     "message": "Actions",
@@ -1787,6 +1809,10 @@
   "E6dCw3": {
     "message": "Add an image.",
     "translation": "Thêm hình ảnh."
+  },
+  "n-3Fak": {
+    "message": "Add another sign-in method first. You need at least one.",
+    "translation": "Hãy thêm một cách đăng nhập khác trước. Bạn cần ít nhất một cách."
   },
   "6ZbKYu": {
     "message": "Add another stadium piece",
@@ -2100,6 +2126,10 @@
   "Dnn2XG": {
     "message": "Automatic",
     "translation": "Tự động"
+  },
+  "kfcRb0": {
+    "message": "Avatar",
+    "translation": "Ảnh đại diện"
   },
   "USi6Js": {
     "message": "Baby",
@@ -2689,6 +2719,14 @@
     "context": "special condition",
     "translation": "Rối loạn"
   },
+  "iSLIjg": {
+    "message": "Connect",
+    "translation": "Kết nối"
+  },
+  "UA993i": {
+    "message": "Connect {name}",
+    "translation": "Kết nối {name}"
+  },
   "JrFTcr": {
     "message": "Connecting…",
     "translation": "Đang kết nối…"
@@ -2696,6 +2734,19 @@
   "-MkffR": {
     "message": "Connection lost.",
     "translation": "Mất kết nối."
+  },
+  "lfHbMT": {
+    "message": "Connections",
+    "context": "account",
+    "translation": "Kết nối"
+  },
+  "_zxqXE": {
+    "message": "Continue with {name}",
+    "translation": "Tiếp tục với {name}"
+  },
+  "6V3Ea3": {
+    "message": "Copied",
+    "translation": "Đã sao chép"
   },
   "_IjcZC": {
     "message": "Copied",
@@ -2751,6 +2802,10 @@
     "message": "Couldn't change it. Try again.",
     "translation": "Không đổi được. Hãy thử lại."
   },
+  "pjDAni": {
+    "message": "Couldn't change the avatar. Try again.",
+    "translation": "Không đổi được ảnh đại diện. Hãy thử lại."
+  },
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
     "translation": "Không kiểm tra được. Hãy thử lại."
@@ -2762,6 +2817,14 @@
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "Không thể tạo phòng. Hãy thử lại."
+  },
+  "MmYfkc": {
+    "message": "Couldn't delete. Try again.",
+    "translation": "Không xóa được. Hãy thử lại."
+  },
+  "vighKL": {
+    "message": "Couldn't disconnect. Try again.",
+    "translation": "Không ngắt kết nối được. Hãy thử lại."
   },
   "2TYlNr": {
     "message": "Couldn't get an image from that link.",
@@ -2806,6 +2869,14 @@
   "ETE6Wl": {
     "message": "Couldn't save the game",
     "translation": "Không lưu được ván đấu"
+  },
+  "VBrK9r": {
+    "message": "Couldn't sign in. Try again.",
+    "translation": "Không đăng nhập được. Hãy thử lại."
+  },
+  "Gg8gpF": {
+    "message": "Couldn't sign out. Try again.",
+    "translation": "Không đăng xuất được. Hãy thử lại."
   },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
@@ -3094,9 +3165,17 @@
     ],
     "translation": "Xóa {label} {number}"
   },
+  "ZDGm40": {
+    "message": "Delete account",
+    "translation": "Xóa tài khoản"
+  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "Xóa bộ bài"
+  },
+  "PKW2qT": {
+    "message": "Deletes your account and its sign-in methods for good. Decks on this device stay.",
+    "translation": "Xóa vĩnh viễn tài khoản và các cách đăng nhập của bạn. Bộ bài trên thiết bị này vẫn được giữ lại."
   },
   "Y6OAuj": {
     "message": "Denim",
@@ -3218,6 +3297,14 @@
     "message": "Discard pile",
     "context": "zone",
     "translation": "Chồng bài bỏ"
+  },
+  "-K0AvT": {
+    "message": "Disconnect",
+    "translation": "Ngắt kết nối"
+  },
+  "C2BaaK": {
+    "message": "Disconnect {name}",
+    "translation": "Ngắt kết nối {name}"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -3417,6 +3504,11 @@
       "A Trainer's or Energy's text in the card text form."
     ],
     "translation": "Hiệu ứng"
+  },
+  "93hdsK": {
+    "message": "Emblem",
+    "context": "avatar",
+    "translation": "Biểu tượng"
   },
   "eAabzD": {
     "message": "Emblem",
@@ -3744,6 +3836,10 @@
     ],
     "translation": "Để xem tin tức và những gì sắp ra mắt, hãy theo dõi tôi trên X: <0>{TWITTER_HANDLE}</0>"
   },
+  "IRbAuL": {
+    "message": "For players 13 and older.",
+    "translation": "Dành cho người chơi từ 13 tuổi trở lên."
+  },
   "RMPKcE": {
     "message": "Forest",
     "context": "sleeve color",
@@ -4021,6 +4117,10 @@
     "message": "Hide your Prizes",
     "translation": "Ẩn Prize của bạn"
   },
+  "0NkY5X": {
+    "message": "Hold to delete",
+    "translation": "Nhấn giữ để xóa"
+  },
   "tgYI8X": {
     "message": "Holographic",
     "translation": "Ánh ngũ sắc"
@@ -4150,6 +4250,11 @@
     ],
     "translation": "trong bộ bài"
   },
+  "2LIvOi": {
+    "message": "Initial",
+    "context": "avatar",
+    "translation": "Chữ cái đầu"
+  },
   "WYBZ5W": {
     "message": "Ink",
     "context": "sleeve color",
@@ -4231,6 +4336,11 @@
     "message": "Join pieces…",
     "translation": "Ghép các lá…"
   },
+  "Ha7muZ": {
+    "message": "Joined",
+    "context": "account",
+    "translation": "Ngày tham gia"
+  },
   "t8Lc2X": {
     "message": "Joining…",
     "translation": "Đang vào…"
@@ -4243,6 +4353,10 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Giữ lại"
+  },
+  "TaE8k-": {
+    "message": "Keep decks and replays everywhere",
+    "translation": "Giữ bộ bài và bản ghi lại trên mọi thiết bị"
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -5310,6 +5424,10 @@
     "message": "Only Pokémon in play take damage",
     "translation": "Chỉ Pokémon trên sân mới nhận sát thương"
   },
+  "Z8V1kN": {
+    "message": "Only signs you out on this device",
+    "translation": "Chỉ đăng xuất trên thiết bị này"
+  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "Chỉ người chơi ở chỗ ngồi đó mới làm được."
@@ -5802,6 +5920,10 @@
     "message": "Prism Star",
     "context": "Pokémon card mechanic",
     "translation": "Prism Star"
+  },
+  "rjGI_Q": {
+    "message": "Privacy",
+    "translation": "Quyền riêng tư"
   },
   "nT_UTA": {
     "message": "Prize",
@@ -6924,6 +7046,34 @@
     "message": "Sideways scan",
     "translation": "Ảnh quét ngang"
   },
+  "5lWFkC": {
+    "message": "Sign in",
+    "translation": "Đăng nhập"
+  },
+  "fcWrnU": {
+    "message": "Sign out",
+    "translation": "Đăng xuất"
+  },
+  "WzENDu": {
+    "message": "Sign-in method added",
+    "translation": "Đã thêm cách đăng nhập"
+  },
+  "2ktC7b": {
+    "message": "Sign-in methods",
+    "translation": "Cách đăng nhập"
+  },
+  "q2v4sG": {
+    "message": "Signed in",
+    "translation": "Đã đăng nhập"
+  },
+  "WM5GrY": {
+    "message": "Signed in as {name}",
+    "translation": "Đã đăng nhập với tên {name}"
+  },
+  "GxoiaQ": {
+    "message": "Signed out",
+    "translation": "Đã đăng xuất"
+  },
   "utezqW": {
     "message": "Single Strike",
     "context": "Pokémon card mechanic",
@@ -7414,6 +7564,15 @@
     "context": "Trainer cards by kind",
     "translation": "Technical Machine"
   },
+  "pnSTDX": {
+    "message": "Test",
+    "context": "stand-in sign-in method",
+    "translation": "Thử nghiệm"
+  },
+  "h9MLYh": {
+    "message": "That account already has its own PTCG Sim account",
+    "translation": "Tài khoản đó đã có tài khoản PTCG Sim riêng"
+  },
   "2DW6tZ": {
     "message": "That code is taken",
     "translation": "Mã này đã được dùng"
@@ -7785,6 +7944,10 @@
     "message": "Too many tries. Wait a minute and try again.",
     "translation": "Quá nhiều lần thử. Hãy đợi một phút rồi thử lại."
   },
+  "SoMNWh": {
+    "message": "Too many tries. Wait a minute.",
+    "translation": "Thử quá nhiều lần. Hãy đợi một phút."
+  },
   "Xx-Q6M": {
     "message": "Tool",
     "context": "shortcut key caption",
@@ -8100,6 +8263,10 @@
     "context": "an Ability, this turn",
     "translation": "Đã dùng"
   },
+  "GjhOGB": {
+    "message": "User ID",
+    "translation": "ID người dùng"
+  },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
     "translation": "Dùng cú pháp tìm kiếm của Limitless TCG."
@@ -8266,6 +8433,14 @@
     "message": "You're watching",
     "translation": "Bạn đang xem"
   },
+  "vblI2b": {
+    "message": "Your account already has a {name} sign-in",
+    "translation": "Tài khoản của bạn đã có phương thức đăng nhập {name}"
+  },
+  "urcldz": {
+    "message": "Your account already has that sign-in",
+    "translation": "Tài khoản của bạn đã có phương thức đăng nhập đó"
+  },
   "wkv3p1": {
     "message": "Your Active Spot",
     "translation": "Vị trí Active của bạn"
@@ -8291,6 +8466,10 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "Các bộ bài của bạn"
+  },
+  "zCckVB": {
+    "message": "Your decks and replays, on every device.",
+    "translation": "Bộ bài và bản replay của bạn, trên mọi thiết bị."
   },
   "S7YY4L": {
     "message": "Your discard pile",

@@ -56,6 +56,10 @@
     "message": "{0, plural, other {Put # Pokémon on the Bench}}",
     "translation": "{0, plural, other {Połóż Pokémony na ławce: #}}"
   },
+  "V90HAM": {
+    "message": "{0} · This session",
+    "translation": "{0} · Ta sesja"
+  },
   "yW-SAQ": {
     "message": "{0} ({1})",
     "translation": "{0} ({1})"
@@ -1707,6 +1711,11 @@
     "context": "settings page",
     "translation": "Informacje"
   },
+  "jkSJZu": {
+    "message": "About me",
+    "context": "account",
+    "translation": "O mnie"
+  },
   "v0rlF7": {
     "message": "Accent",
     "context": "sleeve",
@@ -1719,6 +1728,19 @@
   "XrUtuo": {
     "message": "Access to early beta testing.",
     "translation": "Dostęp do wczesnych testów beta."
+  },
+  "bAnwXR": {
+    "message": "Account",
+    "context": "settings page",
+    "translation": "Konto"
+  },
+  "TKFUnX": {
+    "message": "Account deleted",
+    "translation": "Konto usunięte"
+  },
+  "F9cvwz": {
+    "message": "Account name",
+    "translation": "Nazwa konta"
   },
   "7L01XJ": {
     "message": "Actions",
@@ -1787,6 +1809,10 @@
   "E6dCw3": {
     "message": "Add an image.",
     "translation": "Dodaj obraz."
+  },
+  "n-3Fak": {
+    "message": "Add another sign-in method first. You need at least one.",
+    "translation": "Najpierw dodaj inną metodę logowania. Potrzebujesz co najmniej jednej."
   },
   "6ZbKYu": {
     "message": "Add another stadium piece",
@@ -2100,6 +2126,10 @@
   "Dnn2XG": {
     "message": "Automatic",
     "translation": "Automatycznie"
+  },
+  "kfcRb0": {
+    "message": "Avatar",
+    "translation": "Awatar"
   },
   "USi6Js": {
     "message": "Baby",
@@ -2689,6 +2719,14 @@
     "context": "special condition",
     "translation": "Oszołomiony"
   },
+  "iSLIjg": {
+    "message": "Connect",
+    "translation": "Połącz"
+  },
+  "UA993i": {
+    "message": "Connect {name}",
+    "translation": "Połącz z {name}"
+  },
   "JrFTcr": {
     "message": "Connecting…",
     "translation": "Łączenie…"
@@ -2696,6 +2734,19 @@
   "-MkffR": {
     "message": "Connection lost.",
     "translation": "Utracono połączenie."
+  },
+  "lfHbMT": {
+    "message": "Connections",
+    "context": "account",
+    "translation": "Połączenia"
+  },
+  "_zxqXE": {
+    "message": "Continue with {name}",
+    "translation": "Kontynuuj przez {name}"
+  },
+  "6V3Ea3": {
+    "message": "Copied",
+    "translation": "Skopiowano"
   },
   "_IjcZC": {
     "message": "Copied",
@@ -2751,6 +2802,10 @@
     "message": "Couldn't change it. Try again.",
     "translation": "Nie udało się zmienić. Spróbuj ponownie."
   },
+  "pjDAni": {
+    "message": "Couldn't change the avatar. Try again.",
+    "translation": "Nie udało się zmienić awatara. Spróbuj ponownie."
+  },
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
     "translation": "Nie udało się tego sprawdzić. Spróbuj ponownie."
@@ -2762,6 +2817,14 @@
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "Nie udało się utworzyć pokoju. Spróbuj ponownie."
+  },
+  "MmYfkc": {
+    "message": "Couldn't delete. Try again.",
+    "translation": "Nie udało się usunąć. Spróbuj ponownie."
+  },
+  "vighKL": {
+    "message": "Couldn't disconnect. Try again.",
+    "translation": "Nie udało się rozłączyć. Spróbuj ponownie."
   },
   "2TYlNr": {
     "message": "Couldn't get an image from that link.",
@@ -2806,6 +2869,14 @@
   "ETE6Wl": {
     "message": "Couldn't save the game",
     "translation": "Nie udało się zapisać gry"
+  },
+  "VBrK9r": {
+    "message": "Couldn't sign in. Try again.",
+    "translation": "Nie udało się zalogować. Spróbuj ponownie."
+  },
+  "Gg8gpF": {
+    "message": "Couldn't sign out. Try again.",
+    "translation": "Nie udało się wylogować. Spróbuj ponownie."
   },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
@@ -3094,9 +3165,17 @@
     ],
     "translation": "Usuń: {label} {number}"
   },
+  "ZDGm40": {
+    "message": "Delete account",
+    "translation": "Usuń konto"
+  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "Usuń talię"
+  },
+  "PKW2qT": {
+    "message": "Deletes your account and its sign-in methods for good. Decks on this device stay.",
+    "translation": "Usuwa na stałe twoje konto i jego metody logowania. Talie na tym urządzeniu zostają."
   },
   "Y6OAuj": {
     "message": "Denim",
@@ -3218,6 +3297,14 @@
     "message": "Discard pile",
     "context": "zone",
     "translation": "Stos odrzuconych"
+  },
+  "-K0AvT": {
+    "message": "Disconnect",
+    "translation": "Rozłącz"
+  },
+  "C2BaaK": {
+    "message": "Disconnect {name}",
+    "translation": "Rozłącz {name}"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -3417,6 +3504,11 @@
       "A Trainer's or Energy's text in the card text form."
     ],
     "translation": "Efekt"
+  },
+  "93hdsK": {
+    "message": "Emblem",
+    "context": "avatar",
+    "translation": "Emblemat"
   },
   "eAabzD": {
     "message": "Emblem",
@@ -3744,6 +3836,10 @@
     ],
     "translation": "Aby być na bieżąco i poznać plany, śledź mnie na X: <0>{TWITTER_HANDLE}</0>"
   },
+  "IRbAuL": {
+    "message": "For players 13 and older.",
+    "translation": "Dla graczy w wieku 13 lat i starszych."
+  },
   "RMPKcE": {
     "message": "Forest",
     "context": "sleeve color",
@@ -4021,6 +4117,10 @@
     "message": "Hide your Prizes",
     "translation": "Ukryj swoje nagrody"
   },
+  "0NkY5X": {
+    "message": "Hold to delete",
+    "translation": "Przytrzymaj, aby usunąć"
+  },
   "tgYI8X": {
     "message": "Holographic",
     "translation": "Holograficzna"
@@ -4150,6 +4250,11 @@
     ],
     "translation": "w talii"
   },
+  "2LIvOi": {
+    "message": "Initial",
+    "context": "avatar",
+    "translation": "Inicjał"
+  },
   "WYBZ5W": {
     "message": "Ink",
     "context": "sleeve color",
@@ -4231,6 +4336,11 @@
     "message": "Join pieces…",
     "translation": "Połącz elementy…"
   },
+  "Ha7muZ": {
+    "message": "Joined",
+    "context": "account",
+    "translation": "Dołączono"
+  },
   "t8Lc2X": {
     "message": "Joining…",
     "translation": "Dołączanie…"
@@ -4243,6 +4353,10 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Zachowaj"
+  },
+  "TaE8k-": {
+    "message": "Keep decks and replays everywhere",
+    "translation": "Miej talie i powtórki wszędzie"
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -5310,6 +5424,10 @@
     "message": "Only Pokémon in play take damage",
     "translation": "Obrażenia otrzymują tylko Pokémony w grze"
   },
+  "Z8V1kN": {
+    "message": "Only signs you out on this device",
+    "translation": "Wylogowuje cię tylko na tym urządzeniu"
+  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "Może to zrobić tylko gracz z tego miejsca."
@@ -5802,6 +5920,10 @@
     "message": "Prism Star",
     "context": "Pokémon card mechanic",
     "translation": "Prism Star"
+  },
+  "rjGI_Q": {
+    "message": "Privacy",
+    "translation": "Prywatność"
   },
   "nT_UTA": {
     "message": "Prize",
@@ -6924,6 +7046,34 @@
     "message": "Sideways scan",
     "translation": "Skan poziomy"
   },
+  "5lWFkC": {
+    "message": "Sign in",
+    "translation": "Zaloguj się"
+  },
+  "fcWrnU": {
+    "message": "Sign out",
+    "translation": "Wyloguj się"
+  },
+  "WzENDu": {
+    "message": "Sign-in method added",
+    "translation": "Dodano metodę logowania"
+  },
+  "2ktC7b": {
+    "message": "Sign-in methods",
+    "translation": "Metody logowania"
+  },
+  "q2v4sG": {
+    "message": "Signed in",
+    "translation": "Zalogowano"
+  },
+  "WM5GrY": {
+    "message": "Signed in as {name}",
+    "translation": "Zalogowano jako {name}"
+  },
+  "GxoiaQ": {
+    "message": "Signed out",
+    "translation": "Wylogowano"
+  },
   "utezqW": {
     "message": "Single Strike",
     "context": "Pokémon card mechanic",
@@ -7414,6 +7564,15 @@
     "context": "Trainer cards by kind",
     "translation": "Maszyny Techniczne"
   },
+  "pnSTDX": {
+    "message": "Test",
+    "context": "stand-in sign-in method",
+    "translation": "Test"
+  },
+  "h9MLYh": {
+    "message": "That account already has its own PTCG Sim account",
+    "translation": "To konto ma już własne konto PTCG Sim"
+  },
   "2DW6tZ": {
     "message": "That code is taken",
     "translation": "Ten kod jest zajęty"
@@ -7785,6 +7944,10 @@
     "message": "Too many tries. Wait a minute and try again.",
     "translation": "Zbyt wiele prób. Odczekaj minutę i spróbuj ponownie."
   },
+  "SoMNWh": {
+    "message": "Too many tries. Wait a minute.",
+    "translation": "Zbyt wiele prób. Odczekaj minutę."
+  },
   "Xx-Q6M": {
     "message": "Tool",
     "context": "shortcut key caption",
@@ -8100,6 +8263,10 @@
     "context": "an Ability, this turn",
     "translation": "Użyto"
   },
+  "GjhOGB": {
+    "message": "User ID",
+    "translation": "ID użytkownika"
+  },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
     "translation": "Używa składni wyszukiwania Limitless TCG."
@@ -8266,6 +8433,14 @@
     "message": "You're watching",
     "translation": "Oglądasz"
   },
+  "vblI2b": {
+    "message": "Your account already has a {name} sign-in",
+    "translation": "Twoje konto ma już logowanie przez {name}"
+  },
+  "urcldz": {
+    "message": "Your account already has that sign-in",
+    "translation": "Twoje konto ma już takie logowanie"
+  },
   "wkv3p1": {
     "message": "Your Active Spot",
     "translation": "Twoje pole aktywne"
@@ -8291,6 +8466,10 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "Twoje talie"
+  },
+  "zCckVB": {
+    "message": "Your decks and replays, on every device.",
+    "translation": "Twoje talie i powtórki na każdym urządzeniu."
   },
   "S7YY4L": {
     "message": "Your discard pile",

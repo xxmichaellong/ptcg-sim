@@ -56,6 +56,10 @@
     "message": "{0, plural, other {Put # Pokémon on the Bench}}",
     "translation": "{0, plural, other {วางโปเกมอน # ตัวบนเบนช์}}"
   },
+  "V90HAM": {
+    "message": "{0} · This session",
+    "translation": "{0} · เซสชันนี้"
+  },
   "yW-SAQ": {
     "message": "{0} ({1})",
     "translation": "{0} ({1})"
@@ -1707,6 +1711,11 @@
     "context": "settings page",
     "translation": "เกี่ยวกับ"
   },
+  "jkSJZu": {
+    "message": "About me",
+    "context": "account",
+    "translation": "เกี่ยวกับฉัน"
+  },
   "v0rlF7": {
     "message": "Accent",
     "context": "sleeve",
@@ -1719,6 +1728,19 @@
   "XrUtuo": {
     "message": "Access to early beta testing.",
     "translation": "เข้าร่วมทดสอบเบต้าก่อนใคร"
+  },
+  "bAnwXR": {
+    "message": "Account",
+    "context": "settings page",
+    "translation": "บัญชี"
+  },
+  "TKFUnX": {
+    "message": "Account deleted",
+    "translation": "ลบบัญชีแล้ว"
+  },
+  "F9cvwz": {
+    "message": "Account name",
+    "translation": "ชื่อบัญชี"
   },
   "7L01XJ": {
     "message": "Actions",
@@ -1787,6 +1809,10 @@
   "E6dCw3": {
     "message": "Add an image.",
     "translation": "เพิ่มรูปภาพ"
+  },
+  "n-3Fak": {
+    "message": "Add another sign-in method first. You need at least one.",
+    "translation": "เพิ่มวิธีลงชื่อเข้าใช้อื่นก่อน คุณต้องมีอย่างน้อยหนึ่งวิธี"
   },
   "6ZbKYu": {
     "message": "Add another stadium piece",
@@ -2100,6 +2126,10 @@
   "Dnn2XG": {
     "message": "Automatic",
     "translation": "อัตโนมัติ"
+  },
+  "kfcRb0": {
+    "message": "Avatar",
+    "translation": "อวาตาร์"
   },
   "USi6Js": {
     "message": "Baby",
@@ -2689,6 +2719,14 @@
     "context": "special condition",
     "translation": "สับสน"
   },
+  "iSLIjg": {
+    "message": "Connect",
+    "translation": "เชื่อมต่อ"
+  },
+  "UA993i": {
+    "message": "Connect {name}",
+    "translation": "เชื่อมต่อ {name}"
+  },
   "JrFTcr": {
     "message": "Connecting…",
     "translation": "กำลังเชื่อมต่อ…"
@@ -2696,6 +2734,19 @@
   "-MkffR": {
     "message": "Connection lost.",
     "translation": "การเชื่อมต่อขาดหาย"
+  },
+  "lfHbMT": {
+    "message": "Connections",
+    "context": "account",
+    "translation": "การเชื่อมต่อ"
+  },
+  "_zxqXE": {
+    "message": "Continue with {name}",
+    "translation": "ดำเนินการต่อด้วย {name}"
+  },
+  "6V3Ea3": {
+    "message": "Copied",
+    "translation": "คัดลอกแล้ว"
   },
   "_IjcZC": {
     "message": "Copied",
@@ -2751,6 +2802,10 @@
     "message": "Couldn't change it. Try again.",
     "translation": "เปลี่ยนไม่ได้ ลองอีกครั้ง"
   },
+  "pjDAni": {
+    "message": "Couldn't change the avatar. Try again.",
+    "translation": "เปลี่ยนอวาตาร์ไม่ได้ ลองอีกครั้ง"
+  },
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
     "translation": "ตรวจสอบไม่สำเร็จ ลองอีกครั้ง"
@@ -2762,6 +2817,14 @@
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "สร้างห้องไม่สำเร็จ ลองอีกครั้ง"
+  },
+  "MmYfkc": {
+    "message": "Couldn't delete. Try again.",
+    "translation": "ลบไม่ได้ ลองอีกครั้ง"
+  },
+  "vighKL": {
+    "message": "Couldn't disconnect. Try again.",
+    "translation": "ยกเลิกการเชื่อมต่อไม่ได้ ลองอีกครั้ง"
   },
   "2TYlNr": {
     "message": "Couldn't get an image from that link.",
@@ -2806,6 +2869,14 @@
   "ETE6Wl": {
     "message": "Couldn't save the game",
     "translation": "บันทึกเกมไม่ได้"
+  },
+  "VBrK9r": {
+    "message": "Couldn't sign in. Try again.",
+    "translation": "ลงชื่อเข้าใช้ไม่ได้ ลองอีกครั้ง"
+  },
+  "Gg8gpF": {
+    "message": "Couldn't sign out. Try again.",
+    "translation": "ออกจากระบบไม่ได้ ลองอีกครั้ง"
   },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
@@ -3094,9 +3165,17 @@
     ],
     "translation": "ลบ{label} {number}"
   },
+  "ZDGm40": {
+    "message": "Delete account",
+    "translation": "ลบบัญชี"
+  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "ลบเด็ค"
+  },
+  "PKW2qT": {
+    "message": "Deletes your account and its sign-in methods for good. Decks on this device stay.",
+    "translation": "ลบบัญชีและวิธีลงชื่อเข้าใช้ของคุณถาวร เด็คบนอุปกรณ์นี้จะยังอยู่"
   },
   "Y6OAuj": {
     "message": "Denim",
@@ -3218,6 +3297,14 @@
     "message": "Discard pile",
     "context": "zone",
     "translation": "ตำแหน่งทิ้งการ์ด"
+  },
+  "-K0AvT": {
+    "message": "Disconnect",
+    "translation": "ยกเลิกการเชื่อมต่อ"
+  },
+  "C2BaaK": {
+    "message": "Disconnect {name}",
+    "translation": "ยกเลิกการเชื่อมต่อ {name}"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -3417,6 +3504,11 @@
       "A Trainer's or Energy's text in the card text form."
     ],
     "translation": "เอฟเฟกต์"
+  },
+  "93hdsK": {
+    "message": "Emblem",
+    "context": "avatar",
+    "translation": "เอ็มเบลม"
   },
   "eAabzD": {
     "message": "Emblem",
@@ -3744,6 +3836,10 @@
     ],
     "translation": "ติดตามข่าวสารและสิ่งที่กำลังจะมาถึงได้ที่ X ของผม: <0>{TWITTER_HANDLE}</0>"
   },
+  "IRbAuL": {
+    "message": "For players 13 and older.",
+    "translation": "สำหรับผู้เล่นอายุ 13 ปีขึ้นไป"
+  },
   "RMPKcE": {
     "message": "Forest",
     "context": "sleeve color",
@@ -4021,6 +4117,10 @@
     "message": "Hide your Prizes",
     "translation": "ซ่อนการ์ดรางวัลของคุณ"
   },
+  "0NkY5X": {
+    "message": "Hold to delete",
+    "translation": "กดค้างเพื่อลบ"
+  },
   "tgYI8X": {
     "message": "Holographic",
     "translation": "โฮโลกราฟิก"
@@ -4150,6 +4250,11 @@
     ],
     "translation": "ในเด็ค"
   },
+  "2LIvOi": {
+    "message": "Initial",
+    "context": "avatar",
+    "translation": "ตัวอักษรแรก"
+  },
   "WYBZ5W": {
     "message": "Ink",
     "context": "sleeve color",
@@ -4231,6 +4336,11 @@
     "message": "Join pieces…",
     "translation": "รวมชิ้นส่วน…"
   },
+  "Ha7muZ": {
+    "message": "Joined",
+    "context": "account",
+    "translation": "เข้าร่วมเมื่อ"
+  },
   "t8Lc2X": {
     "message": "Joining…",
     "translation": "กำลังเข้าร่วม…"
@@ -4243,6 +4353,10 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "เก็บไว้"
+  },
+  "TaE8k-": {
+    "message": "Keep decks and replays everywhere",
+    "translation": "เก็บเด็คและรีเพลย์ไว้ได้ทุกที่"
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -5310,6 +5424,10 @@
     "message": "Only Pokémon in play take damage",
     "translation": "เฉพาะโปเกมอนบนกระดานที่รับแดเมจได้"
   },
+  "Z8V1kN": {
+    "message": "Only signs you out on this device",
+    "translation": "ออกจากระบบเฉพาะบนอุปกรณ์นี้"
+  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "เฉพาะผู้เล่นที่นั่งตรงนั้นเท่านั้นที่ทำได้"
@@ -5802,6 +5920,10 @@
     "message": "Prism Star",
     "context": "Pokémon card mechanic",
     "translation": "Prism Star"
+  },
+  "rjGI_Q": {
+    "message": "Privacy",
+    "translation": "ความเป็นส่วนตัว"
   },
   "nT_UTA": {
     "message": "Prize",
@@ -6924,6 +7046,34 @@
     "message": "Sideways scan",
     "translation": "สแกนแนวนอน"
   },
+  "5lWFkC": {
+    "message": "Sign in",
+    "translation": "ลงชื่อเข้าใช้"
+  },
+  "fcWrnU": {
+    "message": "Sign out",
+    "translation": "ออกจากระบบ"
+  },
+  "WzENDu": {
+    "message": "Sign-in method added",
+    "translation": "เพิ่มวิธีลงชื่อเข้าใช้แล้ว"
+  },
+  "2ktC7b": {
+    "message": "Sign-in methods",
+    "translation": "วิธีลงชื่อเข้าใช้"
+  },
+  "q2v4sG": {
+    "message": "Signed in",
+    "translation": "ลงชื่อเข้าใช้แล้ว"
+  },
+  "WM5GrY": {
+    "message": "Signed in as {name}",
+    "translation": "ลงชื่อเข้าใช้เป็น {name}"
+  },
+  "GxoiaQ": {
+    "message": "Signed out",
+    "translation": "ออกจากระบบแล้ว"
+  },
   "utezqW": {
     "message": "Single Strike",
     "context": "Pokémon card mechanic",
@@ -7414,6 +7564,15 @@
     "context": "Trainer cards by kind",
     "translation": "แมชชีนท่าต่อสู้"
   },
+  "pnSTDX": {
+    "message": "Test",
+    "context": "stand-in sign-in method",
+    "translation": "ทดสอบ"
+  },
+  "h9MLYh": {
+    "message": "That account already has its own PTCG Sim account",
+    "translation": "บัญชีนั้นมีบัญชี PTCG Sim ของตัวเองอยู่แล้ว"
+  },
   "2DW6tZ": {
     "message": "That code is taken",
     "translation": "รหัสนี้ถูกใช้แล้ว"
@@ -7785,6 +7944,10 @@
     "message": "Too many tries. Wait a minute and try again.",
     "translation": "ลองหลายครั้งเกินไป รอสักครู่แล้วลองอีกครั้ง"
   },
+  "SoMNWh": {
+    "message": "Too many tries. Wait a minute.",
+    "translation": "ลองหลายครั้งเกินไป รอสักครู่"
+  },
   "Xx-Q6M": {
     "message": "Tool",
     "context": "shortcut key caption",
@@ -8100,6 +8263,10 @@
     "context": "an Ability, this turn",
     "translation": "ใช้แล้ว"
   },
+  "GjhOGB": {
+    "message": "User ID",
+    "translation": "ID ผู้ใช้"
+  },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
     "translation": "ใช้ไวยากรณ์การค้นหาของ Limitless TCG"
@@ -8266,6 +8433,14 @@
     "message": "You're watching",
     "translation": "คุณกำลังรับชม"
   },
+  "vblI2b": {
+    "message": "Your account already has a {name} sign-in",
+    "translation": "บัญชีของคุณมีการเข้าสู่ระบบด้วย {name} อยู่แล้ว"
+  },
+  "urcldz": {
+    "message": "Your account already has that sign-in",
+    "translation": "บัญชีของคุณมีการเข้าสู่ระบบนี้อยู่แล้ว"
+  },
   "wkv3p1": {
     "message": "Your Active Spot",
     "translation": "ตำแหน่งต่อสู้ของคุณ"
@@ -8291,6 +8466,10 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "เด็คของคุณ"
+  },
+  "zCckVB": {
+    "message": "Your decks and replays, on every device.",
+    "translation": "เด็คและรีเพลย์ของคุณ ในทุกอุปกรณ์"
   },
   "S7YY4L": {
     "message": "Your discard pile",

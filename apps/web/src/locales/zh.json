@@ -56,6 +56,10 @@
     "message": "{0, plural, other {Put # Pokémon on the Bench}}",
     "translation": "{0, plural, other {将#只宝可梦放到备战区}}"
   },
+  "V90HAM": {
+    "message": "{0} · This session",
+    "translation": "{0} · 本次会话"
+  },
   "yW-SAQ": {
     "message": "{0} ({1})",
     "translation": "{0}（{1}）"
@@ -1707,6 +1711,11 @@
     "context": "settings page",
     "translation": "关于"
   },
+  "jkSJZu": {
+    "message": "About me",
+    "context": "account",
+    "translation": "关于我"
+  },
   "v0rlF7": {
     "message": "Accent",
     "context": "sleeve",
@@ -1719,6 +1728,19 @@
   "XrUtuo": {
     "message": "Access to early beta testing.",
     "translation": "可参与早期测试。"
+  },
+  "bAnwXR": {
+    "message": "Account",
+    "context": "settings page",
+    "translation": "账号"
+  },
+  "TKFUnX": {
+    "message": "Account deleted",
+    "translation": "账号已删除"
+  },
+  "F9cvwz": {
+    "message": "Account name",
+    "translation": "账号名称"
   },
   "7L01XJ": {
     "message": "Actions",
@@ -1787,6 +1809,10 @@
   "E6dCw3": {
     "message": "Add an image.",
     "translation": "添加图片。"
+  },
+  "n-3Fak": {
+    "message": "Add another sign-in method first. You need at least one.",
+    "translation": "请先添加另一种登录方式，至少需要保留一种。"
   },
   "6ZbKYu": {
     "message": "Add another stadium piece",
@@ -2100,6 +2126,10 @@
   "Dnn2XG": {
     "message": "Automatic",
     "translation": "自动"
+  },
+  "kfcRb0": {
+    "message": "Avatar",
+    "translation": "头像"
   },
   "USi6Js": {
     "message": "Baby",
@@ -2689,6 +2719,14 @@
     "context": "special condition",
     "translation": "混乱"
   },
+  "iSLIjg": {
+    "message": "Connect",
+    "translation": "连接"
+  },
+  "UA993i": {
+    "message": "Connect {name}",
+    "translation": "连接 {name}"
+  },
   "JrFTcr": {
     "message": "Connecting…",
     "translation": "连接中…"
@@ -2696,6 +2734,19 @@
   "-MkffR": {
     "message": "Connection lost.",
     "translation": "连接已断开。"
+  },
+  "lfHbMT": {
+    "message": "Connections",
+    "context": "account",
+    "translation": "连接"
+  },
+  "_zxqXE": {
+    "message": "Continue with {name}",
+    "translation": "使用 {name} 继续"
+  },
+  "6V3Ea3": {
+    "message": "Copied",
+    "translation": "已复制"
   },
   "_IjcZC": {
     "message": "Copied",
@@ -2751,6 +2802,10 @@
     "message": "Couldn't change it. Try again.",
     "translation": "无法更改，请重试。"
   },
+  "pjDAni": {
+    "message": "Couldn't change the avatar. Try again.",
+    "translation": "无法更换头像，请重试。"
+  },
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
     "translation": "无法检查，请重试。"
@@ -2762,6 +2817,14 @@
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "无法创建房间，请重试。"
+  },
+  "MmYfkc": {
+    "message": "Couldn't delete. Try again.",
+    "translation": "无法删除，请重试。"
+  },
+  "vighKL": {
+    "message": "Couldn't disconnect. Try again.",
+    "translation": "无法断开连接，请重试。"
   },
   "2TYlNr": {
     "message": "Couldn't get an image from that link.",
@@ -2806,6 +2869,14 @@
   "ETE6Wl": {
     "message": "Couldn't save the game",
     "translation": "无法保存对战"
+  },
+  "VBrK9r": {
+    "message": "Couldn't sign in. Try again.",
+    "translation": "无法登录，请重试。"
+  },
+  "Gg8gpF": {
+    "message": "Couldn't sign out. Try again.",
+    "translation": "无法退出登录，请重试。"
   },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
@@ -3094,9 +3165,17 @@
     ],
     "translation": "删除{label}{number}"
   },
+  "ZDGm40": {
+    "message": "Delete account",
+    "translation": "删除账号"
+  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "删除卡组"
+  },
+  "PKW2qT": {
+    "message": "Deletes your account and its sign-in methods for good. Decks on this device stay.",
+    "translation": "将永久删除你的账号及其登录方式。本设备上的卡组会保留。"
   },
   "Y6OAuj": {
     "message": "Denim",
@@ -3218,6 +3297,14 @@
     "message": "Discard pile",
     "context": "zone",
     "translation": "弃牌区"
+  },
+  "-K0AvT": {
+    "message": "Disconnect",
+    "translation": "断开连接"
+  },
+  "C2BaaK": {
+    "message": "Disconnect {name}",
+    "translation": "断开 {name}"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -3417,6 +3504,11 @@
       "A Trainer's or Energy's text in the card text form."
     ],
     "translation": "效果"
+  },
+  "93hdsK": {
+    "message": "Emblem",
+    "context": "avatar",
+    "translation": "徽章"
   },
   "eAabzD": {
     "message": "Emblem",
@@ -3744,6 +3836,10 @@
     ],
     "translation": "想了解动态和后续更新，请在 X 上关注我：<0>{TWITTER_HANDLE}</0>"
   },
+  "IRbAuL": {
+    "message": "For players 13 and older.",
+    "translation": "适用于 13 岁及以上的玩家。"
+  },
   "RMPKcE": {
     "message": "Forest",
     "context": "sleeve color",
@@ -4021,6 +4117,10 @@
     "message": "Hide your Prizes",
     "translation": "隐藏你的奖赏卡"
   },
+  "0NkY5X": {
+    "message": "Hold to delete",
+    "translation": "长按删除"
+  },
   "tgYI8X": {
     "message": "Holographic",
     "translation": "全息"
@@ -4150,6 +4250,11 @@
     ],
     "translation": "在卡组中"
   },
+  "2LIvOi": {
+    "message": "Initial",
+    "context": "avatar",
+    "translation": "首字母"
+  },
   "WYBZ5W": {
     "message": "Ink",
     "context": "sleeve color",
@@ -4231,6 +4336,11 @@
     "message": "Join pieces…",
     "translation": "合并卡片…"
   },
+  "Ha7muZ": {
+    "message": "Joined",
+    "context": "account",
+    "translation": "加入时间"
+  },
   "t8Lc2X": {
     "message": "Joining…",
     "translation": "正在加入…"
@@ -4243,6 +4353,10 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "保留"
+  },
+  "TaE8k-": {
+    "message": "Keep decks and replays everywhere",
+    "translation": "在所有设备上保留卡组和回放"
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -5310,6 +5424,10 @@
     "message": "Only Pokémon in play take damage",
     "translation": "只有场上的宝可梦会受到伤害"
   },
+  "Z8V1kN": {
+    "message": "Only signs you out on this device",
+    "translation": "仅在此设备上退出登录"
+  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "只有该座位的玩家可以操作。"
@@ -5802,6 +5920,10 @@
     "message": "Prism Star",
     "context": "Pokémon card mechanic",
     "translation": "棱镜之星"
+  },
+  "rjGI_Q": {
+    "message": "Privacy",
+    "translation": "隐私"
   },
   "nT_UTA": {
     "message": "Prize",
@@ -6924,6 +7046,34 @@
     "message": "Sideways scan",
     "translation": "横向扫描图"
   },
+  "5lWFkC": {
+    "message": "Sign in",
+    "translation": "登录"
+  },
+  "fcWrnU": {
+    "message": "Sign out",
+    "translation": "退出登录"
+  },
+  "WzENDu": {
+    "message": "Sign-in method added",
+    "translation": "已添加登录方式"
+  },
+  "2ktC7b": {
+    "message": "Sign-in methods",
+    "translation": "登录方式"
+  },
+  "q2v4sG": {
+    "message": "Signed in",
+    "translation": "已登录"
+  },
+  "WM5GrY": {
+    "message": "Signed in as {name}",
+    "translation": "已登录为 {name}"
+  },
+  "GxoiaQ": {
+    "message": "Signed out",
+    "translation": "已退出登录"
+  },
   "utezqW": {
     "message": "Single Strike",
     "context": "Pokémon card mechanic",
@@ -7414,6 +7564,15 @@
     "context": "Trainer cards by kind",
     "translation": "招式学习器"
   },
+  "pnSTDX": {
+    "message": "Test",
+    "context": "stand-in sign-in method",
+    "translation": "测试"
+  },
+  "h9MLYh": {
+    "message": "That account already has its own PTCG Sim account",
+    "translation": "该账号已有自己的 PTCG Sim 账号"
+  },
   "2DW6tZ": {
     "message": "That code is taken",
     "translation": "该房间码已被占用"
@@ -7785,6 +7944,10 @@
     "message": "Too many tries. Wait a minute and try again.",
     "translation": "尝试次数过多，请等一分钟后重试。"
   },
+  "SoMNWh": {
+    "message": "Too many tries. Wait a minute.",
+    "translation": "尝试次数过多，请等待一分钟。"
+  },
   "Xx-Q6M": {
     "message": "Tool",
     "context": "shortcut key caption",
@@ -8100,6 +8263,10 @@
     "context": "an Ability, this turn",
     "translation": "已使用"
   },
+  "GjhOGB": {
+    "message": "User ID",
+    "translation": "用户 ID"
+  },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
     "translation": "使用 Limitless TCG 的搜索语法。"
@@ -8266,6 +8433,14 @@
     "message": "You're watching",
     "translation": "你正在观战"
   },
+  "vblI2b": {
+    "message": "Your account already has a {name} sign-in",
+    "translation": "你的账号已绑定 {name} 登录"
+  },
+  "urcldz": {
+    "message": "Your account already has that sign-in",
+    "translation": "你的账号已绑定该登录方式"
+  },
   "wkv3p1": {
     "message": "Your Active Spot",
     "translation": "我方战斗场"
@@ -8291,6 +8466,10 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "你的卡组"
+  },
+  "zCckVB": {
+    "message": "Your decks and replays, on every device.",
+    "translation": "卡组和回放，所有设备通用。"
   },
   "S7YY4L": {
     "message": "Your discard pile",

@@ -17,6 +17,12 @@ import {
   browserJsonResponse as json,
   isSameOriginBrowserRequest,
 } from './browser-json-http.js';
+import {
+  accountRoute,
+  handleAccountRequest,
+} from './accounts/account-http.js';
+import { PtcgAccount, PtcgSignIn } from './accounts/account-objects.js';
+import { readSignInConfiguration } from './accounts/sign-in-providers.js';
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
 import { createContinuationCryptographyFromConfiguration } from './continuation-configuration.js';
 import { handleContinuationCreationRequest } from './continuation-creation-http.js';
@@ -117,6 +123,7 @@ import {
 } from './images/image-store.js';
 import { isRoomAlreadyInitialized } from './room-initialization.js';
 import {
+  consumeAccountRateLimit,
   consumeContinuationCreationRateLimit,
   consumeContinuationRestoreRateLimit,
   consumeContinuationRevocationRateLimit,
@@ -207,6 +214,18 @@ interface Env {
   readonly IMAGE_IMPORT_RATE_LIMITER: RateLimit;
   /** Lookups and joins by room code, per address (ADR-047). */
   readonly ROOM_CODE_RATE_LIMITER: RateLimit;
+  /** Accounts (ADR-052): one per account, one per provider id. */
+  readonly PTCG_ACCOUNT: DurableObjectNamespace<PtcgAccount>;
+  readonly PTCG_SIGN_IN: DurableObjectNamespace<PtcgSignIn>;
+  readonly SIGN_IN_RATE_LIMITER: RateLimit;
+  readonly ACCOUNT_RATE_LIMITER: RateLimit;
+  /** `on` offers the stand-in sign-in (local and test builds only). */
+  readonly AUTH_TEST_PROVIDER?: string;
+  /** Optional secrets: a provider is offered once its app is set. */
+  readonly GOOGLE_CLIENT_ID?: string;
+  readonly GOOGLE_CLIENT_SECRET?: string;
+  readonly DISCORD_CLIENT_ID?: string;
+  readonly DISCORD_CLIENT_SECRET?: string;
 }
 
 interface SocketAttachment {
@@ -1723,6 +1742,34 @@ const worker: ExportedHandler<Env> = {
         )
       );
     }
+    const account = accountRoute(url.pathname);
+    if (account !== undefined) {
+      return observeHttp(
+        telemetry,
+        account.kind === 'start' ||
+          account.kind === 'callback' ||
+          account.kind === 'test_authorize'
+          ? 'sign_in'
+          : 'account',
+        () =>
+          handleAccountRequest(request, account, {
+            account: (accountId) => env.PTCG_ACCOUNT.getByName(accountId),
+            signInRecord: (provider, subject) =>
+              env.PTCG_SIGN_IN.getByName(`${provider}:${subject}`),
+            configuration: readSignInConfiguration(env),
+            fetch: (input, init) => fetch(input, init),
+            now: Date.now,
+            rateLimit: (scope) =>
+              consumeAccountRateLimit(
+                request,
+                scope === 'sign_in'
+                  ? env.SIGN_IN_RATE_LIMITER
+                  : env.ACCOUNT_RATE_LIMITER,
+                scope
+              ),
+          })
+      );
+    }
     const imageHash = servedImageHash(url.pathname);
     if (imageHash) {
       return observeHttp(telemetry, 'image_serve', () =>
@@ -1912,5 +1959,7 @@ const worker: ExportedHandler<Env> = {
     );
   },
 };
+
+export { PtcgAccount, PtcgSignIn };
 
 export default worker;

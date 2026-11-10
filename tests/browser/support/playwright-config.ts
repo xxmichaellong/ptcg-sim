@@ -67,6 +67,8 @@ export const builtApp = (
       ...bindings,
       CARD_CATALOG_SOURCE: 'off',
       DECK_INDEX_SOURCE: 'off',
+      // The stand-in sign-in (ADR-052), for the account specs.
+      AUTH_TEST_PROVIDER: 'on',
     }).map(([name, value]) => `--var ${shellSingleQuote(`${name}:${value}`)}`),
   ]
     .filter(Boolean)

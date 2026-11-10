@@ -6,6 +6,7 @@ import { startLocalization } from './i18n/localization.js';
 import { watchCardImageFailures } from './i18n/card-image-language.js';
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
+import { startAccount } from './account/account-state.js';
 import { App, type AppRoute } from './App.js';
 import { CommandPaletteHost } from './commands/CommandPalette.js';
 import { ShortcutsDialogHost } from './hotkeys/ShortcutsDialog.js';
@@ -92,6 +93,9 @@ if (!root) throw new Error('Missing application root');
 // The saved language is up before the first render, so a page in another
 // language never flashes English (the loading screen covers the wait).
 await startLocalization();
+// Who is signed in (ADR-052), read once; a sign-in finishing in a popup
+// or another tab tells this one.
+startAccount();
 
 // One overlay host for the whole page: the lobby, the room, the Deck panel
 // and the dev room all raise their dialogs and toasts through it.

@@ -56,6 +56,10 @@
     "message": "{0, plural, other {Put # Pokémon on the Bench}}",
     "translation": "{0, plural, other {포켓몬 #장을 벤치로 내보내기}}"
   },
+  "V90HAM": {
+    "message": "{0} · This session",
+    "translation": "{0} · 이번 세션"
+  },
   "yW-SAQ": {
     "message": "{0} ({1})",
     "translation": "{0} ({1})"
@@ -1707,6 +1711,11 @@
     "context": "settings page",
     "translation": "정보"
   },
+  "jkSJZu": {
+    "message": "About me",
+    "context": "account",
+    "translation": "소개"
+  },
   "v0rlF7": {
     "message": "Accent",
     "context": "sleeve",
@@ -1719,6 +1728,19 @@
   "XrUtuo": {
     "message": "Access to early beta testing.",
     "translation": "초기 베타 테스트에 참여할 수 있습니다."
+  },
+  "bAnwXR": {
+    "message": "Account",
+    "context": "settings page",
+    "translation": "계정"
+  },
+  "TKFUnX": {
+    "message": "Account deleted",
+    "translation": "계정이 삭제되었습니다"
+  },
+  "F9cvwz": {
+    "message": "Account name",
+    "translation": "계정 이름"
   },
   "7L01XJ": {
     "message": "Actions",
@@ -1787,6 +1809,10 @@
   "E6dCw3": {
     "message": "Add an image.",
     "translation": "이미지를 추가하세요."
+  },
+  "n-3Fak": {
+    "message": "Add another sign-in method first. You need at least one.",
+    "translation": "먼저 다른 로그인 방법을 추가하세요. 최소 하나는 필요합니다."
   },
   "6ZbKYu": {
     "message": "Add another stadium piece",
@@ -2100,6 +2126,10 @@
   "Dnn2XG": {
     "message": "Automatic",
     "translation": "자동"
+  },
+  "kfcRb0": {
+    "message": "Avatar",
+    "translation": "아바타"
   },
   "USi6Js": {
     "message": "Baby",
@@ -2689,6 +2719,14 @@
     "context": "special condition",
     "translation": "혼란"
   },
+  "iSLIjg": {
+    "message": "Connect",
+    "translation": "연결"
+  },
+  "UA993i": {
+    "message": "Connect {name}",
+    "translation": "{name} 연결"
+  },
   "JrFTcr": {
     "message": "Connecting…",
     "translation": "연결 중…"
@@ -2696,6 +2734,19 @@
   "-MkffR": {
     "message": "Connection lost.",
     "translation": "연결이 끊어졌습니다."
+  },
+  "lfHbMT": {
+    "message": "Connections",
+    "context": "account",
+    "translation": "연결"
+  },
+  "_zxqXE": {
+    "message": "Continue with {name}",
+    "translation": "{name}(으)로 계속"
+  },
+  "6V3Ea3": {
+    "message": "Copied",
+    "translation": "복사했습니다"
   },
   "_IjcZC": {
     "message": "Copied",
@@ -2751,6 +2802,10 @@
     "message": "Couldn't change it. Try again.",
     "translation": "변경하지 못했습니다. 다시 시도하세요."
   },
+  "pjDAni": {
+    "message": "Couldn't change the avatar. Try again.",
+    "translation": "아바타를 변경하지 못했습니다. 다시 시도하세요."
+  },
   "7WsLH4": {
     "message": "Couldn't check that. Try again.",
     "translation": "확인하지 못했습니다. 다시 시도하세요."
@@ -2762,6 +2817,14 @@
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "방을 만들 수 없습니다. 다시 시도하세요."
+  },
+  "MmYfkc": {
+    "message": "Couldn't delete. Try again.",
+    "translation": "삭제하지 못했습니다. 다시 시도하세요."
+  },
+  "vighKL": {
+    "message": "Couldn't disconnect. Try again.",
+    "translation": "연결을 해제하지 못했습니다. 다시 시도하세요."
   },
   "2TYlNr": {
     "message": "Couldn't get an image from that link.",
@@ -2806,6 +2869,14 @@
   "ETE6Wl": {
     "message": "Couldn't save the game",
     "translation": "게임을 저장하지 못했습니다"
+  },
+  "VBrK9r": {
+    "message": "Couldn't sign in. Try again.",
+    "translation": "로그인하지 못했습니다. 다시 시도하세요."
+  },
+  "Gg8gpF": {
+    "message": "Couldn't sign out. Try again.",
+    "translation": "로그아웃하지 못했습니다. 다시 시도하세요."
   },
   "hCQkU8": {
     "message": "Couldn't start Solo mode. Try again.",
@@ -3094,9 +3165,17 @@
     ],
     "translation": "{label} {number} 삭제"
   },
+  "ZDGm40": {
+    "message": "Delete account",
+    "translation": "계정 삭제"
+  },
   "j8-EnI": {
     "message": "Delete deck",
     "translation": "덱 삭제"
+  },
+  "PKW2qT": {
+    "message": "Deletes your account and its sign-in methods for good. Decks on this device stay.",
+    "translation": "계정과 로그인 방법을 영구적으로 삭제합니다. 이 기기의 덱은 유지됩니다."
   },
   "Y6OAuj": {
     "message": "Denim",
@@ -3218,6 +3297,14 @@
     "message": "Discard pile",
     "context": "zone",
     "translation": "트래쉬"
+  },
+  "-K0AvT": {
+    "message": "Disconnect",
+    "translation": "연결 해제"
+  },
+  "C2BaaK": {
+    "message": "Disconnect {name}",
+    "translation": "{name} 연결 해제"
   },
   "OdPOhy": {
     "message": "Discord",
@@ -3417,6 +3504,11 @@
       "A Trainer's or Energy's text in the card text form."
     ],
     "translation": "효과"
+  },
+  "93hdsK": {
+    "message": "Emblem",
+    "context": "avatar",
+    "translation": "엠블럼"
   },
   "eAabzD": {
     "message": "Emblem",
@@ -3744,6 +3836,10 @@
     ],
     "translation": "소식과 앞으로의 계획은 X에서 확인하세요: <0>{TWITTER_HANDLE}</0>"
   },
+  "IRbAuL": {
+    "message": "For players 13 and older.",
+    "translation": "13세 이상 플레이어용입니다."
+  },
   "RMPKcE": {
     "message": "Forest",
     "context": "sleeve color",
@@ -4021,6 +4117,10 @@
     "message": "Hide your Prizes",
     "translation": "내 프라이즈 숨기기"
   },
+  "0NkY5X": {
+    "message": "Hold to delete",
+    "translation": "길게 눌러 삭제"
+  },
   "tgYI8X": {
     "message": "Holographic",
     "translation": "홀로그램"
@@ -4150,6 +4250,11 @@
     ],
     "translation": "덱에 포함"
   },
+  "2LIvOi": {
+    "message": "Initial",
+    "context": "avatar",
+    "translation": "이니셜"
+  },
   "WYBZ5W": {
     "message": "Ink",
     "context": "sleeve color",
@@ -4231,6 +4336,11 @@
     "message": "Join pieces…",
     "translation": "조각 합치기…"
   },
+  "Ha7muZ": {
+    "message": "Joined",
+    "context": "account",
+    "translation": "가입일"
+  },
   "t8Lc2X": {
     "message": "Joining…",
     "translation": "참가 중…"
@@ -4243,6 +4353,10 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "유지"
+  },
+  "TaE8k-": {
+    "message": "Keep decks and replays everywhere",
+    "translation": "덱과 리플레이를 어디서나 보관하세요"
   },
   "gsDcZw": {
     "message": "Keyboard map layer",
@@ -5310,6 +5424,10 @@
     "message": "Only Pokémon in play take damage",
     "translation": "필드에 나와 있는 포켓몬만 데미지를 받습니다"
   },
+  "Z8V1kN": {
+    "message": "Only signs you out on this device",
+    "translation": "이 기기에서만 로그아웃됩니다"
+  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "해당 자리의 플레이어만 할 수 있습니다."
@@ -5802,6 +5920,10 @@
     "message": "Prism Star",
     "context": "Pokémon card mechanic",
     "translation": "프리즘스타"
+  },
+  "rjGI_Q": {
+    "message": "Privacy",
+    "translation": "개인정보"
   },
   "nT_UTA": {
     "message": "Prize",
@@ -6924,6 +7046,34 @@
     "message": "Sideways scan",
     "translation": "가로 스캔"
   },
+  "5lWFkC": {
+    "message": "Sign in",
+    "translation": "로그인"
+  },
+  "fcWrnU": {
+    "message": "Sign out",
+    "translation": "로그아웃"
+  },
+  "WzENDu": {
+    "message": "Sign-in method added",
+    "translation": "로그인 방법을 추가했습니다"
+  },
+  "2ktC7b": {
+    "message": "Sign-in methods",
+    "translation": "로그인 방법"
+  },
+  "q2v4sG": {
+    "message": "Signed in",
+    "translation": "로그인했습니다"
+  },
+  "WM5GrY": {
+    "message": "Signed in as {name}",
+    "translation": "{name}님으로 로그인했습니다"
+  },
+  "GxoiaQ": {
+    "message": "Signed out",
+    "translation": "로그아웃했습니다"
+  },
   "utezqW": {
     "message": "Single Strike",
     "context": "Pokémon card mechanic",
@@ -7414,6 +7564,15 @@
     "context": "Trainer cards by kind",
     "translation": "기술머신"
   },
+  "pnSTDX": {
+    "message": "Test",
+    "context": "stand-in sign-in method",
+    "translation": "테스트"
+  },
+  "h9MLYh": {
+    "message": "That account already has its own PTCG Sim account",
+    "translation": "해당 계정은 이미 다른 PTCG Sim 계정이 있습니다"
+  },
   "2DW6tZ": {
     "message": "That code is taken",
     "translation": "이미 사용 중인 코드입니다"
@@ -7785,6 +7944,10 @@
     "message": "Too many tries. Wait a minute and try again.",
     "translation": "시도 횟수가 너무 많습니다. 1분 후 다시 시도하세요."
   },
+  "SoMNWh": {
+    "message": "Too many tries. Wait a minute.",
+    "translation": "시도 횟수가 너무 많습니다. 1분 후에 다시 시도하세요."
+  },
   "Xx-Q6M": {
     "message": "Tool",
     "context": "shortcut key caption",
@@ -8100,6 +8263,10 @@
     "context": "an Ability, this turn",
     "translation": "사용함"
   },
+  "GjhOGB": {
+    "message": "User ID",
+    "translation": "사용자 ID"
+  },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
     "translation": "Limitless TCG의 검색 구문을 사용합니다."
@@ -8266,6 +8433,14 @@
     "message": "You're watching",
     "translation": "관전 중입니다"
   },
+  "vblI2b": {
+    "message": "Your account already has a {name} sign-in",
+    "translation": "계정에 이미 {name} 로그인이 연결되어 있습니다"
+  },
+  "urcldz": {
+    "message": "Your account already has that sign-in",
+    "translation": "계정에 이미 해당 로그인이 연결되어 있습니다"
+  },
   "wkv3p1": {
     "message": "Your Active Spot",
     "translation": "내 배틀필드"
@@ -8291,6 +8466,10 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "내 덱 목록"
+  },
+  "zCckVB": {
+    "message": "Your decks and replays, on every device.",
+    "translation": "덱과 리플레이를 모든 기기에서 이용하세요."
   },
   "S7YY4L": {
     "message": "Your discard pile",

@@ -17,6 +17,10 @@
     // which every Durable Object in the account shares (ADR-037). "on"
     // turns it on; a deploy's own --var still wins.
     "DECK_INDEX_SOURCE": "off",
+    // The stand-in sign-in for local and test builds (ADR-052); never "on"
+    // in a deploy. Google's and Discord's apps come from secrets:
+    // GOOGLE_CLIENT_ID/SECRET and DISCORD_CLIENT_ID/SECRET.
+    "AUTH_TEST_PROVIDER": "off",
   },
   "assets": {
     "directory": "../web/dist",
@@ -73,6 +77,16 @@
       {
         "name": "PTCG_IMAGE_STORE",
         "class_name": "PtcgImageStore",
+      },
+      // Accounts (ADR-052): one per account, and one per provider id
+      // pointing at its account.
+      {
+        "name": "PTCG_ACCOUNT",
+        "class_name": "PtcgAccount",
+      },
+      {
+        "name": "PTCG_SIGN_IN",
+        "class_name": "PtcgSignIn",
       },
     ],
   },
@@ -145,6 +159,24 @@
         "period": 60,
       },
     },
+    // Sign-ins started and finished, and account changes, per address
+    // (ADR-052).
+    {
+      "name": "SIGN_IN_RATE_LIMITER",
+      "namespace_id": "260903009",
+      "simple": {
+        "limit": 20,
+        "period": 60,
+      },
+    },
+    {
+      "name": "ACCOUNT_RATE_LIMITER",
+      "namespace_id": "260903010",
+      "simple": {
+        "limit": 60,
+        "period": 60,
+      },
+    },
   ],
   "exports": {
     "PtcgContinuation": {
@@ -179,6 +211,14 @@
       "type": "durable-object",
       "storage": "sqlite",
     },
+    "PtcgAccount": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgSignIn": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
   },
   // Once a day: refreshes the deck picker's current lists from Limitless,
   // the deck builder's card catalog from TCGdex, and starts the tournament
@@ -206,6 +246,7 @@
         "BUILD_ID": "local-development",
         // Off until Workers Paid, as in production (ADR-037).
         "DECK_INDEX_SOURCE": "off",
+        "AUTH_TEST_PROVIDER": "off",
       },
       "durable_objects": {
         "bindings": [
@@ -240,6 +281,14 @@
           {
             "name": "PTCG_IMAGE_STORE",
             "class_name": "PtcgImageStore",
+          },
+          {
+            "name": "PTCG_ACCOUNT",
+            "class_name": "PtcgAccount",
+          },
+          {
+            "name": "PTCG_SIGN_IN",
+            "class_name": "PtcgSignIn",
           },
         ],
       },
@@ -308,6 +357,22 @@
             "period": 60,
           },
         },
+        {
+          "name": "SIGN_IN_RATE_LIMITER",
+          "namespace_id": "260903109",
+          "simple": {
+            "limit": 20,
+            "period": 60,
+          },
+        },
+        {
+          "name": "ACCOUNT_RATE_LIMITER",
+          "namespace_id": "260903110",
+          "simple": {
+            "limit": 60,
+            "period": 60,
+          },
+        },
       ],
       "exports": {
         "PtcgContinuation": {
@@ -339,6 +404,14 @@
           "storage": "sqlite",
         },
         "PtcgRoomCode": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgAccount": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgSignIn": {
           "type": "durable-object",
           "storage": "sqlite",
         },

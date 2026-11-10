@@ -192,3 +192,20 @@ export const consumeImageImportRateLimit = async (
     retryAfterSeconds: IMAGE_IMPORT_RATE_LIMIT_RETRY_SECONDS,
   };
 };
+
+export const ACCOUNT_RATE_LIMIT_RETRY_SECONDS = 60;
+
+/** Sign-ins started or finished, and account changes (ADR-052). */
+export const consumeAccountRateLimit = async (
+  request: Request,
+  binding: EdgeRateLimitBinding,
+  scope: 'sign_in' | 'account'
+): Promise<RequestRateLimitDecision> => {
+  const outcome = await binding.limit({
+    key: await anonymousRequestRateLimitKey(request, scope),
+  });
+  return {
+    allowed: outcome.success,
+    retryAfterSeconds: ACCOUNT_RATE_LIMIT_RETRY_SECONDS,
+  };
+};
