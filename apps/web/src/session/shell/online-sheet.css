@@ -14,9 +14,3 @@
   overflow: visible;
   padding: 0;
 }
-
-.ptcgsim-online-sheet .ptcgsim-sheet__header {
-  background: color-mix(in oklab, var(--color-you) 12%, var(--color-surface-2));
-  border-bottom: 1px solid
-    color-mix(in oklab, var(--color-you) 24%, var(--color-border));
-}
