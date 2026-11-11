@@ -86,6 +86,9 @@ const opponentOf = (replay: AccountReplay): string | undefined => {
   return other && other.trim() !== '' ? other : undefined;
 };
 
+/** When the list is read again after the page opens. */
+const REREAD_AFTER_MS = [3_000, 10_000] as const;
+
 export const AccountReplaysPage = ({
   leave,
   back,
@@ -106,22 +109,30 @@ export const AccountReplaysPage = ({
   useEffect(() => {
     if (!account) return undefined;
     let live = true;
-    fetchAccountReplays().then(
-      (found) => {
-        if (live) setReplays(found);
-      },
-      () => {
-        if (!live) return;
-        setReplays([]);
-        toast({
-          title: t`Couldn't load your games. Try again.`,
-          tone: 'danger',
-          id: 'account-replays',
-        });
-      }
+    const read = (first: boolean) =>
+      fetchAccountReplays().then(
+        (found) => {
+          if (live) setReplays(found);
+        },
+        () => {
+          if (!live || !first) return;
+          setReplays([]);
+          toast({
+            title: t`Couldn't load your games. Try again.`,
+            tone: 'danger',
+            id: 'account-replays',
+          });
+        }
+      );
+    void read(true);
+    // The room files a game just after it ends, so one that ended a moment
+    // ago may not be listed yet: read again shortly.
+    const timers = REREAD_AFTER_MS.map((delay) =>
+      setTimeout(() => void read(false), delay)
     );
     return () => {
       live = false;
+      for (const timer of timers) clearTimeout(timer);
     };
   }, [account, t]);
   if (!account) return null;
