@@ -16,6 +16,13 @@ import type {
 export const AUTHORITY_SNAPSHOT_SCHEMA_VERSION = 8 as const;
 export const MAX_REPLAY_EVENT_BATCHES = MAX_REPLAY_FRAMES - 1;
 export const MAX_REPLAY_EVENT_BYTES = 512 * 1024;
+/**
+ * Where compaction stops once a bound is passed: a quarter under it. A full
+ * history drops a block of its oldest moves at once, not one each move, so
+ * a room that keeps what compaction drops (ADR-053) writes it once a block.
+ */
+export const replayCompactionTarget = (maximum: number): number =>
+  maximum - Math.floor(maximum / 4);
 export const MAX_OUTSTANDING_ADMISSION_TICKETS = 32;
 export const MAX_OUTSTANDING_ROOM_INVITATIONS = 32;
 

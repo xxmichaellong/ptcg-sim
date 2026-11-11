@@ -99,6 +99,13 @@ import { accountSnapshot } from '../account/account-state.js';
 import { DeckIcon } from '../ui/DeckIcon.js';
 import { Tooltip } from '../ui/Tooltip.js';
 import { CommandSourceRegistration } from '../commands/registry.js';
+import {
+  playingPart,
+  registerReplayTable,
+  stepAcrossParts,
+  stopWatching,
+} from '../account/account-replay-player.js';
+import { useAccount } from '../account/account-state.js';
 import { roomCommands } from '../commands/room-commands.js';
 import { tutorialLessonCommands } from '../commands/ui-commands.js';
 
@@ -219,6 +226,49 @@ const replayFailureText = (
     default:
       return msg`Replays aren't available right now.`;
   }
+};
+
+/**
+ * The live Solo table, ready, can play a game kept in the account
+ * (ADR-053): its own replay plays each part.
+ */
+const AccountReplayTable = ({
+  enabled,
+  runtime,
+}: {
+  readonly enabled: boolean;
+  readonly runtime: RemoteRoomRuntime;
+}) => {
+  useEffect(() => {
+    if (!enabled) return undefined;
+    return registerReplayTable({
+      play: (file) => runtime.replay.importReplayFileBytes(file),
+      toEnd: () => void runtime.replay.fastForward(),
+    });
+  }, [enabled, runtime]);
+  return null;
+};
+
+/**
+ * Someone signing in or out with the table open tells the room, so the
+ * games at their seat go to the account now signed in. The account the
+ * page first reads is the one the room's connection already knew.
+ */
+const AccountSeat = ({ runtime }: { readonly runtime: RemoteRoomRuntime }) => {
+  const { status, account } = useAccount();
+  const accountId = status === 'ready' ? (account?.id ?? null) : undefined;
+  const known = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (accountId === undefined) return;
+    if (known.current === undefined) {
+      known.current = accountId;
+      return;
+    }
+    if (known.current === accountId) return;
+    known.current = accountId;
+    void runtime.tellSeatAccount();
+  }, [accountId, runtime]);
+  return null;
 };
 
 const SettledByFailure = ({
@@ -467,8 +517,17 @@ export const RemoteRoomRoute = ({
 
   return (
     <ReplayModeShell coordinator={runtime.replay}>
-      {({ state, chrome, handlers, exitReplay }) => {
+      {({ state, chrome, handlers, exitReplay: leaveReplay }) => {
         const replaying = chrome.active;
+        // An account's game plays a part at a time (ADR-053): a step past
+        // a part's end loads the next.
+        const playback =
+          state.playback.phase === 'ready' ? state.playback : undefined;
+        const part = playingPart(playback?.replayId);
+        const exitReplay = (): boolean => {
+          stopWatching();
+          return leaveReplay();
+        };
         const soloLive = !replaying && solo;
         const feedId = replaying || soloLive ? 'chatbox' : 'p2Chatbox';
         const stage = seatStage(state.view, live.playerId);
@@ -480,7 +539,12 @@ export const RemoteRoomRoute = ({
           ) ?? false;
         const roomCode = invites.code;
         const roomName = replaying
-          ? t({ message: 'Replay', context: 'the table is showing a replay' })
+          ? part
+            ? t({
+                message: `Replay, part ${part.part + 1} of ${part.parts}`,
+                comment: 'A long game is watched in parts of 128 moves',
+              })
+            : t({ message: 'Replay', context: 'the table is showing a replay' })
           : solo
             ? t`Solo table`
             : state.sessionPhase !== 'ready'
@@ -602,7 +666,11 @@ export const RemoteRoomRoute = ({
                   title: t`Previous replay action`,
                   icon: CaretLeftIcon,
                   priority: 1,
-                  onSelect: handlers.previous,
+                  onSelect: () => {
+                    if (!stepAcrossParts('previous', playback)) {
+                      handlers.previous();
+                    }
+                  },
                 },
                 {
                   id: 'setupBothButton',
@@ -611,7 +679,9 @@ export const RemoteRoomRoute = ({
                   icon: CaretRightIcon,
                   primary: true,
                   priority: 0,
-                  onSelect: handlers.next,
+                  onSelect: () => {
+                    if (!stepAcrossParts('next', playback)) handlers.next();
+                  },
                 },
                 {
                   id: 'resetBothButton',
@@ -1181,6 +1251,15 @@ export const RemoteRoomRoute = ({
             {/* The deck screen opens ready: warmed up once the table has
                 drawn, never while it is still arriving. */}
             <DeckScreenWarmup ready={state.sessionPhase === 'ready'} />
+            <AccountSeat runtime={runtime} />
+            <AccountReplayTable
+              enabled={
+                live.canImportReplay &&
+                tutorial === undefined &&
+                state.sessionPhase === 'ready'
+              }
+              runtime={runtime}
+            />
             <PresentationAnnouncer runtime={runtime.presentation} />
           </TableShell>
         );

@@ -9,6 +9,7 @@ import {
 
 import {
   MAX_REPLAY_EVENT_BYTES,
+  replayCompactionTarget,
   type ReplayHistory,
   type ReplayHistoryEntry,
 } from './model.js';
@@ -89,9 +90,19 @@ export const appendReplayHistory = (
     resultingStateHash: stableHash(resultingState),
   };
   const entries = [...history.entries, entry];
+  const compacting =
+    entries.length > maximumEntries || utf8Bytes(entries) > maximumEventBytes;
+  const targetEntries = compacting
+    ? replayCompactionTarget(maximumEntries)
+    : maximumEntries;
+  const targetBytes = compacting
+    ? replayCompactionTarget(maximumEventBytes)
+    : maximumEventBytes;
   while (
     entries.length > maximumEntries ||
-    utf8Bytes(entries) > maximumEventBytes
+    utf8Bytes(entries) > maximumEventBytes ||
+    (entries.length > 1 &&
+      (entries.length > targetEntries || utf8Bytes(entries) > targetBytes))
   ) {
     const removed = entries.shift();
     if (!removed) break;

@@ -867,6 +867,10 @@
     "message": "{missingLines, plural, one {# line not found} other {# lines not found}}",
     "translation": "{missingLines, plural, one {# línea no encontrada} other {# líneas no encontradas}}"
   },
+  "QmYqWQ": {
+    "message": "{moves, plural, one {# move} other {# moves}}",
+    "translation": "{moves, plural, one {# jugada} many {# jugadas} other {# jugadas}}"
+  },
   "-man8P": {
     "message": "{name} (copy)",
     "comments": [
@@ -1655,6 +1659,10 @@
       "The rule for a room code"
     ],
     "translation": "De 4 a 12 letras o dígitos, sin I, O, 0 ni 1"
+  },
+  "tVhdR6": {
+    "message": "50 games are starred. Unstar one first.",
+    "translation": "Tienes 50 partidas destacadas. Quita el destacado a una primero."
   },
   "GeqQnM": {
     "message": "A card in it has no image.",
@@ -2810,6 +2818,10 @@
     "message": "Copy room code",
     "translation": "Copiar código de la sala"
   },
+  "RGCCrg": {
+    "message": "Copy share link",
+    "translation": "Copiar enlace para compartir"
+  },
   "gK_NxX": {
     "message": "Coral",
     "context": "sleeve color",
@@ -2826,6 +2838,10 @@
     "message": "Couldn't change it. Try again.",
     "translation": "No se pudo cambiar. Inténtalo de nuevo."
   },
+  "K_vopl": {
+    "message": "Couldn't change that. Try again.",
+    "translation": "No se pudo cambiar. Inténtalo de nuevo."
+  },
   "pjDAni": {
     "message": "Couldn't change the avatar. Try again.",
     "translation": "No se pudo cambiar el avatar. Inténtalo de nuevo."
@@ -2838,9 +2854,17 @@
     "message": "Couldn't copy",
     "translation": "No se pudo copiar"
   },
+  "-Kzl0o": {
+    "message": "Couldn't copy the link",
+    "translation": "No se pudo copiar el enlace"
+  },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "No se pudo crear una sala. Inténtalo de nuevo."
+  },
+  "KJyo1H": {
+    "message": "Couldn't delete that. Try again.",
+    "translation": "No se pudo eliminar. Inténtalo de nuevo."
   },
   "MmYfkc": {
     "message": "Couldn't delete. Try again.",
@@ -2858,6 +2882,10 @@
     "message": "Couldn't join the room. Try again.",
     "translation": "No se pudo entrar en la sala. Inténtalo de nuevo."
   },
+  "gmQtk7": {
+    "message": "Couldn't load that game. Try again.",
+    "translation": "No se pudo cargar esa partida. Inténtalo de nuevo."
+  },
   "0htzp9": {
     "message": "Couldn't load that list",
     "translation": "No se pudo cargar esa lista"
@@ -2865,6 +2893,10 @@
   "1Nv1R5": {
     "message": "Couldn't load this",
     "translation": "No se pudo cargar esto"
+  },
+  "ZHwYJT": {
+    "message": "Couldn't load your games. Try again.",
+    "translation": "No se pudieron cargar tus partidas. Inténtalo de nuevo."
   },
   "w--GsN": {
     "message": "Couldn't open that file",
@@ -2893,6 +2925,10 @@
   "ETE6Wl": {
     "message": "Couldn't save the game",
     "translation": "No se pudo guardar la partida"
+  },
+  "RX5Zev": {
+    "message": "Couldn't share that. Try again.",
+    "translation": "No se pudo compartir. Inténtalo de nuevo."
   },
   "VBrK9r": {
     "message": "Couldn't sign in. Try again.",
@@ -3929,9 +3965,17 @@
     "message": "Game board",
     "translation": "Tablero de juego"
   },
+  "YybM1t": {
+    "message": "Game deleted",
+    "translation": "Partida eliminada"
+  },
   "h8FbrQ": {
     "message": "Game resumed",
     "translation": "Partida reanudada"
+  },
+  "fJPrTm": {
+    "message": "Games you play signed in show up here.",
+    "translation": "Las partidas que juegues con la sesión iniciada aparecerán aquí."
   },
   "gqh64K": {
     "message": "Get",
@@ -4531,6 +4575,10 @@
   "jleG-m": {
     "message": "Line {line}: set code too long.",
     "translation": "Línea {line}: código de expansión demasiado largo."
+  },
+  "edWbV6": {
+    "message": "Link copied",
+    "translation": "Enlace copiado"
   },
   "beOAmP": {
     "message": "Link too long.",
@@ -5429,6 +5477,10 @@
     ],
     "translation": "Eventos en línea"
   },
+  "M6s7AU": {
+    "message": "Online game",
+    "translation": "Partida en línea"
+  },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
     "comments": [
@@ -6272,6 +6324,13 @@
     "message": "Replay interrupted. Try again.",
     "translation": "Repetición interrumpida. Inténtalo de nuevo."
   },
+  "daa0bg": {
+    "message": "Replay, part {0} of {1}",
+    "comments": [
+      "A long game is watched in parts of 128 moves"
+    ],
+    "translation": "Repetición, parte {0} de {1}"
+  },
   "kWiKvV": {
     "message": "Replays aren't available right now.",
     "translation": "Las repeticiones no están disponibles en este momento."
@@ -7094,6 +7153,10 @@
     "message": "Sign in",
     "translation": "Iniciar sesión"
   },
+  "LWgz34": {
+    "message": "Sign in to keep your games",
+    "translation": "Inicia sesión para guardar tus partidas"
+  },
   "fcWrnU": {
     "message": "Sign out",
     "translation": "Cerrar sesión"
@@ -7169,6 +7232,10 @@
     "message": "Solo",
     "context": "playing alone at this table",
     "translation": "Solo"
+  },
+  "4qzXid": {
+    "message": "Solo game",
+    "translation": "Partida en solitario"
   },
   "6N0DKq": {
     "message": "Solo table",
@@ -7363,6 +7430,10 @@
   "kGkZLk": {
     "message": "Standings",
     "translation": "Clasificación"
+  },
+  "Y6PB_F": {
+    "message": "Star to keep",
+    "translation": "Destacar para conservar"
   },
   "WrLzY2": {
     "message": "Start a game",
@@ -7728,6 +7799,10 @@
   "KsKHA0": {
     "message": "The focused card, or the one under the pointer",
     "translation": "La carta con el foco, o la que está bajo el puntero"
+  },
+  "fXfOC7": {
+    "message": "The last 100 are kept. Starred games stay.",
+    "translation": "Se conservan las últimas 100. Las partidas destacadas se quedan."
   },
   "lom6tE": {
     "message": "The last move is still sending.",
@@ -8232,6 +8307,10 @@
     "message": "Unstack copies",
     "translation": "Separar copias"
   },
+  "R6QjaA": {
+    "message": "Unstar",
+    "translation": "Quitar destacado"
+  },
   "-qi9QY": {
     "message": "Untitled deck",
     "translation": "Baraja sin título"
@@ -8369,6 +8448,13 @@
     "context": "sleeve color",
     "translation": "Violeta"
   },
+  "djG3xD": {
+    "message": "vs {opponent}",
+    "comments": [
+      "A game against the named player"
+    ],
+    "translation": "contra {opponent}"
+  },
   "RVlHmr": {
     "message": "VSTAR marker",
     "translation": "Marcador V-ASTRO"
@@ -8381,6 +8467,10 @@
     "message": "Watch",
     "context": "join a room to spectate",
     "translation": "Mirar"
+  },
+  "bbQDbO": {
+    "message": "Watch from your Solo table. The last 100 are kept, and starred games stay.",
+    "translation": "Míralas desde tu mesa en solitario. Se conservan las últimas 100 y las partidas destacadas se quedan."
   },
   "sFWtjQ": {
     "message": "Watch replay…",
@@ -8530,6 +8620,10 @@
   "S7YY4L": {
     "message": "Your discard pile",
     "translation": "Tu pila de descartes"
+  },
+  "pa5Fda": {
+    "message": "Your games",
+    "translation": "Tus partidas"
   },
   "gUPT1q": {
     "message": "Your hand",

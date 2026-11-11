@@ -43,6 +43,11 @@ import {
   SignInMethodsPage,
   SignInPage,
 } from '../../account/AccountPages.js';
+import {
+  AccountReplaysPage,
+  AccountReplaysRow,
+} from '../../account/AccountReplaysPage.js';
+import { useAccount } from '../../account/account-state.js';
 import { TableArtControls } from '../../board/view/TableArtControls.js';
 import {
   CardViewControls,
@@ -263,6 +268,12 @@ const HomePage = ({
     : { room: [], saves: [], tutorial: [], leave: [] };
   const language = useLanguageName();
   const tableArt = useTableArtName();
+  // The account's games (ADR-053) are in Saves & replays: for a player
+  // signed in, or one who could sign in to keep them.
+  const account = useAccount();
+  const accountGames =
+    account.status === 'ready' &&
+    (account.account !== null || account.providers.length > 0);
   const pageRow = (
     page: SettingsPage,
     id: string,
@@ -339,7 +350,7 @@ const HomePage = ({
           />
         )}
       </SettingsGroup>
-      {actions.saves.length > 0 ? (
+      {actions.saves.length > 0 || accountGames ? (
         <SettingsGroup>
           {pageRow('saves', 'settingsSavesRow', FilmReelIcon, 'purple')}
         </SettingsGroup>
@@ -395,11 +406,17 @@ const SavesPage = ({
   const resume = menu?.game?.onResumeSavedText;
   return (
     <>
-      <SettingsGroup>
-        {saves.map((action) => (
-          <ActionRow key={action.id} action={action} leave={context.leave} />
-        ))}
-      </SettingsGroup>
+      <AccountReplaysRow
+        onOpen={() => context.navigate('accountReplays', 'accountReplaysRow')}
+        onSignIn={() => context.navigate('signIn', 'accountReplaysSignInRow')}
+      />
+      {saves.length > 0 ? (
+        <SettingsGroup>
+          {saves.map((action) => (
+            <ActionRow key={action.id} action={action} leave={context.leave} />
+          ))}
+        </SettingsGroup>
+      ) : null}
       {resume ? (
         <AccountSavesGroup
           resume={resume}
@@ -1129,6 +1146,8 @@ export const SettingsSheet = ({
         <DeleteAccountPage back={back} />
       ) : top === 'saves' ? (
         <SavesPage menu={menu} context={context} />
+      ) : top === 'accountReplays' ? (
+        <AccountReplaysPage leave={leave} back={back} />
       ) : top === 'table' ? (
         <TablePage
           background={background}

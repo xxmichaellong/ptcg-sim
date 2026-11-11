@@ -1,6 +1,15 @@
 import { DurableObject } from 'cloudflare:workers';
 
+import { WebCryptoAuthoritySource } from '../authority-crypto.js';
+import type { ReplayFiling } from '../replay-archive.js';
 import type { AccountObject, SignInRecordObject } from './account-http.js';
+import {
+  AccountReplaysSql,
+  projectReplayPart,
+  type AccountReplayPart,
+  type ReplayListing,
+  type StarOutcome,
+} from './account-replays.js';
 import {
   AccountStoreSql,
   type AccountAvatar,
@@ -84,6 +93,7 @@ export class PtcgAccount
     this.store = new AccountStoreSql(this.ctx.storage.sql);
     this.synced = new AccountSyncSql(this.ctx.storage.sql);
     this.saved = new AccountSavesSql(this.ctx.storage.sql);
+    this.replays = new AccountReplaysSql(this.ctx.storage.sql);
     return true;
   }
 
@@ -124,6 +134,96 @@ export class PtcgAccount
     if (!this.store.read(secretHash, now)) return false;
     this.saved.remove(id);
     return true;
+  }
+
+  // ---- Replays (ADR-053) ----------------------------------------------
+
+  private replays = new AccountReplaysSql(this.ctx.storage.sql);
+  private readonly opaqueIds = new WebCryptoAuthoritySource();
+
+  /** From a room: a signed-in seat's game. Not a player's call. */
+  async fileReplay(filing: ReplayFiling): Promise<boolean> {
+    return this.replays.file(filing, Date.now());
+  }
+
+  async listReplays(
+    secretHash: string,
+    now: number
+  ): Promise<readonly ReplayListing[] | null> {
+    if (!this.store.read(secretHash, now)) return null;
+    return this.replays.list();
+  }
+
+  async starReplay(
+    secretHash: string,
+    now: number,
+    id: string,
+    starred: boolean
+  ): Promise<StarOutcome | null> {
+    if (!this.store.read(secretHash, now)) return null;
+    return this.replays.star(id, starred);
+  }
+
+  async deleteReplay(
+    secretHash: string,
+    now: number,
+    id: string
+  ): Promise<boolean | null> {
+    if (!this.store.read(secretHash, now)) return null;
+    return this.replays.remove(id);
+  }
+
+  /** Shares (the secret, the same each time) or unshares; null signed out. */
+  async shareReplay(
+    secretHash: string,
+    now: number,
+    id: string,
+    shared: boolean
+  ): Promise<{ readonly found: boolean; readonly secret?: string } | null> {
+    if (!this.store.read(secretHash, now)) return null;
+    if (!shared) return { found: this.replays.unshare(id) };
+    const secret = this.replays.share(id);
+    return secret ? { found: true, secret } : { found: false };
+  }
+
+  /** A part from the player's own seat; 'missing' if there's no such. */
+  async replayPart(
+    secretHash: string,
+    now: number,
+    id: string,
+    part: number
+  ): Promise<AccountReplayPart | 'missing' | null> {
+    if (!this.store.read(secretHash, now)) return null;
+    const found = this.replays.record(id);
+    if (!found) return 'missing';
+    return (
+      (await projectReplayPart(
+        found.body,
+        part,
+        'seat',
+        found.listing,
+        this.opaqueIds
+      )) ?? 'missing'
+    );
+  }
+
+  /** A part through a share link, as a spectator sees it. */
+  async sharedReplayPart(
+    id: string,
+    secret: string,
+    part: number
+  ): Promise<AccountReplayPart | 'missing'> {
+    const found = this.replays.record(id, secret);
+    if (!found) return 'missing';
+    return (
+      (await projectReplayPart(
+        found.body,
+        part,
+        'spectator',
+        found.listing,
+        this.opaqueIds
+      )) ?? 'missing'
+    );
   }
 }
 

@@ -142,6 +142,8 @@ export const settingsPageName = (page: SettingsPage): string => {
       return t`Delete account`;
     case 'saves':
       return t`Saves & replays`;
+    case 'accountReplays':
+      return t`Your games`;
     case 'table':
       return t({ message: 'Table', context: 'settings page' });
     case 'cards':

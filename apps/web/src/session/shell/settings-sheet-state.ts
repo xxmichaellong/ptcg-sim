@@ -15,6 +15,8 @@ export const SETTINGS_PAGE_PARENTS = {
   signOut: 'account',
   deleteAccount: 'account',
   saves: 'home',
+  // The account's games (ADR-053), from Saves & replays.
+  accountReplays: 'saves',
   table: 'home',
   cards: 'home',
   cardImages: 'cards',
@@ -45,6 +47,7 @@ export const SETTINGS_PAGE_IDS: Readonly<Record<SettingsPage, string>> = {
   signOut: 'settingsSignOut',
   deleteAccount: 'settingsDeleteAccount',
   saves: 'settingsSaves',
+  accountReplays: 'settingsAccountReplays',
   table: 'settingsTable',
   cards: 'settingsCards',
   cardImages: 'settingsCardImages',

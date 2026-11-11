@@ -16,14 +16,21 @@ import { handleAdmissionTicketRequest } from './admission-ticket-http.js';
 import {
   browserJsonResponse as json,
   isSameOriginBrowserRequest,
+  readBoundedJsonRequest,
 } from './browser-json-http.js';
 import {
   accountRoute,
   handleAccountRequest,
 } from './accounts/account-http.js';
 import { PtcgAccount, PtcgSignIn } from './accounts/account-objects.js';
+import {
+  readSessionToken,
+  sha256Hex as sessionSecretHash,
+} from './accounts/account-session.js';
+import { handleReplayRequest, replayRoute } from './accounts/replay-http.js';
 import { readSignInConfiguration } from './accounts/sign-in-providers.js';
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
+import { RoomReplayArchive, seatOfResumeToken } from './replay-archive.js';
 import { createContinuationCryptographyFromConfiguration } from './continuation-configuration.js';
 import { handleContinuationCreationRequest } from './continuation-creation-http.js';
 import {
@@ -236,6 +243,8 @@ interface SocketAttachment {
   readonly admissionExpiresAt?: number;
   /** The presentation events its client reads (from its Hello). */
   readonly presentationLevel?: number;
+  /** Its browser's account, checked at the upgrade (ADR-053). */
+  readonly accountId?: string;
 }
 
 type InitializedRoom = RoomCreationResponse;
@@ -323,6 +332,14 @@ const invitationRoomCodeFromPath = (pathname: string): string | undefined => {
 
 const aliasRoomCodeFromPath = (pathname: string): string | undefined => {
   const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/code$/u.exec(pathname);
+  return match?.[1];
+};
+
+/** A seat's player signed in or out mid-game (ADR-053). */
+const seatAccountRoomCodeFromPath = (pathname: string): string | undefined => {
+  const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/account$/u.exec(
+    pathname
+  );
   return match?.[1];
 };
 
@@ -540,6 +557,8 @@ export class PtcgRoom extends DurableObject<Env> {
   private readonly rateLimits: DurableRoomRateLimiter;
   private readonly continuationSource: DurableRoomContinuationSource;
   private readonly telemetry: StructuredServerTelemetry;
+  /** A signed-in seat's games, filed to its account (ADR-053). */
+  private readonly replays: RoomReplayArchive;
   private socketAlarmTail: Promise<void> = Promise.resolve();
   private runtimePromise: Promise<RoomRuntime | undefined>;
   /** The room's public code (ADR-047), kept beside its snapshot. */
@@ -576,6 +595,27 @@ export class PtcgRoom extends DurableObject<Env> {
       nextSaveId: createContinuationSaveId,
     });
     this.telemetry = createTelemetry('room', env.BUILD_ID);
+    this.replays = new RoomReplayArchive(
+      {
+        get: (key) => ctx.storage.get(key),
+        list: (options) => ctx.storage.list(options),
+        put: (entries) => ctx.storage.put(entries),
+        delete: (keys) => ctx.storage.delete(keys),
+      },
+      {
+        room: () => ctx.id.name ?? ctx.id.toString(),
+        file: async (accountId, filing) => {
+          await env.PTCG_ACCOUNT.getByName(accountId).fileReplay(filing);
+        },
+        now: Date.now,
+        onFailure: () =>
+          this.telemetry.failure({
+            subsystem: 'replay_filing',
+            retryable: true,
+          }),
+      }
+    );
+    this.store.archiveReplays(this.replays);
     // A quiet client's heartbeat is answered by the runtime, so it never
     // wakes the room or keeps it awake: a room asleep isn't billed (ADR-051).
     ctx.setWebSocketAutoResponse(
@@ -770,6 +810,11 @@ export class PtcgRoom extends DurableObject<Env> {
 
   override async fetch(request: Request): Promise<Response> {
     const requestUrl = new URL(request.url);
+    if (seatAccountRoomCodeFromPath(requestUrl.pathname)) {
+      return observeHttp(this.telemetry, 'account', () =>
+        this.bindSeatAccount(request)
+      );
+    }
     if (aliasRoomCodeFromPath(requestUrl.pathname)) {
       return observeHttp(this.telemetry, 'room_code', async () => {
         const runtime = await this.runtimePromise;
@@ -842,6 +887,7 @@ export class PtcgRoom extends DurableObject<Env> {
         });
       }
 
+      const accountId = await this.signedInAccount(request);
       const pair = new WebSocketPair();
       const client = pair[0];
       const server = pair[1];
@@ -852,6 +898,7 @@ export class PtcgRoom extends DurableObject<Env> {
         authorityVersion:
           runtime.coordinator.currentSnapshot().authorityVersion,
         admissionExpiresAt,
+        ...(accountId ? { accountId } : {}),
       };
       await this.coordinateSocketAlarm(() =>
         this.ensureAlarmNoLaterThan(admissionExpiresAt)
@@ -924,6 +971,9 @@ export class PtcgRoom extends DurableObject<Env> {
         ? ({
             connectionId: attachment.connectionId,
             ...binding,
+            ...(attachment.accountId
+              ? { accountId: attachment.accountId }
+              : {}),
           } satisfies SocketAttachment)
         : ({
             ...attachment,
@@ -933,6 +983,25 @@ export class PtcgRoom extends DurableObject<Env> {
               : { presentationLevel: binding.presentationLevel }),
           } satisfies SocketAttachment)
     );
+    if (binding.sessionId && binding.sessionId !== attachment.sessionId) {
+      // Who sits in the seat this socket now holds: their account's games
+      // are filed to it.
+      const viewer =
+        runtime.coordinator.currentSnapshot().sessions[binding.sessionId]
+          ?.viewer;
+      if (viewer?.kind === 'player') {
+        try {
+          await this.replays.bindSeat(viewer.playerId, attachment.accountId);
+        } catch {
+          this.telemetry.failure({
+            subsystem: 'replay_filing',
+            retryable: true,
+          });
+        }
+      }
+    }
+    // A game that ended with this message is filed before the room sleeps.
+    await this.replays.settled();
     if (binding.sessionId) {
       await this.coordinateSocketAlarm(() =>
         this.reconcileClaimedSocketAdmissionAlarm(Date.now(), runtime)
@@ -946,6 +1015,7 @@ export class PtcgRoom extends DurableObject<Env> {
   ): Promise<void> {
     try {
       await this.disconnectSocket(socket);
+      await this.fileWhenEmpty(socket);
     } finally {
       // The runtime doesn't answer a client's close itself: without this a
       // transport dropped for a reconnect sits closing until it times out.
@@ -990,6 +1060,8 @@ export class PtcgRoom extends DurableObject<Env> {
     const nextSocketAdmission = await this.expireSocketAdmissions(now, runtime);
     await runtime?.hub.expireDisconnectedSessions(now);
     const nextReconnect = runtime?.hub.nextReconnectExpiry();
+    // A game nobody is at any more is filed before the room can go.
+    await this.fileWhenEmpty();
     // Read before the room can go: deleting it gives its code back.
     const alias = await this.ctx.storage.get<string>(ROOM_ALIAS_STORAGE_KEY);
     let result;
@@ -1063,6 +1135,72 @@ export class PtcgRoom extends DurableObject<Env> {
   > {
     const runtime = await this.runtimePromise;
     return runtime?.hub.recentAcceptedCommandPerformance() ?? [];
+  }
+
+  /** The account a request's session cookie is signed in to, checked. */
+  private async signedInAccount(request: Request): Promise<string | undefined> {
+    const token = readSessionToken(request);
+    if (!token) return undefined;
+    try {
+      const view = await this.env.PTCG_ACCOUNT.getByName(token.accountId).read(
+        await sessionSecretHash(token.secret),
+        Date.now()
+      );
+      return view?.id === token.accountId ? token.accountId : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * A player who signed in or out with the table open: their seat, by its
+   * resume token, is now their account's (or nobody's). Same-origin only;
+   * the account is checked from the request's own session cookie.
+   */
+  private async bindSeatAccount(request: Request): Promise<Response> {
+    if (request.method !== 'POST') {
+      return json({ error: 'method_not_allowed' }, 405, { Allow: 'POST' });
+    }
+    if (!isSameOriginBrowserRequest(request)) {
+      return json({ error: 'forbidden' }, 403);
+    }
+    let resumeToken: unknown;
+    try {
+      resumeToken = Reflect.get(
+        Object(await readBoundedJsonRequest(request, 1024)),
+        'resumeToken'
+      );
+    } catch {
+      return json({ error: 'invalid_request' }, 400);
+    }
+    const runtime = await this.runtimePromise;
+    if (!runtime) return json({ error: 'not_found' }, 404);
+    const playerId = await seatOfResumeToken(
+      runtime.coordinator.currentSnapshot(),
+      resumeToken,
+      this.cryptoSource
+    );
+    if (!playerId) return json({ error: 'forbidden' }, 403);
+    await this.replays.bindSeat(playerId, await this.signedInAccount(request));
+    return new Response(null, {
+      status: 204,
+      headers: { 'Cache-Control': 'no-store' },
+    });
+  }
+
+  /** Files the game as it stands once nobody is connected (ADR-053). */
+  private async fileWhenEmpty(closing?: WebSocket): Promise<void> {
+    const open = closing
+      ? activeSocketCountExcluding(this.ctx.getWebSockets(), closing)
+      : this.ctx.getWebSockets().length;
+    if (open > 0) return;
+    const runtime = await this.runtimePromise;
+    if (!runtime) return;
+    try {
+      await this.replays.fileCurrent(runtime.coordinator.currentSnapshot());
+    } catch {
+      this.telemetry.failure({ subsystem: 'replay_filing', retryable: true });
+    }
   }
 
   private async disconnectSocket(socket: WebSocket): Promise<void> {
@@ -1742,6 +1880,21 @@ const worker: ExportedHandler<Env> = {
         )
       );
     }
+    const replay = replayRoute(url.pathname);
+    if (replay !== undefined) {
+      return observeHttp(telemetry, 'account', () =>
+        handleReplayRequest(request, replay, {
+          account: (accountId) => env.PTCG_ACCOUNT.getByName(accountId),
+          now: Date.now,
+          rateLimit: () =>
+            consumeAccountRateLimit(
+              request,
+              env.ACCOUNT_RATE_LIMITER,
+              'account'
+            ),
+        })
+      );
+    }
     const account = accountRoute(url.pathname);
     if (account !== undefined) {
       return observeHttp(
@@ -1912,6 +2065,10 @@ const worker: ExportedHandler<Env> = {
     const aliasCode = aliasRoomCodeFromPath(url.pathname);
     if (aliasCode) {
       return forwardToRoom(aliasCode, 'room_code', 'room_code');
+    }
+    const seatAccountCode = seatAccountRoomCodeFromPath(url.pathname);
+    if (seatAccountCode) {
+      return forwardToRoom(seatAccountCode, 'room_code', 'account');
     }
     if (url.pathname === '/v2/join') {
       return observeHttp(telemetry, 'room_code_join', () =>

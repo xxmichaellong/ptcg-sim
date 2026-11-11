@@ -17,6 +17,7 @@ import {
   MAX_OUTSTANDING_ADMISSION_TICKETS,
   MAX_OUTSTANDING_ROOM_INVITATIONS,
   MAX_REPLAY_EVENT_BATCHES,
+  replayCompactionTarget,
   MAX_REPLAY_EVENT_BYTES,
   type AuthoritySnapshotValidation,
   type PersistedAdmissionTransaction,
@@ -269,7 +270,22 @@ export const prepareValidatedReplayHistoryTransition = (
   let baseState = current.replayHistory.baseState;
   let baseStateHash = current.replayHistory.baseStateHash;
   let removedEntries = 0;
-  while (entries.length > maximumEntries || eventBytes > maximumEventBytes) {
+  // Past a bound, a block goes at once (replayCompactionTarget).
+  const compacting =
+    entries.length > maximumEntries || eventBytes > maximumEventBytes;
+  const targetEntries = compacting
+    ? replayCompactionTarget(maximumEntries)
+    : maximumEntries;
+  const targetBytes = compacting
+    ? replayCompactionTarget(maximumEventBytes)
+    : maximumEventBytes;
+  // The newest move stays unless it alone passes a bound: undo needs it.
+  while (
+    entries.length > maximumEntries ||
+    eventBytes > maximumEventBytes ||
+    (entries.length > 1 &&
+      (entries.length > targetEntries || eventBytes > targetBytes))
+  ) {
     const removed = entries.shift();
     const removedBytes = entryBytes.shift();
     if (!removed || removedBytes === undefined) break;

@@ -867,6 +867,10 @@
     "message": "{missingLines, plural, one {# line not found} other {# lines not found}}",
     "translation": "{missingLines, plural, one {# строка не найдена} few {# строки не найдены} many {# строк не найдено} other {# строки не найдено}}"
   },
+  "QmYqWQ": {
+    "message": "{moves, plural, one {# move} other {# moves}}",
+    "translation": "{moves, plural, one {# перемещение} few {# перемещения} many {# перемещений} other {# перемещения}}"
+  },
   "-man8P": {
     "message": "{name} (copy)",
     "comments": [
@@ -1655,6 +1659,10 @@
       "The rule for a room code"
     ],
     "translation": "4–12 букв или цифр, без I, O, 0 и 1"
+  },
+  "tVhdR6": {
+    "message": "50 games are starred. Unstar one first.",
+    "translation": "Отмечено 50 игр. Сначала сними отметку с одной."
   },
   "GeqQnM": {
     "message": "A card in it has no image.",
@@ -2810,6 +2818,10 @@
     "message": "Copy room code",
     "translation": "Копировать код комнаты"
   },
+  "RGCCrg": {
+    "message": "Copy share link",
+    "translation": "Скопировать ссылку"
+  },
   "gK_NxX": {
     "message": "Coral",
     "context": "sleeve color",
@@ -2826,6 +2838,10 @@
     "message": "Couldn't change it. Try again.",
     "translation": "Не удалось изменить. Попробуй ещё раз."
   },
+  "K_vopl": {
+    "message": "Couldn't change that. Try again.",
+    "translation": "Не удалось изменить. Попробуй ещё раз."
+  },
   "pjDAni": {
     "message": "Couldn't change the avatar. Try again.",
     "translation": "Не удалось сменить аватар. Попробуй ещё раз."
@@ -2838,9 +2854,17 @@
     "message": "Couldn't copy",
     "translation": "Не удалось скопировать"
   },
+  "-Kzl0o": {
+    "message": "Couldn't copy the link",
+    "translation": "Не удалось скопировать ссылку"
+  },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "Не удалось создать комнату. Попробуй ещё раз."
+  },
+  "KJyo1H": {
+    "message": "Couldn't delete that. Try again.",
+    "translation": "Не удалось удалить. Попробуй ещё раз."
   },
   "MmYfkc": {
     "message": "Couldn't delete. Try again.",
@@ -2858,6 +2882,10 @@
     "message": "Couldn't join the room. Try again.",
     "translation": "Не удалось войти в комнату. Попробуй снова."
   },
+  "gmQtk7": {
+    "message": "Couldn't load that game. Try again.",
+    "translation": "Не удалось загрузить игру. Попробуй ещё раз."
+  },
   "0htzp9": {
     "message": "Couldn't load that list",
     "translation": "Не удалось загрузить этот список"
@@ -2865,6 +2893,10 @@
   "1Nv1R5": {
     "message": "Couldn't load this",
     "translation": "Не удалось загрузить"
+  },
+  "ZHwYJT": {
+    "message": "Couldn't load your games. Try again.",
+    "translation": "Не удалось загрузить твои игры. Попробуй ещё раз."
   },
   "w--GsN": {
     "message": "Couldn't open that file",
@@ -2893,6 +2925,10 @@
   "ETE6Wl": {
     "message": "Couldn't save the game",
     "translation": "Не удалось сохранить игру"
+  },
+  "RX5Zev": {
+    "message": "Couldn't share that. Try again.",
+    "translation": "Не удалось поделиться. Попробуй ещё раз."
   },
   "VBrK9r": {
     "message": "Couldn't sign in. Try again.",
@@ -3929,9 +3965,17 @@
     "message": "Game board",
     "translation": "Игровое поле"
   },
+  "YybM1t": {
+    "message": "Game deleted",
+    "translation": "Игра удалена"
+  },
   "h8FbrQ": {
     "message": "Game resumed",
     "translation": "Игра возобновлена"
+  },
+  "fJPrTm": {
+    "message": "Games you play signed in show up here.",
+    "translation": "Здесь появятся игры, сыгранные после входа в аккаунт."
   },
   "gqh64K": {
     "message": "Get",
@@ -4531,6 +4575,10 @@
   "jleG-m": {
     "message": "Line {line}: set code too long.",
     "translation": "Строка {line}: слишком длинный код сета."
+  },
+  "edWbV6": {
+    "message": "Link copied",
+    "translation": "Ссылка скопирована"
   },
   "beOAmP": {
     "message": "Link too long.",
@@ -5429,6 +5477,10 @@
     ],
     "translation": "Онлайн-турниры"
   },
+  "M6s7AU": {
+    "message": "Online game",
+    "translation": "Онлайн-игра"
+  },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
     "comments": [
@@ -6272,6 +6324,13 @@
     "message": "Replay interrupted. Try again.",
     "translation": "Повтор прерван. Попробуй ещё раз."
   },
+  "daa0bg": {
+    "message": "Replay, part {0} of {1}",
+    "comments": [
+      "A long game is watched in parts of 128 moves"
+    ],
+    "translation": "Повтор, часть {0} из {1}"
+  },
   "kWiKvV": {
     "message": "Replays aren't available right now.",
     "translation": "Повторы сейчас недоступны."
@@ -7094,6 +7153,10 @@
     "message": "Sign in",
     "translation": "Войти"
   },
+  "LWgz34": {
+    "message": "Sign in to keep your games",
+    "translation": "Войди, чтобы сохранять игры"
+  },
   "fcWrnU": {
     "message": "Sign out",
     "translation": "Выйти"
@@ -7169,6 +7232,10 @@
     "message": "Solo",
     "context": "playing alone at this table",
     "translation": "Один"
+  },
+  "4qzXid": {
+    "message": "Solo game",
+    "translation": "Одиночная игра"
   },
   "6N0DKq": {
     "message": "Solo table",
@@ -7363,6 +7430,10 @@
   "kGkZLk": {
     "message": "Standings",
     "translation": "Итоги"
+  },
+  "Y6PB_F": {
+    "message": "Star to keep",
+    "translation": "Отметь, чтобы сохранить"
   },
   "WrLzY2": {
     "message": "Start a game",
@@ -7728,6 +7799,10 @@
   "KsKHA0": {
     "message": "The focused card, or the one under the pointer",
     "translation": "Выбранная карта или карта под курсором"
+  },
+  "fXfOC7": {
+    "message": "The last 100 are kept. Starred games stay.",
+    "translation": "Хранятся последние 100. Отмеченные игры остаются."
   },
   "lom6tE": {
     "message": "The last move is still sending.",
@@ -8232,6 +8307,10 @@
     "message": "Unstack copies",
     "translation": "Разделить копии"
   },
+  "R6QjaA": {
+    "message": "Unstar",
+    "translation": "Снять отметку"
+  },
   "-qi9QY": {
     "message": "Untitled deck",
     "translation": "Колода без названия"
@@ -8369,6 +8448,13 @@
     "context": "sleeve color",
     "translation": "Фиолетовый"
   },
+  "djG3xD": {
+    "message": "vs {opponent}",
+    "comments": [
+      "A game against the named player"
+    ],
+    "translation": "против {opponent}"
+  },
   "RVlHmr": {
     "message": "VSTAR marker",
     "translation": "Маркер VSTAR"
@@ -8381,6 +8467,10 @@
     "message": "Watch",
     "context": "join a room to spectate",
     "translation": "Наблюдать"
+  },
+  "bbQDbO": {
+    "message": "Watch from your Solo table. The last 100 are kept, and starred games stay.",
+    "translation": "Смотри со своего одиночного стола. Хранятся последние 100, отмеченные игры остаются."
   },
   "sFWtjQ": {
     "message": "Watch replay…",
@@ -8530,6 +8620,10 @@
   "S7YY4L": {
     "message": "Your discard pile",
     "translation": "Твой сброс"
+  },
+  "pa5Fda": {
+    "message": "Your games",
+    "translation": "Твои игры"
   },
   "gUPT1q": {
     "message": "Your hand",

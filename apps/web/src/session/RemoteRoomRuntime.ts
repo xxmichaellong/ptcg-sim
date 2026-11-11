@@ -74,6 +74,8 @@ export class RemoteRoomRuntime {
   private continuationSource: RemoteContinuationSourceInput | undefined;
   private continuationCustody: RemoteContinuationCustody | undefined;
   private disposed = false;
+  /** This player's seat's resume token, for the room's own requests. */
+  private readonly seatResumeToken: string | undefined;
 
   constructor({
     connection,
@@ -94,6 +96,10 @@ export class RemoteRoomRuntime {
       resumeToken: connection.resumeToken,
       ...roomCodes,
     });
+    this.seatResumeToken =
+      connection.requestedRole === 'player'
+        ? connection.resumeToken
+        : undefined;
     this.continuationOptions = continuation;
     this.continuationSource =
       connection.requestedRole === 'player'
@@ -167,6 +173,26 @@ export class RemoteRoomRuntime {
    * Creates and downloads one opaque online save. Successful delivery rotates
    * custody so the next user action captures a fresh authoritative head.
    */
+  /**
+   * Tells the room this player signed in or out with the table open: the
+   * games at this seat are then filed to the account signed in now
+   * (ADR-053). The room reads the account from the session cookie itself.
+   */
+  async tellSeatAccount(): Promise<void> {
+    if (this.disposed || !this.seatResumeToken) return;
+    try {
+      await fetch(`/v2/rooms/${encodeURIComponent(this.roomCode)}/account`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resumeToken: this.seatResumeToken }),
+        credentials: 'same-origin',
+        cache: 'no-store',
+      });
+    } catch {
+      // The next connection tells the room anyway.
+    }
+  }
+
   async saveOnlineGame(
     write: RemoteContinuationHandoffWriter,
     signal?: AbortSignal

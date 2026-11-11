@@ -867,6 +867,10 @@
     "message": "{missingLines, plural, one {# line not found} other {# lines not found}}",
     "translation": "{missingLines, plural, other {ไม่พบ # บรรทัด}}"
   },
+  "QmYqWQ": {
+    "message": "{moves, plural, one {# move} other {# moves}}",
+    "translation": "{moves, plural, other {# ตา}}"
+  },
   "-man8P": {
     "message": "{name} (copy)",
     "comments": [
@@ -1655,6 +1659,10 @@
       "The rule for a room code"
     ],
     "translation": "ตัวอักษรหรือตัวเลข 4–12 ตัว ไม่มี I, O, 0 หรือ 1"
+  },
+  "tVhdR6": {
+    "message": "50 games are starred. Unstar one first.",
+    "translation": "ติดดาวครบ 50 เกมแล้ว ยกเลิกดาวเกมใดเกมหนึ่งก่อน"
   },
   "GeqQnM": {
     "message": "A card in it has no image.",
@@ -2810,6 +2818,10 @@
     "message": "Copy room code",
     "translation": "คัดลอกรหัสห้อง"
   },
+  "RGCCrg": {
+    "message": "Copy share link",
+    "translation": "คัดลอกลิงก์แชร์"
+  },
   "gK_NxX": {
     "message": "Coral",
     "context": "sleeve color",
@@ -2826,6 +2838,10 @@
     "message": "Couldn't change it. Try again.",
     "translation": "เปลี่ยนไม่ได้ ลองอีกครั้ง"
   },
+  "K_vopl": {
+    "message": "Couldn't change that. Try again.",
+    "translation": "เปลี่ยนไม่สำเร็จ ลองอีกครั้ง"
+  },
   "pjDAni": {
     "message": "Couldn't change the avatar. Try again.",
     "translation": "เปลี่ยนอวาตาร์ไม่ได้ ลองอีกครั้ง"
@@ -2838,9 +2854,17 @@
     "message": "Couldn't copy",
     "translation": "คัดลอกไม่สำเร็จ"
   },
+  "-Kzl0o": {
+    "message": "Couldn't copy the link",
+    "translation": "คัดลอกลิงก์ไม่สำเร็จ"
+  },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "สร้างห้องไม่สำเร็จ ลองอีกครั้ง"
+  },
+  "KJyo1H": {
+    "message": "Couldn't delete that. Try again.",
+    "translation": "ลบไม่สำเร็จ ลองอีกครั้ง"
   },
   "MmYfkc": {
     "message": "Couldn't delete. Try again.",
@@ -2858,6 +2882,10 @@
     "message": "Couldn't join the room. Try again.",
     "translation": "เข้าร่วมห้องไม่สำเร็จ ลองอีกครั้ง"
   },
+  "gmQtk7": {
+    "message": "Couldn't load that game. Try again.",
+    "translation": "โหลดเกมนั้นไม่สำเร็จ ลองอีกครั้ง"
+  },
   "0htzp9": {
     "message": "Couldn't load that list",
     "translation": "โหลดลิสต์นั้นไม่ได้"
@@ -2865,6 +2893,10 @@
   "1Nv1R5": {
     "message": "Couldn't load this",
     "translation": "โหลดส่วนนี้ไม่ได้"
+  },
+  "ZHwYJT": {
+    "message": "Couldn't load your games. Try again.",
+    "translation": "โหลดเกมของคุณไม่สำเร็จ ลองอีกครั้ง"
   },
   "w--GsN": {
     "message": "Couldn't open that file",
@@ -2893,6 +2925,10 @@
   "ETE6Wl": {
     "message": "Couldn't save the game",
     "translation": "บันทึกเกมไม่ได้"
+  },
+  "RX5Zev": {
+    "message": "Couldn't share that. Try again.",
+    "translation": "แชร์ไม่สำเร็จ ลองอีกครั้ง"
   },
   "VBrK9r": {
     "message": "Couldn't sign in. Try again.",
@@ -3929,9 +3965,17 @@
     "message": "Game board",
     "translation": "กระดานเกม"
   },
+  "YybM1t": {
+    "message": "Game deleted",
+    "translation": "ลบเกมแล้ว"
+  },
   "h8FbrQ": {
     "message": "Game resumed",
     "translation": "เล่นเกมต่อแล้ว"
+  },
+  "fJPrTm": {
+    "message": "Games you play signed in show up here.",
+    "translation": "เกมที่คุณเล่นขณะลงชื่อเข้าใช้จะแสดงที่นี่"
   },
   "gqh64K": {
     "message": "Get",
@@ -4531,6 +4575,10 @@
   "jleG-m": {
     "message": "Line {line}: set code too long.",
     "translation": "บรรทัดที่ {line}: รหัสชุดยาวเกินไป"
+  },
+  "edWbV6": {
+    "message": "Link copied",
+    "translation": "คัดลอกลิงก์แล้ว"
   },
   "beOAmP": {
     "message": "Link too long.",
@@ -5429,6 +5477,10 @@
     ],
     "translation": "อีเวนต์ออนไลน์"
   },
+  "M6s7AU": {
+    "message": "Online game",
+    "translation": "เกมออนไลน์"
+  },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
     "comments": [
@@ -6272,6 +6324,13 @@
     "message": "Replay interrupted. Try again.",
     "translation": "รีเพลย์ถูกขัดจังหวะ ลองอีกครั้ง"
   },
+  "daa0bg": {
+    "message": "Replay, part {0} of {1}",
+    "comments": [
+      "A long game is watched in parts of 128 moves"
+    ],
+    "translation": "รีเพลย์ ตอนที่ {0} จาก {1}"
+  },
   "kWiKvV": {
     "message": "Replays aren't available right now.",
     "translation": "ตอนนี้ยังไม่สามารถใช้รีเพลย์ได้"
@@ -7094,6 +7153,10 @@
     "message": "Sign in",
     "translation": "ลงชื่อเข้าใช้"
   },
+  "LWgz34": {
+    "message": "Sign in to keep your games",
+    "translation": "ลงชื่อเข้าใช้เพื่อเก็บเกมของคุณ"
+  },
   "fcWrnU": {
     "message": "Sign out",
     "translation": "ออกจากระบบ"
@@ -7169,6 +7232,10 @@
     "message": "Solo",
     "context": "playing alone at this table",
     "translation": "เล่นคนเดียว"
+  },
+  "4qzXid": {
+    "message": "Solo game",
+    "translation": "เกมเดี่ยว"
   },
   "6N0DKq": {
     "message": "Solo table",
@@ -7363,6 +7430,10 @@
   "kGkZLk": {
     "message": "Standings",
     "translation": "อันดับ"
+  },
+  "Y6PB_F": {
+    "message": "Star to keep",
+    "translation": "ติดดาวเพื่อเก็บไว้"
   },
   "WrLzY2": {
     "message": "Start a game",
@@ -7728,6 +7799,10 @@
   "KsKHA0": {
     "message": "The focused card, or the one under the pointer",
     "translation": "การ์ดที่โฟกัสอยู่ หรือใบที่อยู่ใต้ตัวชี้"
+  },
+  "fXfOC7": {
+    "message": "The last 100 are kept. Starred games stay.",
+    "translation": "เก็บ 100 เกมล่าสุด เกมที่ติดดาวจะไม่ถูกลบ"
   },
   "lom6tE": {
     "message": "The last move is still sending.",
@@ -8232,6 +8307,10 @@
     "message": "Unstack copies",
     "translation": "แยกการ์ดที่ซ้อนกัน"
   },
+  "R6QjaA": {
+    "message": "Unstar",
+    "translation": "ยกเลิกดาว"
+  },
   "-qi9QY": {
     "message": "Untitled deck",
     "translation": "เด็คไม่มีชื่อ"
@@ -8369,6 +8448,13 @@
     "context": "sleeve color",
     "translation": "ม่วงไวโอเล็ต"
   },
+  "djG3xD": {
+    "message": "vs {opponent}",
+    "comments": [
+      "A game against the named player"
+    ],
+    "translation": "พบกับ {opponent}"
+  },
   "RVlHmr": {
     "message": "VSTAR marker",
     "translation": "มาร์กเกอร์ VSTAR"
@@ -8381,6 +8467,10 @@
     "message": "Watch",
     "context": "join a room to spectate",
     "translation": "ชม"
+  },
+  "bbQDbO": {
+    "message": "Watch from your Solo table. The last 100 are kept, and starred games stay.",
+    "translation": "ดูได้จากโต๊ะเล่นเดี่ยวของคุณ เก็บ 100 เกมล่าสุด และเกมที่ติดดาวจะไม่ถูกลบ"
   },
   "sFWtjQ": {
     "message": "Watch replay…",
@@ -8530,6 +8620,10 @@
   "S7YY4L": {
     "message": "Your discard pile",
     "translation": "ตำแหน่งทิ้งการ์ดของคุณ"
+  },
+  "pa5Fda": {
+    "message": "Your games",
+    "translation": "เกมของคุณ"
   },
   "gUPT1q": {
     "message": "Your hand",

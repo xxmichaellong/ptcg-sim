@@ -1,6 +1,8 @@
 // Before anything else: an invitation link's fragment leaves the address
 // bar before any other module could read or report it (ADR-020).
 import './session/invitation-link-capture.js';
+// A shared game's link (ADR-053) likewise.
+import './account/replay-link-capture.js';
 // Then the language, active before any other module runs.
 import { startLocalization } from './i18n/localization.js';
 import { watchCardImageFailures } from './i18n/card-image-language.js';

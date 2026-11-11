@@ -867,6 +867,10 @@
     "message": "{missingLines, plural, one {# line not found} other {# lines not found}}",
     "translation": "{missingLines, plural, other {Không tìm thấy # dòng}}"
   },
+  "QmYqWQ": {
+    "message": "{moves, plural, one {# move} other {# moves}}",
+    "translation": "{moves, plural, other {# nước đi}}"
+  },
   "-man8P": {
     "message": "{name} (copy)",
     "comments": [
@@ -1655,6 +1659,10 @@
       "The rule for a room code"
     ],
     "translation": "4–12 chữ cái hoặc chữ số, không có I, O, 0 hay 1"
+  },
+  "tVhdR6": {
+    "message": "50 games are starred. Unstar one first.",
+    "translation": "Bạn đã gắn sao 50 ván. Hãy bỏ sao một ván trước."
   },
   "GeqQnM": {
     "message": "A card in it has no image.",
@@ -2810,6 +2818,10 @@
     "message": "Copy room code",
     "translation": "Sao chép mã phòng"
   },
+  "RGCCrg": {
+    "message": "Copy share link",
+    "translation": "Sao chép liên kết chia sẻ"
+  },
   "gK_NxX": {
     "message": "Coral",
     "context": "sleeve color",
@@ -2826,6 +2838,10 @@
     "message": "Couldn't change it. Try again.",
     "translation": "Không đổi được. Hãy thử lại."
   },
+  "K_vopl": {
+    "message": "Couldn't change that. Try again.",
+    "translation": "Không thể thay đổi. Hãy thử lại."
+  },
   "pjDAni": {
     "message": "Couldn't change the avatar. Try again.",
     "translation": "Không đổi được ảnh đại diện. Hãy thử lại."
@@ -2838,9 +2854,17 @@
     "message": "Couldn't copy",
     "translation": "Không thể sao chép"
   },
+  "-Kzl0o": {
+    "message": "Couldn't copy the link",
+    "translation": "Không thể sao chép liên kết"
+  },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "Không thể tạo phòng. Hãy thử lại."
+  },
+  "KJyo1H": {
+    "message": "Couldn't delete that. Try again.",
+    "translation": "Không thể xóa. Hãy thử lại."
   },
   "MmYfkc": {
     "message": "Couldn't delete. Try again.",
@@ -2858,6 +2882,10 @@
     "message": "Couldn't join the room. Try again.",
     "translation": "Không vào được phòng. Hãy thử lại."
   },
+  "gmQtk7": {
+    "message": "Couldn't load that game. Try again.",
+    "translation": "Không thể tải ván đấu này. Hãy thử lại."
+  },
   "0htzp9": {
     "message": "Couldn't load that list",
     "translation": "Không tải được bộ bài đó"
@@ -2865,6 +2893,10 @@
   "1Nv1R5": {
     "message": "Couldn't load this",
     "translation": "Không tải được nội dung này"
+  },
+  "ZHwYJT": {
+    "message": "Couldn't load your games. Try again.",
+    "translation": "Không thể tải các ván đấu của bạn. Hãy thử lại."
   },
   "w--GsN": {
     "message": "Couldn't open that file",
@@ -2893,6 +2925,10 @@
   "ETE6Wl": {
     "message": "Couldn't save the game",
     "translation": "Không lưu được ván đấu"
+  },
+  "RX5Zev": {
+    "message": "Couldn't share that. Try again.",
+    "translation": "Không thể chia sẻ. Hãy thử lại."
   },
   "VBrK9r": {
     "message": "Couldn't sign in. Try again.",
@@ -3929,9 +3965,17 @@
     "message": "Game board",
     "translation": "Bàn đấu"
   },
+  "YybM1t": {
+    "message": "Game deleted",
+    "translation": "Đã xóa ván đấu"
+  },
   "h8FbrQ": {
     "message": "Game resumed",
     "translation": "Ván đấu đã tiếp tục"
+  },
+  "fJPrTm": {
+    "message": "Games you play signed in show up here.",
+    "translation": "Các ván bạn chơi khi đã đăng nhập sẽ hiện ở đây."
   },
   "gqh64K": {
     "message": "Get",
@@ -4531,6 +4575,10 @@
   "jleG-m": {
     "message": "Line {line}: set code too long.",
     "translation": "Dòng {line}: mã set quá dài."
+  },
+  "edWbV6": {
+    "message": "Link copied",
+    "translation": "Đã sao chép liên kết"
   },
   "beOAmP": {
     "message": "Link too long.",
@@ -5429,6 +5477,10 @@
     ],
     "translation": "Sự kiện trực tuyến"
   },
+  "M6s7AU": {
+    "message": "Online game",
+    "translation": "Ván online"
+  },
   "-EDLvw": {
     "message": "Only {formatLabel}-legal",
     "comments": [
@@ -6272,6 +6324,13 @@
     "message": "Replay interrupted. Try again.",
     "translation": "Phát lại bị gián đoạn. Hãy thử lại."
   },
+  "daa0bg": {
+    "message": "Replay, part {0} of {1}",
+    "comments": [
+      "A long game is watched in parts of 128 moves"
+    ],
+    "translation": "Xem lại, phần {0}/{1}"
+  },
   "kWiKvV": {
     "message": "Replays aren't available right now.",
     "translation": "Hiện chưa thể xem lại ván đấu."
@@ -7094,6 +7153,10 @@
     "message": "Sign in",
     "translation": "Đăng nhập"
   },
+  "LWgz34": {
+    "message": "Sign in to keep your games",
+    "translation": "Đăng nhập để lưu các ván đấu của bạn"
+  },
   "fcWrnU": {
     "message": "Sign out",
     "translation": "Đăng xuất"
@@ -7169,6 +7232,10 @@
     "message": "Solo",
     "context": "playing alone at this table",
     "translation": "Một mình"
+  },
+  "4qzXid": {
+    "message": "Solo game",
+    "translation": "Ván solo"
   },
   "6N0DKq": {
     "message": "Solo table",
@@ -7363,6 +7430,10 @@
   "kGkZLk": {
     "message": "Standings",
     "translation": "Bảng xếp hạng"
+  },
+  "Y6PB_F": {
+    "message": "Star to keep",
+    "translation": "Gắn sao để giữ lại"
   },
   "WrLzY2": {
     "message": "Start a game",
@@ -7728,6 +7799,10 @@
   "KsKHA0": {
     "message": "The focused card, or the one under the pointer",
     "translation": "Lá bài đang chọn, hoặc lá bài dưới con trỏ"
+  },
+  "fXfOC7": {
+    "message": "The last 100 are kept. Starred games stay.",
+    "translation": "100 ván gần nhất được giữ lại. Ván có gắn sao sẽ được giữ."
   },
   "lom6tE": {
     "message": "The last move is still sending.",
@@ -8232,6 +8307,10 @@
     "message": "Unstack copies",
     "translation": "Tách các bản sao"
   },
+  "R6QjaA": {
+    "message": "Unstar",
+    "translation": "Bỏ sao"
+  },
   "-qi9QY": {
     "message": "Untitled deck",
     "translation": "Bộ bài chưa đặt tên"
@@ -8369,6 +8448,13 @@
     "context": "sleeve color",
     "translation": "Tím violet"
   },
+  "djG3xD": {
+    "message": "vs {opponent}",
+    "comments": [
+      "A game against the named player"
+    ],
+    "translation": "vs {opponent}"
+  },
   "RVlHmr": {
     "message": "VSTAR marker",
     "translation": "Dấu VSTAR"
@@ -8381,6 +8467,10 @@
     "message": "Watch",
     "context": "join a room to spectate",
     "translation": "Xem"
+  },
+  "bbQDbO": {
+    "message": "Watch from your Solo table. The last 100 are kept, and starred games stay.",
+    "translation": "Xem lại từ bàn Solo của bạn. 100 ván gần nhất được giữ lại, và ván có gắn sao sẽ được giữ."
   },
   "sFWtjQ": {
     "message": "Watch replay…",
@@ -8530,6 +8620,10 @@
   "S7YY4L": {
     "message": "Your discard pile",
     "translation": "Chồng bài bỏ của bạn"
+  },
+  "pa5Fda": {
+    "message": "Your games",
+    "translation": "Các ván đấu của bạn"
   },
   "gUPT1q": {
     "message": "Your hand",

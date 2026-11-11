@@ -197,4 +197,40 @@ describe('replay history byte facts', () => {
     expect(history.baseState).toEqual(secondState);
     expect(replayHistoryEventBytes(history)).toBe(thirdOnlyBytes);
   });
+
+  it('drops a block of the oldest moves once a bound is passed (ADR-053)', () => {
+    const player = asPlayerId('player-one');
+    let state = createEmptyMatch(asMatchId('block-compaction'), [
+      { playerId: player, displayName: 'Blue', cardBackUrl: '/blue.png' },
+      {
+        playerId: asPlayerId('player-two'),
+        displayName: 'Red',
+        cardBackUrl: '/red.png',
+      },
+    ]);
+    let history = createReplayHistory(state);
+    const lengths: number[] = [];
+    for (let revision = 1; revision <= 140; revision += 1) {
+      const batch = {
+        revision,
+        events: [
+          {
+            type: 'CoinFlipped' as const,
+            playerId: player,
+            result:
+              revision % 2 === 0 ? ('tails' as const) : ('heads' as const),
+          },
+        ],
+      };
+      state = applyEventBatch(state, batch);
+      history = appendReplayHistory(history, batch, state, 128);
+      lengths.push(history.entries.length);
+    }
+    // Full at 128; the 129th move takes it to 96, and it fills again.
+    expect(lengths[127]).toBe(128);
+    expect(lengths[128]).toBe(96);
+    expect(lengths[139]).toBe(107);
+    expect(history.baseState.revision).toBe(33);
+    expect(history.entries[0]!.batch.revision).toBe(34);
+  });
 });

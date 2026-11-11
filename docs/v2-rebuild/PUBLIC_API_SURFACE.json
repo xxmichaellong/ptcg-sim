@@ -3406,6 +3406,10 @@
               "kind": "value"
             },
             {
+              "name": "replayCompactionTarget",
+              "kind": "value"
+            },
+            {
               "name": "ReplayHistory",
               "kind": "type"
             },

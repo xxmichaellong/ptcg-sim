@@ -94,6 +94,7 @@ export type ServerFailureSubsystem =
   | 'chat_processing'
   | 'command_processing'
   | 'replay_projection'
+  | 'replay_filing'
   | 'socket_send'
   | 'socket_upgrade'
   | 'deck_feed_refresh'

@@ -34,6 +34,10 @@ export type {
   DurableStorageTransactionLike,
 } from './durable-storage-types.js';
 
+import type {
+  RoomReplayArchive,
+  StagedReplayArchive,
+} from './replay-archive.js';
 import { ROOM_ALREADY_INITIALIZED_MESSAGE } from './room-initialization.js';
 import { chunkedSnapshotStorage } from './snapshot-storage.js';
 
@@ -673,6 +677,8 @@ export class DurableRoomSnapshotStore
 {
   private validatedHead: ValidatedAuthorityHead | undefined;
   private readonly storage: DurableStorageLike;
+  /** Keeps what compaction drops for signed-in seats (ADR-053). */
+  private replayArchive: RoomReplayArchive | undefined;
 
   constructor(
     storage: DurableStorageLike,
@@ -685,6 +691,11 @@ export class DurableRoomSnapshotStore
       storage,
       AUTHORITY_SNAPSHOT_STORAGE_KEY
     );
+  }
+
+  /** Commits from now on keep a game's record for signed-in seats. */
+  archiveReplays(archive: RoomReplayArchive): void {
+    this.replayArchive = archive;
   }
 
   async load(): Promise<RoomAuthoritySnapshot | undefined> {
@@ -1146,10 +1157,12 @@ export class DurableRoomSnapshotStore
     const transactionStartedAt = safeMonotonicMark(this.monotonicNow);
     let predecessorValidationMs = 0;
     let frontierFastPathHit = 0;
+    let archived: StagedReplayArchive | undefined;
     try {
       await this.storage.transaction(async (storageTransaction) => {
         predecessorValidationMs = 0;
         frontierFastPathHit = 0;
+        archived = undefined;
         const lifecycle = readStoredRoomLifecycle(
           await storageTransaction.get<unknown>(ROOM_LIFECYCLE_STORAGE_KEY)
         );
@@ -1245,6 +1258,14 @@ export class DurableRoomSnapshotStore
         // is no journal of moves: nothing ever read it back, and each move
         // wrote three more rows for it.
         const idle = refreshedIdleLifecycle(lifecycle, this.wallTime());
+        // A signed-in seat's game keeps what compaction drops, a block at
+        // a time (ADR-053): no row a move.
+        archived = await this.replayArchive?.stageCommit(
+          storageTransaction,
+          current,
+          transaction.snapshot,
+          transaction.eventBatch
+        );
         await storageTransaction.put({
           [AUTHORITY_SNAPSHOT_STORAGE_KEY]: {
             format: STORAGE_FORMAT,
@@ -1258,8 +1279,10 @@ export class DurableRoomSnapshotStore
       });
     } catch (error) {
       if (this.validatedHead === capturedHead) this.validatedHead = undefined;
+      this.replayArchive?.forget();
       throw error;
     }
+    this.replayArchive?.applyStaged(archived);
     this.validatedHead = {
       snapshot: transaction.snapshot,
       validation: candidateValidation,
@@ -1283,8 +1306,10 @@ export class DurableRoomSnapshotStore
     const capturedHead = this.validatedHead;
     const generation = this.createGeneration();
     const frontier = frontierForSnapshot(transaction.snapshot, generation);
+    let archived: StagedReplayArchive | undefined;
     try {
       await this.storage.transaction(async (storageTransaction) => {
+        archived = undefined;
         const lifecycle = readStoredRoomLifecycle(
           await storageTransaction.get<unknown>(ROOM_LIFECYCLE_STORAGE_KEY)
         );
@@ -1353,6 +1378,12 @@ export class DurableRoomSnapshotStore
           transaction.kind === 'sessions_expired'
             ? undefined
             : refreshedIdleLifecycle(lifecycle, now));
+        // A history begun again ends the game as it was (ADR-053).
+        archived = await this.replayArchive?.stageAdmission(
+          storageTransaction,
+          current,
+          transaction.snapshot
+        );
         // No journal of admissions either (ADR-051): nothing read it back.
         await storageTransaction.put({
           [AUTHORITY_SNAPSHOT_STORAGE_KEY]: {
@@ -1386,8 +1417,10 @@ export class DurableRoomSnapshotStore
       });
     } catch (error) {
       if (this.validatedHead === capturedHead) this.validatedHead = undefined;
+      this.replayArchive?.forget();
       throw error;
     }
+    this.replayArchive?.applyStaged(archived);
     this.validatedHead = {
       snapshot: transaction.snapshot,
       validation,

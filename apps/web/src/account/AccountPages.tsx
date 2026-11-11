@@ -33,6 +33,7 @@ import {
   type AccountProvider,
 } from './account-api.js';
 import { emblemFile } from '../card-backs/card-back-emblems.js';
+import { AccountReplaysRow } from './AccountReplaysPage.js';
 import {
   addDeviceDecks,
   clearAccountFromDevice,
@@ -64,7 +65,8 @@ export type AccountSettingsPage =
   | 'accountAvatar'
   | 'signInMethods'
   | 'signOut'
-  | 'deleteAccount';
+  | 'deleteAccount'
+  | 'accountReplays';
 
 export interface AccountPageContext {
   readonly navigate: (page: AccountSettingsPage, opener: string) => void;
@@ -388,6 +390,11 @@ export const AccountPage = ({ navigate, back }: AccountPageContext) => {
           value={joined}
         />
       </SettingsGroup>
+      {/* The account's games (ADR-053). */}
+      <AccountReplaysRow
+        onOpen={() => navigate('accountReplays', 'accountReplaysRow')}
+        onSignIn={() => navigate('signIn', 'accountReplaysSignInRow')}
+      />
       <SettingsGroup
         heading={t({ message: 'Connections', context: 'account' })}
       >
