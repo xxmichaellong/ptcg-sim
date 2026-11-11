@@ -79,6 +79,8 @@ test('keeps a signed-in Solo game, watches, stars and shares it', async ({
   page,
   browser,
 }) => {
+  // A game played, then a second browser: past the suite's 45 s on CI.
+  test.setTimeout(120_000);
   await openTable(page);
   await signIn(page, someone('Iris'));
   await closeSheet(page);

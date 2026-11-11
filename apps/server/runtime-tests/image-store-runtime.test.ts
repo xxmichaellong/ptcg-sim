@@ -60,7 +60,8 @@ describe('the image store, through the Worker', () => {
     );
     expect(served.headers.get('X-Content-Type-Options')).toBe('nosniff');
     expect([...new Uint8Array(await served.arrayBuffer())]).toEqual([...bytes]);
-  });
+    // Its first upload cold-starts the store: past 5 s on a loaded machine.
+  }, 30_000);
 
   it('refuses another site and a file that is no picture it keeps', async () => {
     expect((await upload(webp(2), 'https://elsewhere.example')).status).toBe(
