@@ -51,6 +51,8 @@ export interface PulseTile {
   readonly unit: Unit;
   readonly headline: Headline;
   readonly trend: readonly (number | null)[];
+  /** Why there is no figure: its source couldn't be read. */
+  readonly unavailable?: string;
 }
 
 export interface DimensionRow {
@@ -250,6 +252,12 @@ export const problemsOf = (sources: Sources): Readonly<Record<string, Problem>> 
     })
   );
 
+/**
+ * The Worker statuses that are faults. `clientDisconnected` is a visitor
+ * leaving mid-request, as every room connection ends, and is not one.
+ */
+export const WORKER_FAULTS: ReadonlySet<string> = new Set(['scriptThrewException', 'exceededResources', 'internalError']);
+
 const PHASES = [
   ['authorityMs', 'Rules'],
   ['projectionMs', 'Each player’s view'],
@@ -344,7 +352,7 @@ export const shapeOverview = (response: ViewResponse): OverviewModel => {
   const workerExceptions = dailySum(
     withDate,
     allDays,
-    (row) => (str(path(row, 'dimensions', 'status')) === 'success' ? 0 : num(path(row, 'sum', 'requests'))),
+    (row) => (WORKER_FAULTS.has(str(path(row, 'dimensions', 'status'))) ? num(path(row, 'sum', 'requests')) : 0),
     '__date'
   );
 
@@ -354,7 +362,7 @@ export const shapeOverview = (response: ViewResponse): OverviewModel => {
   const totalNew = rangeSum(newPlayers);
   const rangeWeeks = Math.max(1, response.days / 7);
 
-  const pulse: PulseTile[] = [
+  const tiles: PulseTile[] = [
     {
       id: 'players',
       label: 'Daily players',
@@ -405,6 +413,19 @@ export const shapeOverview = (response: ViewResponse): OverviewModel => {
     },
   ];
 
+  // A tile whose source couldn't be read says so rather than show zero.
+  const TILE_SOURCES: Readonly<Record<string, string>> = {
+    players: 'pagesDaily',
+    new: 'pagesDaily',
+    games: 'roomsDaily',
+    moves: 'movesDaily',
+    table: 'speedDaily',
+    errors: 'pagesDaily',
+  };
+  const pulse: readonly PulseTile[] = tiles.map((tile) => {
+    const problem = problemOf(sources, TILE_SOURCES[tile.id] ?? '');
+    return problem ? { ...tile, unavailable: problem.reason === 'failed' ? 'Couldn’t load' : 'Needs the API token' } : tile;
+  });
   const speedRows = speed ?? [];
   const recentSpeed = speedRows.filter((row) => days.slice(-8, -1).includes(str(row.t).slice(0, 10)));
   const vitals: Vital[] = VITALS.map((vital) => {
@@ -464,7 +485,7 @@ export const shapeOverview = (response: ViewResponse): OverviewModel => {
     }));
     const zoneDays = days;
     const zoneDimension = (name: string, label: (key: string) => string): readonly DimensionRow[] => {
-      const rows = graphqlRows(zoneScope, name);
+      const rows = graphqlRows(zoneScope, name).filter((row) => num(path(row, 'sum', 'visits')) > 0);
       const total = rows.reduce((all, row) => all + num(path(row, 'sum', 'visits')), 0);
       return rows.map((row) => {
         const key = str(path(row, 'dimensions', name));

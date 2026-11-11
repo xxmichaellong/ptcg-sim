@@ -349,6 +349,10 @@ a {
   margin-top: 4px;
 }
 
+.tile__value--none {
+  color: var(--muted);
+}
+
 .tile__note {
   font-size: 11px;
   font-weight: 400;

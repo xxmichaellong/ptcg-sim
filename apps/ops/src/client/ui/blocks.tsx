@@ -41,6 +41,7 @@ export interface Tile {
   readonly unit: Unit;
   readonly headline: Headline;
   readonly trend: readonly (number | null)[];
+  readonly unavailable?: string;
 }
 
 const tileValue = (unit: Unit, value: number | null): string =>
@@ -55,19 +56,28 @@ export const PulseStrip = ({ tiles, days }: { readonly tiles: readonly Tile[]; r
           {tile.label}
           <Info text={tile.info} />
         </div>
-        <div className="tile__value">
-          {tileValue(tile.unit, tile.headline.value)}
-          <span className="tile__note">7-day avg</span>
-        </div>
-        <div>
-          <DeltaChip {...tile.headline} />
-          <span className="delta-note">vs prior 7d</span>
-        </div>
-        <Sparkline
-          values={tile.trend.slice(0, -1)}
-          label={`${tile.label}: ${tileValue(tile.unit, tile.headline.value)} a day over the last seven days; trend over ${String(days)} days`}
-        />
-        <div className="tile__foot">Last {days} days, through yesterday</div>
+        {tile.unavailable ? (
+          <>
+            <div className="tile__value tile__value--none">—</div>
+            <div className="tile__foot">{tile.unavailable}</div>
+          </>
+        ) : (
+          <>
+            <div className="tile__value">
+              {tileValue(tile.unit, tile.headline.value)}
+              <span className="tile__note">7-day avg</span>
+            </div>
+            <div>
+              <DeltaChip {...tile.headline} />
+              <span className="delta-note">vs prior 7d</span>
+            </div>
+            <Sparkline
+              values={tile.trend.slice(0, -1)}
+              label={`${tile.label}: ${tileValue(tile.unit, tile.headline.value)} a day over the last seven days; trend over ${String(days)} days`}
+            />
+            <div className="tile__foot">Last {days} days, through yesterday</div>
+          </>
+        )}
       </div>
     ))}
   </div>

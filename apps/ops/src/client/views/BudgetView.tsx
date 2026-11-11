@@ -64,7 +64,7 @@ export const BudgetView = ({
           />
           <div className="figures" style={{ marginTop: 16 }}>
             <Fig
-              value={model.storageBytes === null ? '—' : bytes(model.storageBytes)}
+              value={model.storageBytes === null ? 'Not reported' : bytes(model.storageBytes)}
               label={`Stored, of ${bytes(model.storageLimit)}`}
               info="Durable Object storage, every object together. Rooms are deleted a day after their last use."
             />

@@ -75,7 +75,7 @@ export const Card = ({ id, title, subtitle, info, figure, span = 12, footnote, t
           {subtitle && <div className="card__sub">{subtitle}</div>}
         </div>
         <div className="card__actions">
-          {figure}
+          {problem ? null : figure}
           {table && !problem && (
             <button
               type="button"

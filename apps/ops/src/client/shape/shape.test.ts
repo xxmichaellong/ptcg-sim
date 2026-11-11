@@ -81,7 +81,9 @@ describe('shapeOverview', () => {
     const model = shapeOverview(broken);
     expect(model.problems.pagesDaily?.reason).toBe('unauthorized');
     expect(model.problems.zone?.message).toBe('zone down');
-    expect(model.pulse.find((tile) => tile.id === 'players')?.headline.value).toBe(0);
+    // Its tiles say why they have no figure rather than show zero.
+    expect(model.pulse.find((tile) => tile.id === 'players')?.unavailable).toBe('Needs the API token');
+    expect(model.pulse.find((tile) => tile.id === 'games')?.unavailable).toBeUndefined();
     expect(model.traffic).toBeUndefined();
     expect(model.games.started.series[0]?.values.some((value) => (value ?? 0) > 0)).toBe(true);
   });
@@ -187,6 +189,32 @@ describe('shapeLive', () => {
     }
     expect(model.feed.length).toBeGreaterThan(10);
     expect(model.feed[0]!.at).toBeGreaterThanOrEqual(model.feed.at(-1)!.at);
+  });
+});
+
+describe('worker faults', () => {
+  it("counts a visitor leaving mid-request as no fault (every room connection ends so)", () => {
+    const response = demo('errors', 'beta', 7);
+    const worker = {
+      ok: true as const,
+      data: {
+        viewer: {
+          accounts: [
+            {
+              w0: [
+                { dimensions: { date: '2026-11-10', status: 'success' }, sum: { requests: 100 } },
+                { dimensions: { date: '2026-11-10', status: 'clientDisconnected' }, sum: { requests: 9 } },
+                { dimensions: { date: '2026-11-10', status: 'scriptThrewException' }, sum: { requests: 2 } },
+              ],
+            },
+          ],
+        },
+      },
+    };
+    const errors = shapeErrors({ ...response, sources: { ...response.sources, worker } });
+    expect(errors.workerStatuses.map((row) => [row.key, row.n])).toEqual([['scriptThrewException', 2]]);
+    const overview = shapeOverview({ ...demo('overview', 'beta', 7), sources: { ...demo('overview', 'beta', 7).sources, worker } });
+    expect(overview.reliability.totals.workerExceptions).toBe(2);
   });
 });
 

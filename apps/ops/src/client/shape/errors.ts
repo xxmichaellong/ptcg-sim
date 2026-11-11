@@ -17,7 +17,7 @@ import {
   type Row,
 } from './common.js';
 import { CLOSE_CODES, feedOf, type FeedEvent } from './events.js';
-import { releasesOf, type DailyChart, type Problem, type Release } from './overview.js';
+import { releasesOf, WORKER_FAULTS, type DailyChart, type Problem, type Release } from './overview.js';
 
 /**
  * The Errors view: what goes wrong, how often, since when, for whom.
@@ -32,6 +32,7 @@ export interface ErrorTile {
   readonly unit: 'count' | 'percent';
   readonly headline: Headline;
   readonly trend: readonly (number | null)[];
+  readonly unavailable?: string;
 }
 
 export interface Signature {
@@ -102,6 +103,11 @@ export const shapeErrors = (response: ViewResponse): ErrorsModel => {
     { id: 'limited', label: 'Rate-limited', info: 'Requests turned away for coming too often.', unit: 'count', headline: headline(limited, 'down'), trend: inRange(limited) },
   ];
 
+  const troubleProblem = problemOf(sources, 'troubleDaily');
+  const shownTiles = troubleProblem
+    ? tiles.map((tile) => ({ ...tile, unavailable: troubleProblem.reason === 'failed' ? 'Couldn’t load' : 'Needs the API token' }))
+    : tiles;
+
   const signatures: Signature[] = (rowsOf(sources, 'signatures') ?? []).map((row) => ({
     error: str(row.error),
     reports: num(row.reports),
@@ -126,12 +132,12 @@ export const shapeErrors = (response: ViewResponse): ErrorsModel => {
   const rangeStart = days[0] ?? '';
   for (const row of graphqlRows(workerScope, 'w')) {
     const status = str(path(row, 'dimensions', 'status'));
-    if (status === 'success' || str(path(row, 'dimensions', 'date')) < rangeStart) continue;
+    if (!WORKER_FAULTS.has(status) || str(path(row, 'dimensions', 'date')) < rangeStart) continue;
     statusTotals.set(status, (statusTotals.get(status) ?? 0) + num(path(row, 'sum', 'requests')));
   }
 
   return {
-    tiles,
+    tiles: shownTiles,
     daily: {
       days,
       unit: 'count',
