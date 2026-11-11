@@ -25,7 +25,7 @@ Players sign in with Google or Discord by the OAuth code flow:
 - **Scopes and tokens.** Google is asked for `openid email profile` without offline access. No provider token is kept, because the sim never calls a provider again after sign-in.
 - **The popup.** The provider opens in a popup from the press itself, so a game in progress stays put. The callback answers a small page. It tells every tab the result on the `ptcgsim-account` BroadcastChannel (a popup that went through Google may have lost its opener), then closes. Where popups are blocked, the page itself goes and comes back with `?account=<result>`, which the app reads and removes.
 - **Which providers show.** A provider appears only once its app's secrets are set: `GOOGLE_CLIENT_ID`/`SECRET` and `DISCORD_CLIENT_ID`/`SECRET`. With none set, Settings shows no sign-in at all.
-- **The stand-in.** `AUTH_TEST_PROVIDER=on` adds a stand-in provider (a name and Continue) for local and test builds. It is `off` in both deployed Workers.
+- **The stand-in.** `AUTH_TEST_PROVIDER=on` adds a stand-in provider (a name and Continue) for local and test builds. It is `off` in the beta. The owner turned it on in the preview (2026-11-11) to try accounts before setting up Google and Discord: anyone typing the same name there shares an account, so it holds nothing worth keeping.
 
 ## Accounts and sessions
 

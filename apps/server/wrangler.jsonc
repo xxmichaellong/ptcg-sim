@@ -261,7 +261,9 @@
         "BUILD_ID": "local-development",
         // Off until Workers Paid, as in production (ADR-037).
         "DECK_INDEX_SOURCE": "off",
-        "AUTH_TEST_PROVIDER": "off",
+        // The stand-in sign-in (ADR-052): on in the preview only, for trying
+        // accounts before Google and Discord are set up. Never the beta.
+        "AUTH_TEST_PROVIDER": "on",
       },
       "durable_objects": {
         "bindings": [
