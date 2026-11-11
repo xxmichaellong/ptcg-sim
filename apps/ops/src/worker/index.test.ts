@@ -2,7 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ViewResponse } from '../shared/api.js';
 import { viewQueries } from '../shared/queries.js';
-import { forgetAnswers, handleOpsRequest, type OpsEnv } from './index.js';
+import {
+  AE_CONCURRENCY,
+  forgetAnswers,
+  handleOpsRequest,
+  type OpsEnv,
+} from './index.js';
 
 const NOW = Date.parse('2026-11-11T15:30:00Z');
 const env: OpsEnv = {
@@ -163,6 +168,46 @@ describe('handleOpsRequest', () => {
     expect(fetcher.mock.calls.length).toBeGreaterThan(
       Object.keys(body.sources).length
     );
+  });
+
+  it('asks Analytics Engine again once after a 429, a few queries at a time', async () => {
+    let inFlight = 0;
+    let most = 0;
+    let refusedOnce = false;
+    const fetcher = fakeCloudflare({
+      ae: () => {
+        if (!refusedOnce) {
+          refusedOnce = true;
+          return new Response('Too many requests', { status: 429 });
+        }
+        return Response.json({ data: [] });
+      },
+    });
+    const counting = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const ae = String(input).includes('/analytics_engine/sql');
+        if (ae) {
+          inFlight += 1;
+          most = Math.max(most, inFlight);
+          await new Promise((resolve) => setTimeout(resolve, 5));
+        }
+        try {
+          return await fetcher(input, init);
+        } finally {
+          if (ae) inFlight -= 1;
+        }
+      }
+    );
+    const body = (await (
+      await handleOpsRequest(
+        get('/api/view?view=overview&env=beta&days=30'),
+        { ...env, OPS_RETRY_DELAY_MS: '1' },
+        counting,
+        NOW
+      )
+    ).json()) as ViewResponse;
+    expect(Object.values(body.sources).every((source) => source.ok)).toBe(true);
+    expect(most).toBe(AE_CONCURRENCY);
   });
 
   it('reads a dataset nothing has written yet as empty', async () => {

@@ -21,6 +21,8 @@ export interface CloudflareClient {
   readonly probe?: (url: string, init: RequestInit) => Promise<Response>;
   /** The Cloudflare API's base, for a test or a local stand-in. */
   readonly base?: string;
+  /** The pause before asking Analytics Engine again after a 429. */
+  readonly retryDelayMs?: number;
   readonly now?: () => number;
 }
 
@@ -56,15 +58,25 @@ const runAnalyticsEngine = async (
   client: CloudflareClient,
   sql: string
 ): Promise<SourceResult> => {
-  const response = await client.fetch(
-    `${client.base ?? CLOUDFLARE_API}/accounts/${client.accountId}/analytics_engine/sql`,
-    {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${client.token ?? ''}` },
-      // JSON is its default format.
-      body: sql,
-    }
-  );
+  const ask = () =>
+    client.fetch(
+      `${client.base ?? CLOUDFLARE_API}/accounts/${client.accountId}/analytics_engine/sql`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${client.token ?? ''}` },
+        // JSON is its default format.
+        body: sql,
+      }
+    );
+  let response = await ask();
+  // Asked too often for a moment: once more, after a pause.
+  if (response.status === 429) {
+    await response.body?.cancel();
+    await new Promise((resolve) =>
+      setTimeout(resolve, client.retryDelayMs ?? 1_200)
+    );
+    response = await ask();
+  }
   const text = await response.text();
   if (!response.ok) {
     // A dataset nothing has written to yet is no rows, not a fault.

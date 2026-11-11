@@ -32,6 +32,8 @@ export interface OpsEnv extends ProtectionEnv {
   readonly OPS_DEMO?: string;
   /** Another Cloudflare API base (tests). */
   readonly CLOUDFLARE_API_BASE?: string;
+  /** The pause before asking again after a 429, in milliseconds (tests). */
+  readonly OPS_RETRY_DELAY_MS?: string;
   /**
    * The preview Worker (a service binding). A Worker can't fetch another
    * workers.dev Worker of its own account, so its health is asked here.
@@ -79,6 +81,26 @@ const NOT_SET_UP = `<!doctype html><meta charset="utf-8"><title>Ops: not set up<
 <p>This dashboard shows nothing until it is protected. Set a password with <code>wrangler secret put OPS_PASSWORD</code>, or put the Worker behind Cloudflare Access and set <code>ACCESS_TEAM_DOMAIN</code> and <code>ACCESS_AUD</code>.</p>
 <p>See <code>apps/ops/README.md</code>.</p>`;
 
+/** Analytics Engine queries one view keeps in flight at once. */
+export const AE_CONCURRENCY = 4;
+
+/** Runs tasks at most `size` at a time, in the order they are given. */
+const limit = (size: number) => {
+  let running = 0;
+  const waiting: (() => void)[] = [];
+  return async <T>(task: () => Promise<T>): Promise<T> => {
+    if (running >= size)
+      await new Promise<void>((resolve) => waiting.push(resolve));
+    running += 1;
+    try {
+      return await task();
+    } finally {
+      running -= 1;
+      waiting.shift()?.();
+    }
+  };
+};
+
 export const handleViewRequest = async (
   url: URL,
   env: OpsEnv,
@@ -121,10 +143,22 @@ export const handleViewRequest = async (
           }
         : {}),
       ...(env.CLOUDFLARE_API_BASE ? { base: env.CLOUDFLARE_API_BASE } : {}),
+      ...(env.OPS_RETRY_DELAY_MS
+        ? { retryDelayMs: Number(env.OPS_RETRY_DELAY_MS) }
+        : {}),
     };
+    // Analytics Engine's SQL turns away a burst, so at most a few of its
+    // queries are in flight at once; the rest go together.
+    const events = limit(AE_CONCURRENCY);
     const entries = await Promise.all(
       Object.entries(queries).map(
-        async ([name, query]) => [name, await runSource(client, query)] as const
+        async ([name, query]) =>
+          [
+            name,
+            await (query.kind === 'ae'
+              ? events(() => runSource(client, query))
+              : runSource(client, query)),
+          ] as const
       )
     );
     sources = Object.fromEntries(entries);
