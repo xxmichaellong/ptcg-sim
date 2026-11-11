@@ -103,6 +103,7 @@ import {
   type TableCurtain,
 } from './shell/table-curtain.js';
 import { TableBanner, TableShell } from './shell/TableShell.js';
+import { pageReporter } from '../telemetry/page-report.js';
 
 import '../design/panel-controls.css';
 import '../ui/form-controls.css';
@@ -401,6 +402,8 @@ export const RemoteRoomLobby = ({
   }, []);
   useEffect(() => {
     if (connected) markTableLoad('room');
+    // The page's report says which table it shows (ADR-054).
+    pageReporter()?.tableIs(connected?.mode ?? 'none');
   }, [connected]);
   const [parkedSolo, setParkedSolo] = useState<ConnectedRoom>();
   // The tutorial's practice table, shown in place of the player's own
@@ -635,6 +638,8 @@ export const RemoteRoomLobby = ({
     const settled = settledTableRef.current;
     if (settled === undefined) return;
     if (settled === 'empty' && awaitingSoloRoom()) return;
+    // The first table seen is the page's load (ADR-054).
+    pageReporter()?.tableShown();
     curtain.reveal();
   };
   const handleEmptyTableSettled = (settled: boolean): void => {

@@ -12,6 +12,13 @@
 
 const PREFIX = '#invite=';
 
+/**
+ * How the page was opened, for its own report (ADR-054): by an invite link,
+ * by a room code link, or neither. Kept after the links are taken.
+ */
+let openedBy: 'invite' | 'room_code' | undefined;
+export const pageOpenedBy = (): 'invite' | 'room_code' | undefined => openedBy;
+
 let captured: string | undefined;
 const listeners = new Set<() => void>();
 
@@ -35,7 +42,7 @@ const capture = (): boolean => {
   return true;
 };
 
-capture();
+if (capture()) openedBy = 'invite';
 
 /**
  * An invite link by room code (ADR-047), `?room=CODE`: no secret, but taken
@@ -51,6 +58,7 @@ const captureRoomCode = (): void => {
   const code = params.get('room');
   if (code === null) return;
   capturedRoomCode = code;
+  openedBy ??= 'room_code';
   params.delete('room');
   const search = params.toString();
   try {

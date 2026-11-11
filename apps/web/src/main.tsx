@@ -1,6 +1,6 @@
 // Before anything else: an invitation link's fragment leaves the address
 // bar before any other module could read or report it (ADR-020).
-import './session/invitation-link-capture.js';
+import { pageOpenedBy } from './session/invitation-link-capture.js';
 // A shared game's link (ADR-053) likewise.
 import './account/replay-link-capture.js';
 // Then the language, active before any other module runs.
@@ -20,6 +20,7 @@ import { HelpSheetHost } from './session/shell/help-pages.js';
 import { markTableLoad, tableCurtain } from './session/shell/table-curtain.js';
 import { installFocusFrom } from './ui/focus-from.js';
 import { OverlayHost } from './ui/OverlayHost.js';
+import { installPageReport } from './telemetry/page-report.js';
 import './design/tokens.css';
 import './design/table-art.css';
 import './styles.css';
@@ -69,6 +70,13 @@ const roomLobbyRoute: AppRoute | undefined = rendererSpikeRequested
       landing: parameters.get('room-lobby') === '1' ? 'lobby' : 'solo',
     };
 
+// The page's report of its own visit (ADR-054): its load, its game, its
+// errors, sent when it is put away. Developer pages send none.
+if (roomLobbyRoute && !devRoomRequested && !depthLabRequested) {
+  installPageReport(
+    pageOpenedBy() ?? (roomLobbyRoute.landing === 'lobby' ? 'lobby' : 'solo')
+  );
+}
 // Reduced motion and animation speed apply to the whole page from the
 // first paint, not only once a room is open.
 installPageMotion();

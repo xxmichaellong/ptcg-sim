@@ -308,6 +308,24 @@ messages, or stack traces. Adding a field requires a schema change, privacy
 test, this document update, and review against VIS-002, VIS-004, SEC-003, and
 OPS-001.
 
+## Analytics events and the internal dashboard (ADR-054)
+
+Each event above is also written to Workers Analytics Engine
+(`AnalyticsTelemetrySink`): dataset `ptcgsim_events` for the beta,
+`ptcgsim_events_preview` for the preview, columns named by
+`ANALYTICS_LAYOUT` in `@ptcgsim/protocol`. Alarm bookkeeping and allowed
+rate-limit checks are left out; one accepted move in four is written,
+weighted 4. Pages report their own visit to `POST /v2/beacon`
+(`page-report-http.ts`): same origin only, 30 a minute per address
+(`PAGE_REPORT_RATE_LIMITER`), no identifier, the User-Agent reduced to a
+browser family, system and device class. Writing never waits or throws;
+past Analytics Engine's free 100,000 events a day, rows are dropped and the
+site is unaffected.
+
+The internal dashboard, `apps/ops` (Worker `ptcgsim-ops`), reads these
+rows, Cloudflare's own usage and traffic analytics, the deployments, and the
+sites' health. See its README for running, deploying and protecting it.
+
 ## Initial dashboard and alert specification
 
 Production dashboards should group only by the bounded enum/version fields in

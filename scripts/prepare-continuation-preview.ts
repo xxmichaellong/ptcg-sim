@@ -39,6 +39,10 @@ export const CONTINUATION_PREVIEW_MANIFEST_FILE = 'manifest.json';
 const PRODUCTION_WORKER_NAME = 'ptcgsim-v2';
 const EXPECTED_SOURCE_CONFIG_KEYS = Object.freeze([
   '$schema',
+  // The site's analytics events (ADR-054). Not copied: a continuation
+  // preview's test traffic is nobody's visit, and its Worker has no use for
+  // the beta's dataset.
+  'analytics_engine_datasets',
   'assets',
   'compatibility_date',
   'compatibility_flags',
@@ -71,6 +75,8 @@ const EXPECTED_RATE_LIMIT_BINDINGS = Object.freeze([
   // Sign-ins and account changes (ADR-052).
   'SIGN_IN_RATE_LIMITER',
   'ACCOUNT_RATE_LIMITER',
+  // Page reports (ADR-054).
+  'PAGE_REPORT_RATE_LIMITER',
 ]);
 const MAXIMUM_PREVIOUS_CREDENTIAL_BYTES = 8 * 1024;
 const KEY_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/u;

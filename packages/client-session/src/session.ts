@@ -47,6 +47,8 @@ interface PendingCommand {
   rebound?: boolean;
   status: PendingCommandSummary['state'];
   retries: number;
+  /** When it was last written to the socket (`now`). */
+  sentAt?: number;
   publicationRevision?: number;
   result?: CommandResult;
 }
@@ -67,6 +69,19 @@ export interface ClientSessionScheduler {
   readonly cancel: (handle: unknown) => void;
 }
 
+/**
+ * Told how the connection fares, for the page's own report (ADR-054). It is
+ * never asked anything back, and what it throws is ignored.
+ */
+export interface ClientSessionObserver {
+  /** A heartbeat's round trip. */
+  readonly heartbeat?: (ms: number) => void;
+  /** A move from its last send until the room answered it. */
+  readonly moveAnswered?: (ms: number) => void;
+  /** The connection was lost and is being sought again. */
+  readonly reconnecting?: () => void;
+}
+
 export interface ClientSessionDependencies {
   readonly socketFactory: SessionSocketFactory;
   readonly createCommandId?: () => string;
@@ -79,6 +94,7 @@ export interface ClientSessionDependencies {
    */
   readonly isOnline?: () => boolean;
   readonly policy?: Partial<ClientSessionPolicy>;
+  readonly observer?: ClientSessionObserver;
   /**
    * Rewrites what a queued command refers to just before it is first sent,
    * against the room's latest view. A command built on a prediction can
@@ -264,6 +280,7 @@ export class RemoteGameSession {
   private readonly now: () => number;
   private readonly isOnline: () => boolean;
   private readonly rebindCommand: ClientSessionDependencies['rebindCommand'];
+  private readonly observer: ClientSessionObserver | undefined;
   private readonly policy: ClientSessionPolicy;
   private readonly listeners = new Set<() => void>();
   private readonly pending: PendingCommand[] = [];
@@ -324,6 +341,7 @@ export class RemoteGameSession {
         (globalThis as { navigator?: { onLine?: boolean } }).navigator
           ?.onLine !== false);
     this.rebindCommand = dependencies.rebindCommand;
+    this.observer = dependencies.observer;
     this.policy = validPolicy({
       ...DEFAULT_CLIENT_SESSION_POLICY,
       ...dependencies.policy,
@@ -752,7 +770,9 @@ export class RemoteGameSession {
         const started = this.pingSentAt;
         if (message.id !== HEARTBEAT_PING_ID || started === undefined) return;
         this.pingSentAt = undefined;
-        this.updateState({ latencyMs: Math.max(0, this.now() - started) });
+        const latencyMs = Math.max(0, this.now() - started);
+        this.tell((observer) => observer.heartbeat?.(latencyMs));
+        this.updateState({ latencyMs });
         return;
       }
       case 'ServerNotice': {
@@ -1182,6 +1202,11 @@ export class RemoteGameSession {
       return;
     }
     head.result = message;
+    const { sentAt } = head;
+    if (sentAt !== undefined) {
+      const answeredMs = Math.max(0, this.now() - sentAt);
+      this.tell((observer) => observer.moveAnswered?.(answeredMs));
+    }
     if (message.accepted) {
       this.ownRevisions.add(message.revision);
       // Only revisions newer than the oldest queued command matter.
@@ -1259,6 +1284,7 @@ export class RemoteGameSession {
       return;
     }
     if (this.sendEnvelope(head.envelope)) {
+      head.sentAt = this.now();
       this.armAnswerDeadline();
     } else if (
       this.isCurrent(generation) &&
@@ -1318,6 +1344,7 @@ export class RemoteGameSession {
     const sessionId = this.sessionId;
     head.retries += 1;
     if (this.sendEnvelope(head.envelope)) {
+      head.sentAt = this.now();
       this.armAnswerDeadline();
     } else if (
       this.isCurrent(generation) &&
@@ -1331,6 +1358,16 @@ export class RemoteGameSession {
 
   private send(message: ClientMessage): boolean {
     return this.sendEnvelope(message);
+  }
+
+  /** Tells the observer, which can never break the session. */
+  private tell(call: (observer: ClientSessionObserver) => void): void {
+    if (!this.observer) return;
+    try {
+      call(this.observer);
+    } catch {
+      // Ignored: it only watches.
+    }
   }
 
   private sendEnvelope(message: ClientMessage): boolean {
@@ -1490,6 +1527,10 @@ export class RemoteGameSession {
     this.stopHeartbeat();
     if (this.sessionId !== undefined && this.reconnectingSince === undefined) {
       this.reconnectingSince = this.now();
+      // A move sent before the loss is answered, if at all, after a wait
+      // that is the reconnect's, not the room's.
+      for (const item of this.pending) item.sentAt = undefined;
+      this.tell((observer) => observer.reconnecting?.());
     }
     // Offline, no attempt could open: the network is waited for, and the
     // budget is kept for when it is back.

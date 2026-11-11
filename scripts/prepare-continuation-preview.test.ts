@@ -203,6 +203,7 @@ describe('continuation managed-preview provisioner', () => {
         // Sign-ins and account changes (ADR-052).
         '260904109',
         '260904110',
+        '260904111',
       ]
     );
     assert.deepEqual(

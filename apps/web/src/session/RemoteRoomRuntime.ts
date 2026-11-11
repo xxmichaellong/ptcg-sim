@@ -25,6 +25,7 @@ import {
 } from './RemoteContinuationCustody.js';
 import { createProvisionalRebinder } from '../board/rebindProvisionalReferences.js';
 import { RoomCodeCustody } from './room-code.js';
+import { pageReportSessionObserver } from '../telemetry/page-report.js';
 
 export interface RemoteRoomSessionDependencies extends Omit<
   ClientSessionDependencies,
@@ -87,6 +88,7 @@ export class RemoteRoomRuntime {
     const {
       socketFactory = createBrowserWebSocketFactory(),
       rebindCommand = createProvisionalRebinder(),
+      observer = pageReportSessionObserver,
       ...remainingSessionDependencies
     } = sessionDependencies;
     this.roomCode = connection.roomCode;
@@ -111,6 +113,7 @@ export class RemoteRoomRuntime {
     this.session = new RemoteGameSession({
       socketFactory,
       rebindCommand,
+      observer,
       ...remainingSessionDependencies,
     });
 

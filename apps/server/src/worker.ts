@@ -8,6 +8,7 @@ import {
 import {
   HEARTBEAT_PING_FRAME,
   HEARTBEAT_PONG_FRAME,
+  PAGE_REPORT_PATH,
   type RoomCreationRequest,
   type RoomCreationResponse,
 } from '@ptcgsim/protocol';
@@ -85,6 +86,12 @@ import {
   handleCardCatalogBodyRequest,
   handleCardCatalogManifestRequest,
 } from './card-catalog/http.js';
+import {
+  AnalyticsTelemetrySink,
+  requestOrigin,
+  type AnalyticsDataset,
+  type AnalyticsRequestOrigin,
+} from './analytics-sink.js';
 import { initializeNewRoom } from './create-room.js';
 import {
   CURRENT_DECKS_PATH,
@@ -128,6 +135,7 @@ import {
   type ImagePutResult,
   type StoredImage,
 } from './images/image-store.js';
+import { handlePageReportRequest } from './page-report-http.js';
 import { isRoomAlreadyInitialized } from './room-initialization.js';
 import {
   consumeAccountRateLimit,
@@ -136,6 +144,7 @@ import {
   consumeContinuationRevocationRateLimit,
   consumeImageImportRateLimit,
   consumeImageUploadRateLimit,
+  consumePageReportRateLimit,
   consumeRoomCodeJoinRateLimit,
   consumeRoomCreationRateLimit,
   consumeRoomIngressRateLimit,
@@ -226,6 +235,13 @@ interface Env {
   readonly PTCG_SIGN_IN: DurableObjectNamespace<PtcgSignIn>;
   readonly SIGN_IN_RATE_LIMITER: RateLimit;
   readonly ACCOUNT_RATE_LIMITER: RateLimit;
+  /**
+   * The site's analytics events (ADR-054): the server's own and each page's
+   * report. Absent in tests, where nothing is kept.
+   */
+  readonly ANALYTICS?: AnalyticsDataset;
+  /** Page reports, per address (ADR-054). */
+  readonly PAGE_REPORT_RATE_LIMITER: RateLimit;
   /** `on` offers the stand-in sign-in (local and test builds only). */
   readonly AUTH_TEST_PROVIDER?: string;
   /** Optional secrets: a provider is offered once its app is set. */
@@ -266,14 +282,19 @@ const liveAdmissionDeadline = (value: unknown, now: number): value is number =>
   value - now <= DEFAULT_ADMISSION_TICKET_POLICY.lifetimeMs;
 
 const telemetrySink = new ConsoleServerTelemetrySink();
+/**
+ * Logs each event and keeps it in the site's analytics (ADR-054), with the
+ * visitor's country and data center when a request is at hand.
+ */
 const createTelemetry = (
   source: ServerTelemetrySource,
-  buildId: string
+  env: Pick<Env, 'BUILD_ID' | 'ANALYTICS'>,
+  requestFrom?: AnalyticsRequestOrigin
 ): StructuredServerTelemetry =>
   new StructuredServerTelemetry(
     source,
-    buildId,
-    telemetrySink,
+    env.BUILD_ID,
+    new AnalyticsTelemetrySink(telemetrySink, env.ANALYTICS, requestFrom),
     Date.now,
     nextTelemetryId
   );
@@ -387,7 +408,7 @@ export class PtcgContinuation extends DurableObject<Env> {
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
-    this.telemetry = createTelemetry('continuation', env.BUILD_ID);
+    this.telemetry = createTelemetry('continuation', env);
   }
 
   async createContinuation(
@@ -594,7 +615,7 @@ export class PtcgRoom extends DurableObject<Env> {
       digestCapability: (value) => this.cryptoSource.digestCapability(value),
       nextSaveId: createContinuationSaveId,
     });
-    this.telemetry = createTelemetry('room', env.BUILD_ID);
+    this.telemetry = createTelemetry('room', env);
     this.replays = new RoomReplayArchive(
       {
         get: (key) => ctx.storage.get(key),
@@ -658,6 +679,7 @@ export class PtcgRoom extends DurableObject<Env> {
     this.runtimePromise = Promise.resolve(this.createRuntime(created.snapshot));
     this.telemetry.roomLifecycle({
       outcome: 'created',
+      mode,
       authorityVersion: created.snapshot.authorityVersion,
       activeSessions: 0,
       activeSockets: 0,
@@ -1122,6 +1144,7 @@ export class PtcgRoom extends DurableObject<Env> {
     }
     this.telemetry.roomLifecycle({
       outcome: 'expired',
+      ...(runtime ? { mode: runtime.coordinator.currentSnapshot().mode } : {}),
       authorityVersion:
         runtime?.coordinator.currentSnapshot().authorityVersion ?? 0,
       activeSessions: 0,
@@ -1439,7 +1462,7 @@ const DECK_FEED_RETRY_AFTER_MS = 10 * 60 * 1000;
  */
 export class PtcgDeckFeed extends DurableObject<Env> {
   private refreshing: Promise<CurrentDeckFeed | null> | undefined;
-  private readonly telemetry = createTelemetry('deck_feed', this.env.BUILD_ID);
+  private readonly telemetry = createTelemetry('deck_feed', this.env);
 
   async current(): Promise<CurrentDeckFeed | null> {
     const stored = await this.stored();
@@ -1551,10 +1574,7 @@ const durableCatalogStore = (storage: DurableObjectStorage): CatalogStore => ({
  * per version.
  */
 export class PtcgCardCatalog extends DurableObject<Env> {
-  private readonly telemetry = createTelemetry(
-    'card_catalog',
-    this.env.BUILD_ID
-  );
+  private readonly telemetry = createTelemetry('card_catalog', this.env);
   private readonly builder = new CardCatalogBuilder({
     store: durableCatalogStore(this.ctx.storage),
     fetch: (input, init) => fetch(input, init),
@@ -1664,7 +1684,7 @@ const DECK_INDEX_FAILURE_DELAY_MS = 10 * 60 * 1000;
  * alarms keep it going.
  */
 export class PtcgDeckIndex extends DurableObject<Env> {
-  private readonly telemetry = createTelemetry('deck_index', this.env.BUILD_ID);
+  private readonly telemetry = createTelemetry('deck_index', this.env);
   private readonly index: DeckIndex;
 
   constructor(ctx: DurableObjectState, env: Env) {
@@ -1802,7 +1822,7 @@ const worker: ExportedHandler<Env> = {
 
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const telemetry = createTelemetry('edge', env.BUILD_ID);
+    const telemetry = createTelemetry('edge', env, requestOrigin(request));
     if (
       url.pathname === CARD_CATALOG_PATH &&
       env.CARD_CATALOG_SOURCE === 'off'
@@ -1929,6 +1949,17 @@ const worker: ExportedHandler<Env> = {
         handleImageServeRequest(request, imageHash, (sha256) =>
           env.PTCG_IMAGE_STORE.getByName(imageStoreName(sha256)).get(sha256)
         )
+      );
+    }
+    if (url.pathname === PAGE_REPORT_PATH) {
+      return observeHttp(telemetry, 'page_report', () =>
+        handlePageReportRequest(request, {
+          dataset: env.ANALYTICS,
+          build: env.BUILD_ID,
+          origin: requestOrigin(request),
+          rateLimit: () =>
+            consumePageReportRateLimit(request, env.PAGE_REPORT_RATE_LIMITER),
+        })
       );
     }
     if (url.pathname === '/v2/health') {

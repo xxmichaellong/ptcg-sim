@@ -10,6 +10,7 @@
     { "path": "./packages/room-authority" },
     { "path": "./packages/renderer-contract" },
     { "path": "./packages/renderer-dom" },
+    { "path": "./apps/ops" },
     { "path": "./apps/server" },
     { "path": "./apps/web" }
   ]

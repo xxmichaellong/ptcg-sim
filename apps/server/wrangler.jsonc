@@ -177,6 +177,21 @@
         "period": 60,
       },
     },
+    // Page reports (ADR-054), per address: a page sends a dozen at most.
+    {
+      "name": "PAGE_REPORT_RATE_LIMITER",
+      "namespace_id": "260903011",
+      "simple": {
+        "limit": 30,
+        "period": 60,
+      },
+    },
+  ],
+  // The site's analytics events (ADR-054): the server's own and each page's
+  // report, kept three months for the internal dashboard (apps/ops). Free
+  // up to 100,000 a day, outside the Durable Objects' limits.
+  "analytics_engine_datasets": [
+    { "binding": "ANALYTICS", "dataset": "ptcgsim_events" },
   ],
   "exports": {
     "PtcgContinuation": {
@@ -373,6 +388,18 @@
             "period": 60,
           },
         },
+        {
+          "name": "PAGE_REPORT_RATE_LIMITER",
+          "namespace_id": "260903111",
+          "simple": {
+            "limit": 30,
+            "period": 60,
+          },
+        },
+      ],
+      // Its own dataset: test traffic never counts as the beta's players.
+      "analytics_engine_datasets": [
+        { "binding": "ANALYTICS", "dataset": "ptcgsim_events_preview" },
       ],
       "exports": {
         "PtcgContinuation": {

@@ -181,7 +181,8 @@ const setup = (
   policy: ConstructorParameters<typeof RemoteGameSession>[0]['policy'] = {},
   rebindCommand?: ConstructorParameters<
     typeof RemoteGameSession
-  >[0]['rebindCommand']
+  >[0]['rebindCommand'],
+  observer?: ConstructorParameters<typeof RemoteGameSession>[0]['observer']
 ) => {
   const factory = new FakeSocketFactory();
   const scheduler = new FakeScheduler();
@@ -199,6 +200,7 @@ const setup = (
     // timer to every ready session.
     policy: { idleHeartbeatMs: 0, ...policy },
     ...(rebindCommand ? { rebindCommand } : {}),
+    ...(observer ? { observer } : {}),
   });
   const connect = () => {
     session.connect({
@@ -1760,6 +1762,42 @@ describe('RemoteGameSession', () => {
     }
     expect(socket.close).toHaveBeenCalled();
     expect(test.session.getSnapshot().phase).toBe('reconnecting');
+  });
+
+  it("tells its observer each heartbeat's and move's round trip and each reconnect", () => {
+    const heartbeats: number[] = [];
+    const moves: number[] = [];
+    let reconnects = 0;
+    const test = setup({ idleHeartbeatMs: 25_000 }, undefined, {
+      heartbeat: (ms) => heartbeats.push(ms),
+      moveAnswered: (ms) => moves.push(ms),
+      reconnecting: () => {
+        reconnects += 1;
+        // What the observer throws never reaches the session.
+        throw new Error('observer fault');
+      },
+    });
+    const socket = test.admit();
+    test.scheduler.runNext();
+    test.advance(42);
+    socket.serverMessage(HEARTBEAT_PONG_FRAME);
+    expect(heartbeats).toEqual([42]);
+
+    test.session.submit({ type: 'FlipCoin' });
+    test.advance(75);
+    socket.serverMessage({
+      type: 'CommandResult',
+      protocolVersion: PROTOCOL_VERSION,
+      commandId: 'command-1',
+      clientSequence: 1,
+      accepted: true,
+      revision: 1,
+    });
+    expect(moves).toEqual([75]);
+
+    socket.serverClose();
+    expect(test.session.getSnapshot().phase).toBe('reconnecting');
+    expect(reconnects).toBe(1);
   });
 
   it('never retries a failure the game caused', () => {

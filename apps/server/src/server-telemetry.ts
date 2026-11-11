@@ -43,6 +43,7 @@ export type ServerHttpRoute =
   | 'socket_upgrade'
   | 'sign_in'
   | 'account'
+  | 'page_report'
   | 'not_found';
 export type ServerHttpOutcome =
   'accepted' | 'rejected' | 'rate_limited' | 'not_found' | 'failed';
@@ -140,6 +141,8 @@ type ServerTelemetryDetail =
   | {
       readonly kind: 'room_lifecycle';
       readonly outcome: RoomLifecycleOutcome;
+      /** Solo or multiplayer, where the room knows it. */
+      readonly mode?: 'solo' | 'multiplayer';
       readonly authorityVersion: number;
       readonly activeSessions: number;
       readonly activeSockets: number;
@@ -208,6 +211,7 @@ export interface ServerTelemetryPort {
   }) => void;
   readonly roomLifecycle: (input: {
     readonly outcome: RoomLifecycleOutcome;
+    readonly mode?: 'solo' | 'multiplayer';
     readonly authorityVersion: number;
     readonly activeSessions: number;
     readonly activeSockets: number;
@@ -380,6 +384,7 @@ export class StructuredServerTelemetry implements ServerTelemetryPort {
 
   roomLifecycle({
     outcome,
+    mode,
     authorityVersion,
     activeSessions,
     activeSockets,
@@ -388,6 +393,7 @@ export class StructuredServerTelemetry implements ServerTelemetryPort {
     this.publish('info', {
       kind: 'room_lifecycle',
       outcome,
+      ...(mode === 'solo' || mode === 'multiplayer' ? { mode } : {}),
       authorityVersion: safeCount(authorityVersion),
       activeSessions: safeCount(activeSessions),
       activeSockets: safeCount(activeSockets),

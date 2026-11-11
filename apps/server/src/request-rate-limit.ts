@@ -5,6 +5,7 @@ export const CONTINUATION_REVOCATION_RATE_LIMIT_RETRY_SECONDS = 60;
 export const ROOM_INGRESS_RATE_LIMIT_RETRY_SECONDS = 60;
 export const IMAGE_UPLOAD_RATE_LIMIT_RETRY_SECONDS = 60;
 export const IMAGE_IMPORT_RATE_LIMIT_RETRY_SECONDS = 60;
+export const PAGE_REPORT_RATE_LIMIT_RETRY_SECONDS = 60;
 
 export interface EdgeRateLimitBinding {
   readonly limit: (options: {
@@ -207,5 +208,19 @@ export const consumeAccountRateLimit = async (
   return {
     allowed: outcome.success,
     retryAfterSeconds: ACCOUNT_RATE_LIMIT_RETRY_SECONDS,
+  };
+};
+
+/** Page reports (ADR-054), per address: a page sends a dozen at most. */
+export const consumePageReportRateLimit = async (
+  request: Request,
+  binding: EdgeRateLimitBinding
+): Promise<RequestRateLimitDecision> => {
+  const outcome = await binding.limit({
+    key: await anonymousRequestRateLimitKey(request, 'page_report'),
+  });
+  return {
+    allowed: outcome.success,
+    retryAfterSeconds: PAGE_REPORT_RATE_LIMIT_RETRY_SECONDS,
   };
 };

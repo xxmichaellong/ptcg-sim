@@ -22,6 +22,10 @@
               "kind": "type"
             },
             {
+              "name": "ClientSessionObserver",
+              "kind": "type"
+            },
+            {
               "name": "ClientSessionPhase",
               "kind": "type"
             },
@@ -1526,6 +1530,54 @@
           "source": "packages/protocol/src/index.ts",
           "symbols": [
             {
+              "name": "ANALYTICS_ABSENT",
+              "kind": "value"
+            },
+            {
+              "name": "ANALYTICS_DATASETS",
+              "kind": "value"
+            },
+            {
+              "name": "ANALYTICS_LAYOUT",
+              "kind": "value"
+            },
+            {
+              "name": "ANALYTICS_MOVE_SAMPLE",
+              "kind": "value"
+            },
+            {
+              "name": "AnalyticsBlobField",
+              "kind": "type"
+            },
+            {
+              "name": "analyticsColumn",
+              "kind": "value"
+            },
+            {
+              "name": "analyticsDataPoint",
+              "kind": "value"
+            },
+            {
+              "name": "AnalyticsDataPoint",
+              "kind": "type"
+            },
+            {
+              "name": "AnalyticsDoubleField",
+              "kind": "type"
+            },
+            {
+              "name": "AnalyticsEnvironment",
+              "kind": "type"
+            },
+            {
+              "name": "AnalyticsKind",
+              "kind": "type"
+            },
+            {
+              "name": "AnalyticsOrigin",
+              "kind": "type"
+            },
+            {
               "name": "cardStepMakesPokemon",
               "kind": "value"
             },
@@ -1646,6 +1698,18 @@
               "kind": "value"
             },
             {
+              "name": "MAX_PAGE_ERROR_CODE_UNITS",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_PAGE_REPORT_CODE_UNITS",
+              "kind": "value"
+            },
+            {
+              "name": "MAX_PAGE_REPORTS",
+              "kind": "value"
+            },
+            {
               "name": "MAX_PRESENTATION_EVENTS",
               "kind": "value"
             },
@@ -1674,6 +1738,38 @@
               "kind": "value"
             },
             {
+              "name": "PAGE_LANDINGS",
+              "kind": "value"
+            },
+            {
+              "name": "PAGE_REPORT_PATH",
+              "kind": "value"
+            },
+            {
+              "name": "PAGE_REPORT_VERSION",
+              "kind": "value"
+            },
+            {
+              "name": "PAGE_TABLES",
+              "kind": "value"
+            },
+            {
+              "name": "PageLanding",
+              "kind": "type"
+            },
+            {
+              "name": "PageReport",
+              "kind": "type"
+            },
+            {
+              "name": "PageReportSchema",
+              "kind": "value"
+            },
+            {
+              "name": "PageTable",
+              "kind": "type"
+            },
+            {
               "name": "parseClientFrame",
               "kind": "value"
             },
@@ -1699,6 +1795,10 @@
             },
             {
               "name": "parseContinuationRevocationRequest",
+              "kind": "value"
+            },
+            {
+              "name": "parsePageReport",
               "kind": "value"
             },
             {
@@ -1787,6 +1887,10 @@
             },
             {
               "name": "PROTOCOL_VERSION",
+              "kind": "value"
+            },
+            {
+              "name": "readPageReport",
               "kind": "value"
             },
             {
@@ -3618,6 +3722,10 @@
               "kind": "value"
             },
             {
+              "name": "consumePageReportRateLimit",
+              "kind": "value"
+            },
+            {
               "name": "consumeRoomCodeJoinRateLimit",
               "kind": "value"
             },
@@ -3795,6 +3903,10 @@
             },
             {
               "name": "NOOP_SERVER_TELEMETRY",
+              "kind": "value"
+            },
+            {
+              "name": "PAGE_REPORT_RATE_LIMIT_RETRY_SECONDS",
               "kind": "value"
             },
             {

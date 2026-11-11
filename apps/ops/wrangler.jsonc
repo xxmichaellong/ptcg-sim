@@ -1,0 +1,34 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  // The internal dashboard (ADR-054): its page and a read-only API over
+  // Cloudflare's analytics for the site. Its own Worker, on workers.dev
+  // only; it touches nothing of the site's but what Cloudflare reports.
+  "name": "ptcgsim-ops",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-08-31",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    // Every path is checked before anything is served (access.ts).
+    "run_worker_first": true,
+  },
+  "vars": {
+    // Not secrets: the account and the ptcgsim.online zone it reads.
+    "CLOUDFLARE_ACCOUNT_ID": "03570fc689befad62bb5401ddc95e9cd",
+    "CLOUDFLARE_ZONE_ID": "6b24c117debe2da91e7e3ebf59dd56c1",
+    // Cloudflare Access, once the Worker is behind it: the team's domain
+    // (<team>.cloudflareaccess.com) and the application's AUD tag. Empty
+    // until then; a password (secret OPS_PASSWORD) protects it meanwhile.
+    "ACCESS_TEAM_DOMAIN": "",
+    "ACCESS_AUD": "",
+  },
+  // Secrets, set by a person (never in this file):
+  //   CLOUDFLARE_API_TOKEN: read-only; Account Analytics Read, Workers
+  //     Scripts Read, Zone Analytics Read.
+  //   OPS_PASSWORD: at least 12 characters, unless Access is set.
+  "observability": {
+    "enabled": true,
+  },
+}
