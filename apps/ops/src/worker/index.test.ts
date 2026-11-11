@@ -203,6 +203,43 @@ describe('handleOpsRequest', () => {
     expect(fetcher).toHaveBeenCalledTimes(3);
   });
 
+  it("asks the preview's health through its binding, not across workers.dev", async () => {
+    const fetcher = fakeCloudflare();
+    const preview = {
+      fetch: vi.fn(async (request: Request) => {
+        expect(request.url).toBe(
+          'https://ptcgsim-v2-preview.xx-michael-long.workers.dev/v2/health'
+        );
+        return Response.json({ status: 'ok', buildId: 'preview-test' });
+      }),
+    };
+    const body = (await (
+      await handleOpsRequest(
+        get('/api/view?view=live&env=beta&days=7'),
+        { ...env, PREVIEW: preview },
+        fetcher,
+        NOW
+      )
+    ).json()) as ViewResponse;
+    expect(body.sources.previewHealth).toMatchObject({
+      ok: true,
+      data: { status: 200, body: { buildId: 'preview-test' } },
+    });
+    expect(preview.fetch).toHaveBeenCalledOnce();
+    // The beta and v1 are asked as before.
+    expect(
+      fetcher.mock.calls
+        .map(([input]) => String(input))
+        .filter(
+          (url) =>
+            url.endsWith('/v2/health') || url === 'https://ptcgsim.online/'
+        )
+    ).toEqual([
+      'https://beta.ptcgsim.online/v2/health',
+      'https://ptcgsim.online/',
+    ]);
+  });
+
   it('serves generated data in demo mode, asking Cloudflare nothing', async () => {
     const fetcher = vi.fn();
     for (const view of ['overview', 'live', 'budget', 'errors'] as const) {

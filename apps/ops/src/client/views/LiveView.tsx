@@ -91,7 +91,9 @@ const HOURS = Array.from({ length: 24 }, (_, hour) => String(hour));
 
 export const LiveView = ({ model }: { readonly model: LiveModel }) => {
   const { problems } = model;
-  const tightest = model.usage.tightest;
+  // Without the day's usage there is nothing to say how full it is.
+  const usageProblem = firstProblem(problems, 'usageToday');
+  const tightest = usageProblem ? undefined : model.usage.tightest;
   return (
     <>
       <div className="health" role="list" aria-label="Health">
@@ -134,7 +136,11 @@ export const LiveView = ({ model }: { readonly model: LiveModel }) => {
             )}
           </div>
           <div className="health__meta">
-            {tightest ? `Heading for ${percent(tightest.projected / tightest.daily)} by 00:00 UTC` : 'No usage data'}
+            {tightest
+              ? `Heading for ${percent(tightest.projected / tightest.daily)} by 00:00 UTC`
+              : usageProblem?.reason === 'failed'
+                ? 'Couldn’t load'
+                : 'Needs the API token'}
           </div>
         </div>
       </div>

@@ -6,7 +6,7 @@ import {
   type ViewId,
   type ViewRequest,
 } from '../shared/queries.js';
-import { isRangeDays, isSiteEnvironment } from '../shared/site.js';
+import { isRangeDays, isSiteEnvironment, SITE } from '../shared/site.js';
 import {
   checkAccess,
   protectionOf,
@@ -32,6 +32,13 @@ export interface OpsEnv extends ProtectionEnv {
   readonly OPS_DEMO?: string;
   /** Another Cloudflare API base (tests). */
   readonly CLOUDFLARE_API_BASE?: string;
+  /**
+   * The preview Worker (a service binding). A Worker can't fetch another
+   * workers.dev Worker of its own account, so its health is asked here.
+   */
+  readonly PREVIEW?: {
+    readonly fetch: (request: Request) => Promise<Response>;
+  };
 }
 
 interface WorkerContext {
@@ -100,10 +107,19 @@ export const handleViewRequest = async (
       accountId: env.CLOUDFLARE_ACCOUNT_ID,
       zoneId: env.CLOUDFLARE_ZONE_ID,
     });
+    const preview = env.PREVIEW;
     const client = {
       token: env.CLOUDFLARE_API_TOKEN,
       accountId: env.CLOUDFLARE_ACCOUNT_ID,
       fetch: fetcher,
+      ...(preview
+        ? {
+            probe: (url: string, init: RequestInit) =>
+              url.startsWith(`${SITE.preview.origin}/`)
+                ? preview.fetch(new Request(url, init))
+                : fetcher(url, init),
+          }
+        : {}),
       ...(env.CLOUDFLARE_API_BASE ? { base: env.CLOUDFLARE_API_BASE } : {}),
     };
     const entries = await Promise.all(

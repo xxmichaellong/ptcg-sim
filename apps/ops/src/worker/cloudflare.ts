@@ -13,6 +13,12 @@ export interface CloudflareClient {
   readonly token: string | undefined;
   readonly accountId: string;
   readonly fetch: typeof fetch;
+  /**
+   * How a health check asks a site, if not by `fetch`: a Worker can't fetch
+   * another workers.dev Worker of its own account, so the preview is asked
+   * through a service binding.
+   */
+  readonly probe?: (url: string, init: RequestInit) => Promise<Response>;
   /** The Cloudflare API's base, for a test or a local stand-in. */
   readonly base?: string;
   readonly now?: () => number;
@@ -152,7 +158,7 @@ const runProbe = async (
   const now = client.now ?? (() => Date.now());
   const started = now();
   try {
-    const response = await client.fetch(url, {
+    const response = await (client.probe ?? client.fetch)(url, {
       headers: { 'User-Agent': 'ptcgsim-ops health check' },
       redirect: 'follow',
       signal: AbortSignal.timeout(8_000),

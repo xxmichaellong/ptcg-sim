@@ -28,6 +28,9 @@
   //   CLOUDFLARE_API_TOKEN: read-only; Account Analytics Read, Workers
   //     Scripts Read, Zone Analytics Read.
   //   OPS_PASSWORD: at least 12 characters, unless Access is set.
+  // The preview's health is asked through its Worker directly: a Worker
+  // can't fetch another workers.dev Worker of its own account.
+  "services": [{ "binding": "PREVIEW", "service": "ptcgsim-v2-preview" }],
   "observability": {
     "enabled": true,
   },
