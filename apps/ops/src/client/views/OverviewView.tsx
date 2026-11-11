@@ -268,32 +268,25 @@ export const OverviewView = ({ model, rangeDays }: { readonly model: OverviewMod
         >
           <DailyChart days={days} series={model.speed.roundTrip.series} unit="ms" kind="lines" label="Move and heartbeat round trips per day" markers={markers} height={200} />
         </Card>
-        <Card
-          span={6}
-          title="Server time per move"
-          subtitle="From a move arriving at the room until every player was sent the result"
-          problem={firstProblem(problems, 'movesDaily')}
-          table={<SeriesTable labels={days} series={model.speed.server.series} unit="ms" />}
-        >
-          <DailyChart days={days} series={model.speed.server.series} unit="ms" kind="lines" label="Server time per move per day" markers={markers} height={200} />
-        </Card>
-        <Card span={12} title="Where a move's time goes" subtitle="Average server time per accepted move, by step and by kind of move" problem={firstProblem(problems, 'moveTypes')}>
-          {model.speed.phases.some((phase) => phase.ms > 0) ? (
-            <SegmentedBar tall parts={model.speed.phases.map((phase) => ({ key: phase.id, label: `${phase.label} ${milliseconds(phase.ms)}`, value: phase.ms }))} />
-          ) : null}
+        <Card span={6} title="Moves by kind" subtitle="Which moves players make, and how much each sends to the players" problem={firstProblem(problems, 'moveTypes')}>
           <DataTable
             rows={model.speed.types}
             rowKey={(row) => row.type}
             columns={[
               { heading: 'Move', align: 'left', cell: (row) => row.type },
               { heading: 'Moves', cell: (row) => fullCount(row.moves) },
-              { heading: 'Median', cell: (row) => milliseconds(row.server50) },
-              { heading: '95th pct', cell: (row) => milliseconds(row.server95) },
+              { heading: 'Share', cell: (row) => percent(row.share) },
               { heading: 'Sent to players', cell: (row) => bytes(row.publicationBytes) },
             ]}
           />
         </Card>
-        <Card span={12} title="Requests by route" subtitle="What the Worker answered itself, how fast, and how often it said no" problem={firstProblem(problems, 'httpRoutes')}>
+        <Card
+          span={12}
+          title="Requests by route"
+          subtitle="What the Worker answered itself, how long it waited, and how often it said no"
+          info="A Worker's clock moves only while it waits (on a room, storage or the network), so these are the waits: a route that only computes reads 0 ms. The players' own round trips above are the measure of speed."
+          problem={firstProblem(problems, 'httpRoutes')}
+        >
           <DataTable
             rows={model.speed.routes}
             rowKey={(row) => row.route}

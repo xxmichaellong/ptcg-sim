@@ -6,7 +6,7 @@ The site's internal dashboard (ADR-054): who plays, how much, how fast it is, wh
   - the headline numbers, a 7-day average each against the week before;
   - players and where they come from;
   - games and moves;
-  - speed: time to table, Core Web Vitals, round trips and server time;
+  - speed: time to table, Core Web Vitals, the players' round trips, moves by kind and requests by route;
   - reliability;
   - the zone's traffic;
   - deployments.
@@ -35,7 +35,7 @@ pnpm --filter @ptcgsim/ops dev        # http://localhost:5180, your wrangler log
 pnpm --filter @ptcgsim/ops dev:demo   # generated data, no login needed
 ```
 
-`dev` runs the page and the Worker's own handler under Vite. It reads Cloudflare with your wrangler login, which covers usage, traffic and deployments. Wrangler's login can't read the site's own events (Analytics Engine), so those panels say so until you set a token:
+`dev` runs the page and the Worker's own handler under Vite. It reads Cloudflare with your wrangler login, which covers everything the dashboard shows. To read with another login, set a token:
 
 ```sh
 CLOUDFLARE_API_TOKEN=… pnpm --filter @ptcgsim/ops dev

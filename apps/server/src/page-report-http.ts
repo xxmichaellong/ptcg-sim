@@ -45,8 +45,11 @@ export const summarizeUserAgent = (
   height: number
 ): UserAgentSummary => {
   const ua = userAgent;
-  const browser = /Discord\//u.test(ua)
-    ? 'Discord'
+  // A headless browser is a test or a bot, never a player's.
+  const browser = /\bHeadlessChrome\/|\bHeadless\b/u.test(ua)
+    ? 'Headless'
+    : /Discord\//u.test(ua)
+      ? 'Discord'
     : /\bEdg(?:e|A|iOS)?\//u.test(ua)
       ? 'Edge'
       : /\bOPR\/|\bOpera\b/u.test(ua)

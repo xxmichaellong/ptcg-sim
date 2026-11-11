@@ -96,6 +96,20 @@ const failure = (field: Parameters<typeof analyticsColumn<'failure'>>[1]) =>
 const limited = (field: Parameters<typeof analyticsColumn<'limited'>>[1]) =>
   analyticsColumn('limited', field);
 
+/**
+ * Analytics Engine's SQL is strictly typed: both branches of `if` must be
+ * one type (a sample interval is an integer, a column or a weighted move a
+ * double) and its condition a comparison, never `1`. These say "nothing"
+ * in the type of what they stand beside.
+ */
+const zeroLike = (weight: string): string => (weight === W ? '0' : '0.0');
+/** Rows where the field was measured, or every row (`ALWAYS`). */
+const ALWAYS = 'always';
+const weightWhere = (measured: string, weight: string): string =>
+  measured === ALWAYS
+    ? weight
+    : `if(${measured}, ${weight}, ${zeroLike(weight)})`;
+
 /** A weighted quantile of the rows where `measured` holds. */
 const quantile = (
   q: number,
@@ -103,14 +117,16 @@ const quantile = (
   measured: string,
   weight = W
 ): string =>
-  `quantileExactWeighted(${String(q)})(${value}, toUInt32(if(${measured}, ${weight}, 0)))`;
+  `quantileExactWeighted(${String(q)})(${value}, toUInt32(${weightWhere(measured, weight)}))`;
 /** How many events a quantile stands on. */
 const measuredCount = (measured: string, weight = W): string =>
-  `SUM(if(${measured}, ${weight}, 0))`;
+  `SUM(${weightWhere(measured, weight)})`;
+/** A column's total, its absent (-1) and zero values left out. */
+const positive = (value: string): string => `if(${value} > 0, ${value}, 0.0)`;
 const sumOf = (value: string, weight = W): string =>
-  `SUM(${weight} * if(${value} > 0, ${value}, 0))`;
+  `SUM(${weight} * ${positive(value)})`;
 const countWhere = (condition: string, weight = W): string =>
-  `SUM(if(${condition}, ${weight}, 0))`;
+  `SUM(if(${condition}, ${weight}, ${zeroLike(weight)}))`;
 
 const since = (from: number): string =>
   `timestamp >= toDateTime('${sqlTime(from)}')`;
@@ -192,8 +208,8 @@ const roomSizes = (dataset: string, from: number): string => `
 SELECT ${room('mode')} AS mode,
   SUM(${W}) AS rooms,
   ${sumOf(room('authorityVersion'))} AS moves,
-  ${quantile(0.5, room('authorityVersion'), '1')} AS moves50,
-  ${quantile(0.9, room('authorityVersion'), '1')} AS moves90,
+  ${quantile(0.5, room('authorityVersion'), ALWAYS)} AS moves50,
+  ${quantile(0.9, room('authorityVersion'), ALWAYS)} AS moves90,
   ${countWhere(`${room('authorityVersion')} <= 1`)} AS untouched
 FROM ${dataset}
 WHERE index1 = 'room' AND ${room('outcome')} = 'expired' AND ${since(from)}
@@ -210,8 +226,8 @@ GROUP BY t, operation, outcome, role ORDER BY t`;
 const movesDaily = (dataset: string, from: number): string => `
 SELECT ${DAY} AS t, ${move('outcome')} AS outcome,
   SUM(${MOVE_W}) AS moves,
-  ${quantile(0.5, move('durationMs'), '1', MOVE_W)} AS server50,
-  ${quantile(0.95, move('durationMs'), '1', MOVE_W)} AS server95
+  ${quantile(0.5, move('durationMs'), ALWAYS, MOVE_W)} AS server50,
+  ${quantile(0.95, move('durationMs'), ALWAYS, MOVE_W)} AS server95
 FROM ${dataset}
 WHERE index1 = 'move' AND ${since(from)}
 GROUP BY t, outcome ORDER BY t`;
@@ -220,8 +236,8 @@ GROUP BY t, outcome ORDER BY t`;
 const moveTypes = (dataset: string, from: number): string => `
 SELECT ${move('commandType')} AS type,
   SUM(${MOVE_W}) AS moves,
-  ${quantile(0.5, move('durationMs'), '1', MOVE_W)} AS server50,
-  ${quantile(0.95, move('durationMs'), '1', MOVE_W)} AS server95,
+  ${quantile(0.5, move('durationMs'), ALWAYS, MOVE_W)} AS server50,
+  ${quantile(0.95, move('durationMs'), ALWAYS, MOVE_W)} AS server95,
   SUM(${MOVE_W} * ${move('authorityMs')}) / SUM(${MOVE_W}) AS authorityMs,
   SUM(${MOVE_W} * ${move('projectionMs')}) / SUM(${MOVE_W}) AS projectionMs,
   SUM(${MOVE_W} * ${move('persistenceMs')}) / SUM(${MOVE_W}) AS persistenceMs,
@@ -238,8 +254,8 @@ SELECT ${http('route')} AS route,
   ${countWhere(`${http('status')} >= 500`)} AS failed,
   ${countWhere(`${http('status')} = 429`)} AS limited,
   ${countWhere(`${http('status')} >= 400 AND ${http('status')} < 500 AND ${http('status')} != 429`)} AS refused,
-  ${quantile(0.5, http('durationMs'), '1')} AS p50,
-  ${quantile(0.95, http('durationMs'), '1')} AS p95
+  ${quantile(0.5, http('durationMs'), ALWAYS)} AS p50,
+  ${quantile(0.95, http('durationMs'), ALWAYS)} AS p95
 FROM ${dataset}
 WHERE index1 = 'http' AND ${since(from)}
 GROUP BY route ORDER BY requests DESC LIMIT 30`;
@@ -252,10 +268,10 @@ SELECT ${DAY} AS t,
   ${countWhere(`index1 = 'move' AND ${move('outcome')} = 'failed'`, MOVE_W)} AS movesFailed,
   ${countWhere(`index1 = 'move' AND ${move('outcome')} = 'rejected'`, MOVE_W)} AS movesRejected,
   ${countWhere(`index1 = 'limited'`)} AS limited,
-  ${countWhere(`index1 = 'socket' AND ${socket('outcome')} = 'closed' AND ${socket('closeCode')} NOT IN (1000, 1001, 1005)`)} AS dropped,
+  ${countWhere(`index1 = 'socket' AND ${socket('outcome')} = 'closed' AND ${socket('closeCode')} NOT IN (1000.0, 1001.0, 1005.0)`)} AS dropped,
   ${countWhere(`index1 = 'socket' AND ${socket('outcome')} = 'upgraded'`)} AS connections,
   ${countWhere(`index1 = 'page' AND ${page('errors')} > 0`)} AS pagesWithErrors,
-  SUM(if(index1 = 'page', ${W} * if(${page('errors')} > 0, ${page('errors')}, 0), 0)) AS pageErrors
+  SUM(if(index1 = 'page', ${W} * ${positive(page('errors'))}, 0.0)) AS pageErrors
 FROM ${dataset}
 WHERE index1 IN ('failure', 'http', 'move', 'limited', 'socket', 'page') AND ${since(from)}
 GROUP BY t ORDER BY t`;
@@ -269,7 +285,7 @@ SELECT ${HOUR} AS t,
   ${countWhere(`index1 = 'room' AND ${room('outcome')} = 'created'`)} AS rooms,
   ${countWhere(`index1 = 'admission' AND ${admission('operation')} = 'hello_ticket' AND ${admission('outcome')} = 'accepted'`)} AS joins,
   ${countWhere(`index1 = 'failure' OR (index1 = 'http' AND ${http('status')} >= 500)`)} AS serverErrors,
-  SUM(if(index1 = 'page', ${W} * if(${page('errors')} > 0, ${page('errors')}, 0), 0)) AS pageErrors
+  SUM(if(index1 = 'page', ${W} * ${positive(page('errors'))}, 0.0)) AS pageErrors
 FROM ${dataset}
 WHERE ${since(from)}
 GROUP BY t ORDER BY t`;
@@ -284,12 +300,16 @@ const COLUMNS =
     ', '
   );
 
-/** The latest events a person would want to see, newest first. */
+/**
+ * The latest events a person would want to see, newest first. A room
+ * restored (woken from sleep) is routine, not news, and is left out.
+ */
 const latestEvents = (dataset: string, from: number): string => `
 SELECT ${COLUMNS}
 FROM ${dataset}
 WHERE ${since(from)} AND (
-  index1 IN ('room', 'failure', 'limited')
+  index1 IN ('failure', 'limited')
+  OR (index1 = 'room' AND ${room('outcome')} != 'restored')
   OR (index1 = 'admission' AND ${admission('outcome')} = 'accepted'
       AND ${admission('operation')} IN ('hello_ticket', 'code_join', 'room_open', 'invitation_issue'))
   OR (index1 = 'admission' AND ${admission('outcome')} != 'accepted')

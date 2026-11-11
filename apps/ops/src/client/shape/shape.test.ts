@@ -63,7 +63,7 @@ describe('shapeOverview', () => {
       }
       expect(model.traffic?.daily.series[0]?.values.length).toBe(days);
       expect(model.speed.vitals.every((vital) => vital.rating !== null)).toBe(true);
-      expect(model.speed.phases.reduce((total, phase) => total + phase.ms, 0)).toBeGreaterThan(0);
+      expect(model.speed.types.reduce((total, type) => total + type.share, 0)).toBeCloseTo(1, 5);
     }
     expect(shapeOverview(demo('overview', 'preview')).traffic).toBeUndefined();
   });

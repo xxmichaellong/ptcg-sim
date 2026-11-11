@@ -87,6 +87,23 @@ describe('view queries', () => {
     }
   });
 
+  it("types every branch as Analytics Engine's strict SQL requires", () => {
+    // Found against the real API: both branches of `if` must be one type
+    // (a double column or a weighted move needs 0.0, not 0), a condition
+    // can't be a bare 1, and a list compared with a double needs decimals.
+    for (const { view, queries } of all()) {
+      for (const [name, query] of Object.entries(queries)) {
+        if (query.kind !== 'ae') continue;
+        expect(query.sql, `${view}/${name}`).not.toMatch(/\bif\(1,/u);
+        expect(query.sql, `${view}/${name}`).not.toMatch(/double\d+, 0\)/u);
+        expect(query.sql, `${view}/${name}`).not.toMatch(/NOT IN \(\d+[,)]/u);
+        expect(query.sql, `${view}/${name}`).not.toMatch(
+          /_sample_interval \* double1, 0\)/u
+        );
+      }
+    }
+  });
+
   it("keeps GraphQL's windows within its 31 days and its lookback", () => {
     for (const { view, days, queries } of all()) {
       for (const [name, query] of Object.entries(queries)) {

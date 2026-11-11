@@ -50,6 +50,9 @@ const FIREFOX_LINUX =
 const EDGE_MAC =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0';
 
+const HEADLESS =
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36';
+
 const field = (
   point: AnalyticsDataPoint,
   name: Parameters<typeof analyticsColumn<'page'>>[1]
@@ -90,6 +93,7 @@ describe('summarizeUserAgent', () => {
     [DISCORD_IOS, 'coarse', 390, 844, 'Discord', 'iOS', 'mobile'],
     [FIREFOX_LINUX, 'fine', 1920, 1080, 'Firefox', 'Linux', 'desktop'],
     [EDGE_MAC, 'fine', 1512, 982, 'Edge', 'macOS', 'desktop'],
+    [HEADLESS, 'fine', 1280, 800, 'Headless', 'Linux', 'desktop'],
     ['', 'fine', 800, 600, 'Other', 'Other', 'desktop'],
   ] as const)(
     'reads %s as its family',

@@ -154,13 +154,10 @@ export interface OverviewModel {
     readonly table: DailyChart;
     readonly vitals: readonly Vital[];
     readonly roundTrip: DailyChart;
-    readonly server: DailyChart;
-    readonly phases: readonly { readonly id: string; readonly label: string; readonly ms: number }[];
     readonly types: readonly {
       readonly type: string;
       readonly moves: number;
-      readonly server50: number | null;
-      readonly server95: number | null;
+      readonly share: number;
       readonly publicationBytes: number | null;
     }[];
     readonly routes: readonly {
@@ -258,13 +255,6 @@ export const problemsOf = (sources: Sources): Readonly<Record<string, Problem>> 
  */
 export const WORKER_FAULTS: ReadonlySet<string> = new Set(['scriptThrewException', 'exceededResources', 'internalError']);
 
-const PHASES = [
-  ['authorityMs', 'Rules'],
-  ['projectionMs', 'Each player’s view'],
-  ['persistenceMs', 'Saving'],
-  ['serializationMs', 'Packing'],
-  ['sendMs', 'Sending'],
-] as const;
 
 export const shapeOverview = (response: ViewResponse): OverviewModel => {
   const { sources } = response;
@@ -327,12 +317,6 @@ export const shapeOverview = (response: ViewResponse): OverviewModel => {
   const rejected = dailySum(movesRows, allDays, (row) =>
     str(row.outcome) === 'rejected' ? num(row.moves) : 0
   );
-  const serverLevel = (field: string) =>
-    dailyLevel(
-      (movesRows ?? []).filter((row) => str(row.outcome) === 'accepted'),
-      allDays,
-      (row) => measured(row[field], row.moves)
-    );
 
   const trouble = rowsOf(sources, 'troubleDaily');
   const troubleOf = (field: string) => dailySum(trouble, allDays, (row) => num(row[field]));
@@ -450,24 +434,14 @@ export const shapeOverview = (response: ViewResponse): OverviewModel => {
     };
   });
 
-  const types = (rowsOf(sources, 'moveTypes') ?? []).map((row) => ({
-    type: str(row.type),
-    moves: num(row.moves),
-    server50: measured(row.server50, row.moves),
-    server95: measured(row.server95, row.moves),
-    publicationBytes: measured(row.publicationBytes, row.moves),
-  }));
   const typeRows = rowsOf(sources, 'moveTypes') ?? [];
   const typeMoves = typeRows.reduce((total, row) => total + num(row.moves), 0);
-  const phases = PHASES.map(([id, label]) => ({
-    id,
-    label,
-    ms:
-      typeMoves > 0
-        ? typeRows.reduce((total, row) => total + num(row[id]) * num(row.moves), 0) / typeMoves
-        : 0,
+  const types = typeRows.map((row) => ({
+    type: str(row.type),
+    moves: num(row.moves),
+    share: typeMoves > 0 ? num(row.moves) / typeMoves : 0,
+    publicationBytes: measured(row.publicationBytes, row.moves),
   }));
-
   const sizes = (rowsOf(sources, 'roomSizes') ?? []).map((row) => ({
     mode: str(row.mode),
     rooms: num(row.rooms),
@@ -611,15 +585,6 @@ export const shapeOverview = (response: ViewResponse): OverviewModel => {
           { id: 'heartbeat50', label: 'Connection, median', values: inRange(heartbeat50) },
         ],
       },
-      server: {
-        days,
-        unit: 'ms',
-        series: [
-          { id: 'server50', label: 'Median', values: inRange(serverLevel('server50')) },
-          { id: 'server95', label: '95th percentile', values: inRange(serverLevel('server95')) },
-        ],
-      },
-      phases,
       types,
       routes: (rowsOf(sources, 'httpRoutes') ?? []).map((row) => ({
         route: str(row.route),

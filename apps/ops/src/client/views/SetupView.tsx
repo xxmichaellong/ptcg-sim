@@ -59,7 +59,7 @@ export const SetupView = ({ status }: { readonly status: StatusResponse | undefi
         <li>
           Set it on the Worker: <code>pnpm --filter @ptcgsim/ops exec wrangler secret put CLOUDFLARE_API_TOKEN</code>, and paste
           it at the prompt. On this machine, <code>CLOUDFLARE_API_TOKEN=… pnpm --filter @ptcgsim/ops dev</code> uses it instead of
-          your wrangler login (which can’t read the site’s own events).
+          your wrangler login.
         </li>
       </ol>
     </section>

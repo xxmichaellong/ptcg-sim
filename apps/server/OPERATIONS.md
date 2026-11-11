@@ -320,7 +320,8 @@ weighted 4. Pages report their own visit to `POST /v2/beacon`
 (`PAGE_REPORT_RATE_LIMITER`), no identifier, the User-Agent reduced to a
 browser family, system and device class. Writing never waits or throws;
 past Analytics Engine's free 100,000 events a day, rows are dropped and the
-site is unaffected.
+site is unaffected. Analytics Engine is enabled on the account (once, in
+the dashboard); without it, a deploy with the binding fails with code 10089.
 
 The internal dashboard, `apps/ops` (Worker `ptcgsim-ops`), reads these
 rows, Cloudflare's own usage and traffic analytics, the deployments, and the

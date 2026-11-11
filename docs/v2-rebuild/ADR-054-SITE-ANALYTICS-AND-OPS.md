@@ -7,7 +7,7 @@
 
 ## What is measured
 
-Two sources, both written to Workers Analytics Engine. It is free on Workers Free up to 100,000 events a day, keeps three months, and counts toward none of the Durable Object limits. ANALYTICS_LAYOUT (`packages/protocol/src/analytics-layout.ts`) names every column for the writer and the reader. Columns are only appended, never moved.
+Two sources, both written to Workers Analytics Engine. It is free on Workers Free up to 100,000 events a day, keeps three months, and counts toward none of the Durable Object limits. ANALYTICS_LAYOUT (`packages/protocol/src/analytics-layout.ts`) names every column for the writer and the reader. Columns are only appended, never moved. The account must enable Analytics Engine once, in the dashboard; until it does, a deploy with the binding fails (code 10089). It was enabled on 2026-11-11.
 
 **The server's events.** Every event the server already logs also becomes a row (`AnalyticsTelemetrySink`):
 
@@ -54,7 +54,7 @@ Cost:
   - a headline strip: players, new players, games, moves, time to table and visits with errors, each a 7-day average against the 7 days before;
   - Players: daily players and new players, sources, countries, devices, browsers, systems and languages;
   - Games: Solo and online games, moves, joins, and moves per game;
-  - Speed: time to table, the Web Vitals with ratings, round trips, server time per move and per step, and requests by route;
+  - Speed: time to table, the Web Vitals with ratings, the players' round trips, moves by kind, and requests by route;
   - Reliability;
   - Traffic, from the zone's own count of the beta's host, with 31 days of history from before the site counted itself;
   - Releases, marked on every daily chart.
@@ -90,6 +90,8 @@ Protection fails closed. With nothing set, it serves only a page saying it is no
 `pnpm --filter @ptcgsim/ops dev` runs the page and the Worker's handler under Vite with this machine's wrangler login. `dev:demo` serves generated data with no login.
 
 ## Not done
+
+- **Server-side timing of a move.** A Worker's clock moves only while it waits on I/O (Cloudflare's Spectre mitigation), so a room's own processing reads 0 ms. The events still carry the durations, but the dashboard shows the players' measured round trips instead. A request's duration is its waits, on a room, storage or the network.
 
 - **Alerts** (a daily check that mails when a limit is near) and **uptime history** (a cron probe). The Live view shows both at a glance, and a cron trigger would spend one of the account's five.
 - **Retention cohorts** (day-1, day-7). They need an identifier per player, which this deliberately does not have. The visit flags give daily, weekly and monthly players and the returning share.

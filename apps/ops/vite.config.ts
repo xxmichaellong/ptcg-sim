@@ -8,9 +8,8 @@ import { defineConfig, type Plugin } from 'vite';
 
 /**
  * The dashboard's own login on this machine: `CLOUDFLARE_API_TOKEN` if set,
- * else wrangler's (refreshed by `wrangler whoami` when it has run out).
- * Wrangler's login reads usage and deployments but not Analytics Engine;
- * those panels say so until a token with Account Analytics Read is set.
+ * else wrangler's (refreshed by `wrangler whoami` when it has run out),
+ * which reads everything the dashboard shows.
  */
 const localToken = (): string | undefined => {
   if (process.env.CLOUDFLARE_API_TOKEN) return process.env.CLOUDFLARE_API_TOKEN;
