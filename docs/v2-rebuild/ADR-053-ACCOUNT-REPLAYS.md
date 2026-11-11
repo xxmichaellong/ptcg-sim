@@ -40,7 +40,7 @@ The record holds both players' hidden cards, so it never leaves the server unpro
 
 - The account's object rebuilds the state at the part's start and projects up to 128 moves with `buildProjectedReplay`, from the player's own seat. A Worker has only 10 ms of CPU on the Free plan; the object has 30 s.
 - A part answers with the frames as the room streams them. The app writes them into an ordinary replay file (ADR-012's format) and plays that on the live Solo table.
-- Stepping on from a part's last move loads the next part. Stepping back from a part's first move loads the previous part at its end. The bar then reads "Replay, part 2 of 4".
+- Stepping on from a part's last move loads the next part. Stepping back from a part's first move loads the previous part at its end. The bar then reads "Replay 2 of 4".
 
 **Share links:**
 
@@ -98,4 +98,4 @@ These numbers come from `account-replays-runtime.test.ts` on workerd: a Solo gam
   - a signed-in Solo game is filed at its reset, viewed by part, starred, shared and opened anonymously;
   - a cookie with a made-up secret files nothing.
 - **Mutation checks.** Dropping the block write fails the unit and runtime tests. Trusting the cookie's account id without asking the account fails the runtime test.
-- **Browser spec:** sign in at the Solo table, play and reset a game, find it under Your games, star it, copy its link, watch it, and open the link in another browser as a spectator.
+- **Browser specs:** sign in at the Solo table, play and reset a game, find it under Your games, star it, copy its link, watch it, and open the link in another browser as a spectator. A game of 140-odd moves is watched in two parts: Next at the first part's end loads the second, Back from its start returns to the first's end. Stopping parts from chaining fails it.

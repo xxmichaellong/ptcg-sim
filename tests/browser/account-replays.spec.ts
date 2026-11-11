@@ -44,8 +44,8 @@ const signIn = async (page: Page, name: string): Promise<void> => {
 const someone = (name: string): string =>
   `${name} ${Math.random().toString(36).slice(2, 7)}`;
 
-/** Loads a deck, sets up, flips the coin a few times, then resets. */
-const playAGame = async (page: Page): Promise<void> => {
+/** Loads a deck, sets up, flips the coin `flips` times, then resets. */
+const playAGame = async (page: Page, flips = 4): Promise<void> => {
   await openDeck(page);
   await page.locator('#nativeDeckBuilderCsvImport').setInputFiles({
     name: 'replay.csv',
@@ -61,7 +61,7 @@ const playAGame = async (page: Page): Promise<void> => {
   await page.locator('#nativeDeckBuilderPlayButton').click();
   await page.locator('#setupButton').click();
   await expect(page.locator('#moreActionsButton')).toBeVisible();
-  for (let flip = 0; flip < 4; flip += 1) {
+  for (let flip = 0; flip < flips; flip += 1) {
     await page.locator('#flipCoinButton').click();
   }
   await chooseMoreAction(page, 'resetButton');
@@ -141,4 +141,39 @@ test('keeps a signed-in Solo game, watches, stars and shares it', async ({
   await game.locator('[data-action="delete"]').click();
   await expect(game).toHaveCount(0);
   await expect(games).toContainText('Games you play signed in show up here.');
+});
+
+test('a long game is watched in parts, stepping from one to the next and back', async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openTable(page);
+  await signIn(page, someone('Cilan'));
+  await closeSheet(page);
+  // Past one part's 128 moves: the room keeps the moves it compacts away.
+  await playAGame(page, 140);
+
+  await openYourGames(page);
+  const game = page.locator(
+    '#settings #settingsAccountReplays .account-replay'
+  );
+  await expect(game).toHaveCount(1, { timeout: 15_000 });
+  await expect(game).toContainText(/1[4-9]\d moves/u);
+  await game.locator('.account-replay__watch').click();
+  await expect(page.locator('#exitReplay')).toBeVisible({ timeout: 15_000 });
+  const mode = page.locator('.ptcgsim-app-bar__mode');
+  await expect(mode).toHaveText('Replay 1 of 2');
+
+  // On from the first part's end: the second part, from its start.
+  await page.locator('#resetBothButton').click();
+  await page.locator('#setupBothButton').click();
+  await expect(mode).toHaveText('Replay 2 of 2', { timeout: 15_000 });
+  // Back from its start: the first part again, at its end.
+  await page.locator('#resetButton').click();
+  await expect(mode).toHaveText('Replay 1 of 2', { timeout: 15_000 });
+  await page.locator('#setupBothButton').click();
+  await expect(mode).toHaveText('Replay 2 of 2', { timeout: 15_000 });
+  await page.locator('#exitReplay').click();
+  await expect(page.locator('#setupButton')).toBeVisible();
 });

@@ -53,6 +53,8 @@ export interface TableMode {
   readonly detail?: string;
   /** Online: the room's code (ADR-047), shown in place of "Online". */
   readonly code?: string;
+  /** Replay of a long game kept in the account: which part (ADR-053). */
+  readonly part?: { readonly part: number; readonly parts: number };
 }
 
 /**
@@ -635,7 +637,13 @@ const ModeLabel = ({
     online:
       mode.code ?? t({ message: 'Online', context: 'playing against someone' }),
     watching: t({ message: 'Watching', context: 'spectating a room' }),
-    replay: t({ message: 'Replay', context: 'the table is showing a replay' }),
+    replay: mode.part
+      ? t({
+          message: `Replay ${mode.part.part + 1} of ${mode.part.parts}`,
+          comment:
+            'A long game is watched in parts of 128 moves: "Replay 1 of 3"',
+        })
+      : t({ message: 'Replay', context: 'the table is showing a replay' }),
     tutorial: t`Tutorial`,
   }[mode.kind];
   const ModeIcon = MODE_ICONS[mode.kind];

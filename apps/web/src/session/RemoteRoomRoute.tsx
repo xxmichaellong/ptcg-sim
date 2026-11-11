@@ -816,7 +816,7 @@ export const RemoteRoomRoute = ({
           mode: tutorial
             ? { kind: 'tutorial' }
             : replaying
-              ? { kind: 'replay' }
+              ? { kind: 'replay', ...(part ? { part } : {}) }
               : solo
                 ? { kind: 'solo' }
                 : {

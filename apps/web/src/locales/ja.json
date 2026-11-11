@@ -6320,6 +6320,13 @@
     "context": "the table is showing a replay",
     "translation": "リプレイ"
   },
+  "MHL9ka": {
+    "message": "Replay {0} of {1}",
+    "comments": [
+      "A long game is watched in parts of 128 moves: \"Replay 1 of 3\""
+    ],
+    "translation": "リプレイ {0}/{1}"
+  },
   "3hz5zq": {
     "message": "Replay interrupted. Try again.",
     "translation": "リプレイが中断されました。もう一度お試しください。"
