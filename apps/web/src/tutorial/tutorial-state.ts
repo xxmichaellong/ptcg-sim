@@ -20,6 +20,7 @@ export interface TutorialPreferences {
 
 export const TUTORIAL_PREFERENCES = definePreference<TutorialPreferences>({
   key: 'ptcgsim.tutorial.v1',
+  synced: true,
   defaults: Object.freeze({ completed: Object.freeze({}) }),
   parse: (value) => {
     const completed: Record<string, number> = {};

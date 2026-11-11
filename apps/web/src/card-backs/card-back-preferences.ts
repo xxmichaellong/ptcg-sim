@@ -14,6 +14,7 @@ export interface CardBackViewPreferences {
 export const CARD_BACK_VIEW_PREFERENCES =
   definePreference<CardBackViewPreferences>({
     key: 'ptcgsim.card-backs.v1',
+    synced: true,
     defaults: Object.freeze({ opponentCustomBacks: true }),
     parse: (value) => ({
       opponentCustomBacks:
@@ -40,6 +41,7 @@ const isOwnMade = (value: unknown): value is string => {
 
 export const RECENT_CARD_BACK_PREFERENCES = definePreference<RecentCardBacks>({
   key: 'ptcgsim.card-back-recent.v1',
+  synced: true,
   defaults: Object.freeze({ backs: Object.freeze([]) }),
   parse: (value) => {
     const backs: unknown =

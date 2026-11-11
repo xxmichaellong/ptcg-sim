@@ -34,10 +34,12 @@ import {
   type RefObject,
 } from 'react';
 
+import { AccountSavesGroup } from '../../account/AccountSaves.js';
 import {
   AccountPage,
   AccountRow,
   DeleteAccountPage,
+  SignOutPage,
   SignInMethodsPage,
   SignInPage,
 } from '../../account/AccountPages.js';
@@ -390,12 +392,22 @@ const SavesPage = ({
   readonly context: PageContext;
 }) => {
   const saves = menu ? menuActions(menu).saves : [];
+  const resume = menu?.game?.onResumeSavedText;
   return (
-    <SettingsGroup>
-      {saves.map((action) => (
-        <ActionRow key={action.id} action={action} leave={context.leave} />
-      ))}
-    </SettingsGroup>
+    <>
+      <SettingsGroup>
+        {saves.map((action) => (
+          <ActionRow key={action.id} action={action} leave={context.leave} />
+        ))}
+      </SettingsGroup>
+      {resume ? (
+        <AccountSavesGroup
+          resume={resume}
+          leave={context.leave}
+          busy={menu?.game?.busy === true}
+        />
+      ) : null}
+    </>
   );
 };
 
@@ -1111,6 +1123,8 @@ export const SettingsSheet = ({
         </Suspense>
       ) : top === 'signInMethods' ? (
         <SignInMethodsPage />
+      ) : top === 'signOut' ? (
+        <SignOutPage back={back} />
       ) : top === 'deleteAccount' ? (
         <DeleteAccountPage back={back} />
       ) : top === 'saves' ? (

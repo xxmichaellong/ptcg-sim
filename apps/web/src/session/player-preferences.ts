@@ -11,6 +11,7 @@ const MAX_STORED_NAME = 64;
 
 export const PLAYER_PREFERENCES = definePreference<PlayerPreferences>({
   key: 'ptcgsim.player.v1',
+  synced: true,
   defaults: Object.freeze({ displayName: '' }),
   parse: (value) => {
     const name =

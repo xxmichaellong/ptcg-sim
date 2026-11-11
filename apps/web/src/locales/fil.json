@@ -723,6 +723,10 @@
     "message": "{deckName}: put on {seat}",
     "translation": "{deckName}: ilagay sa {seat}"
   },
+  "3zfTm5": {
+    "message": "{deviceDecks} decks not in your account",
+    "translation": "{deviceDecks} deck na wala sa account mo"
+  },
   "j1pN5w": {
     "message": "{errorCount, plural, one {# thing to fix for {format}} other {# things to fix for {format}}}",
     "comments": [
@@ -1606,6 +1610,10 @@
     ],
     "translation": "Ang 1 ay magdadagdag ng 10, ang 9 ay 90"
   },
+  "AR8Lh0": {
+    "message": "1 deck not in your account",
+    "translation": "1 deck na wala sa account mo"
+  },
   "ngBvCd": {
     "message": "10 less damage",
     "translation": "Bawas 10 damage"
@@ -1659,6 +1667,10 @@
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "Masyadong mahaba ang pangalan ng isang card."
+  },
+  "08IhZS": {
+    "message": "A deck didn't fit in your account",
+    "translation": "May deck na hindi kasya sa account mo"
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1783,6 +1795,10 @@
     ],
     "translation": "Active"
   },
+  "m16xKo": {
+    "message": "Add",
+    "translation": "Idagdag"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "Magdagdag ng {count} damage"
@@ -1856,6 +1872,14 @@
       "Opens a form to write what a hand-made card says."
     ],
     "translation": "Magdagdag ng text"
+  },
+  "lTvIUT": {
+    "message": "Add this device's {count} decks to your account?",
+    "translation": "Idagdag ang {count} deck ng device na ito sa account mo?"
+  },
+  "Osu6-d": {
+    "message": "Add this device's deck to your account?",
+    "translation": "Idagdag ang deck ng device na ito sa account mo?"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -3132,6 +3156,10 @@
     "context": "go back to the saved decks",
     "translation": "Mga deck"
   },
+  "-zINRr": {
+    "message": "Decks added",
+    "translation": "Naidagdag na ang mga deck"
+  },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
     "translation": "Dito naka-save ang mga deck na na-import o ginawa mo"
@@ -4358,6 +4386,10 @@
     "message": "Keep decks and replays everywhere",
     "translation": "Itago ang mga deck at replay saanman"
   },
+  "94aPBP": {
+    "message": "Keep your decks and settings here",
+    "translation": "Dito itago ang mga deck at setting mo"
+  },
   "gsDcZw": {
     "message": "Keyboard map layer",
     "translation": "Layer ng keyboard map"
@@ -5424,10 +5456,6 @@
     "message": "Only Pokémon in play take damage",
     "translation": "Mga Pokémon lang na nasa play ang puwedeng ma-damage"
   },
-  "Z8V1kN": {
-    "message": "Only signs you out on this device",
-    "translation": "Sa device na ito lang ang masa-sign out"
-  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "Player lang ng upuang iyon ang puwede."
@@ -6221,6 +6249,10 @@
     ],
     "translation": "Alisin ang attack na ito"
   },
+  "Jt5upM": {
+    "message": "Remove your decks and settings from this device",
+    "translation": "Alisin ang mga deck at setting mo sa device na ito"
+  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
@@ -6643,6 +6675,18 @@
     "message": "Saved for this visit only",
     "translation": "Na-save para sa pagbisitang ito lang"
   },
+  "NsOwyo": {
+    "message": "Saved game",
+    "translation": "Saved game"
+  },
+  "V_F5oM": {
+    "message": "Saved games",
+    "translation": "Mga saved game"
+  },
+  "Q2CRS7": {
+    "message": "Saved to your account",
+    "translation": "Na-save sa account mo"
+  },
   "br8YKa": {
     "message": "Saves & replays",
     "translation": "Mga save at replay"
@@ -7054,6 +7098,10 @@
     "message": "Sign out",
     "translation": "Mag-sign out"
   },
+  "OelR1j": {
+    "message": "Sign out and clear",
+    "translation": "Mag-sign out at i-clear"
+  },
   "WzENDu": {
     "message": "Sign-in method added",
     "translation": "Naidagdag ang paraan ng pag-sign in"
@@ -7073,6 +7121,10 @@
   "GxoiaQ": {
     "message": "Signed out",
     "translation": "Naka-sign out"
+  },
+  "qNwERt": {
+    "message": "Signed out and cleared",
+    "translation": "Nag-sign out at na-clear"
   },
   "utezqW": {
     "message": "Single Strike",
@@ -7801,6 +7853,10 @@
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "Hindi itatago ng browser na ito ang mga deck mo pagkasara ng page."
+  },
+  "UaUf4s": {
+    "message": "This device's decks",
+    "translation": "Mga deck ng device na ito"
   },
   "5PdIYU": {
     "message": "This game will be lost.",

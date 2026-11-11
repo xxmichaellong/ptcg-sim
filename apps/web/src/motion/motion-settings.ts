@@ -80,6 +80,7 @@ export const resolveMotion = (
 
 export const MOTION_PREFERENCES = definePreference<MotionSettings>({
   key: 'ptcgsim.motion.v1',
+  synced: true,
   defaults: DEFAULT_MOTION_SETTINGS,
   parse: parseMotionSettings,
 });

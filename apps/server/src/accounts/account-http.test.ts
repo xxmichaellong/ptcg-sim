@@ -337,6 +337,109 @@ describe('accounts over HTTP', () => {
     expect((await me(jar)).account?.name).toBe('Dawn Berlitz');
   });
 
+  it('shares a device’s changes with the account’s other devices', async () => {
+    const { signIn, send, call } = setup();
+    const phone = new Jar();
+    const laptop = new Jar();
+    await signIn(phone, 'Dawn');
+    await signIn(laptop, 'Dawn');
+    const change = {
+      kind: 'deck',
+      id: 'deck-1',
+      base: 0,
+      changedAt: 1,
+      body: JSON.stringify({ id: 'deck-1', name: 'Gardevoir' }),
+    };
+    const pushed = await send(phone, '/v2/account/sync', 'POST', {
+      since: 0,
+      changes: [change],
+    });
+    expect(pushed.status).toBe(200);
+    expect(await pushed.json()).toMatchObject({
+      rev: 1,
+      accepted: [{ kind: 'deck', id: 'deck-1', rev: 1 }],
+    });
+    const pulled = await send(laptop, '/v2/account/sync', 'POST', {
+      since: 0,
+      changes: [],
+    });
+    expect(await pulled.json()).toMatchObject({
+      rev: 1,
+      records: [{ id: 'deck-1', body: change.body }],
+    });
+    // Someone else's account knows nothing of it.
+    const other = new Jar();
+    await signIn(other, 'Barry');
+    const theirs = await send(other, '/v2/account/sync', 'POST', {
+      since: 0,
+      changes: [],
+    });
+    expect(await theirs.json()).toMatchObject({ rev: 0, records: [] });
+    // Signed out, cross-site, malformed or a GET: refused.
+    expect(
+      (await send(new Jar(), '/v2/account/sync', 'POST', { since: 0, changes: [] }))
+        .status
+    ).toBe(401);
+    const crossSite = await call(
+      '/v2/account/sync',
+      {
+        method: 'POST',
+        headers: { Origin: 'https://evil.example', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ since: 0, changes: [] }),
+      },
+      laptop
+    );
+    expect(crossSite.status).toBe(403);
+    expect(
+      (await send(laptop, '/v2/account/sync', 'POST', { since: 'x' })).status
+    ).toBe(400);
+    expect((await call('/v2/account/sync', {}, laptop)).status).toBe(405);
+  });
+
+  it('keeps saved games for the player, until they expire', async () => {
+    const { signIn, send, call } = setup();
+    const jar = new Jar();
+    await signIn(jar, 'Dawn');
+    const saveId = 'S'.repeat(22);
+    const text = `PTCGSIM2-SAVE:${JSON.stringify({
+      format: 'ptcgsim-continuation-handoff-v1',
+      saveId,
+      capability: `ptcgsave.v1.${saveId}.${'c'.repeat(43)}`,
+      expiresAt: 1_900_000_000_000,
+    })}`;
+    const put = await send(jar, `/v2/account/saves/${saveId}`, 'PUT', {
+      text,
+      title: 'Dawn vs Barry',
+    });
+    expect(put.status).toBe(204);
+    // Another save's text under this id, or no text, is refused.
+    expect(
+      (await send(jar, `/v2/account/saves/${'T'.repeat(22)}`, 'PUT', { text }))
+        .status
+    ).toBe(400);
+    const list = await (await call('/v2/account/saves', {}, jar)).json<{
+      saves: { id: string; text: string; title: string }[];
+    }>();
+    expect(list.saves).toEqual([
+      expect.objectContaining({ id: saveId, text, title: 'Dawn vs Barry' }),
+    ]);
+    // Nobody else's session reads them.
+    const other = new Jar();
+    await signIn(other, 'Barry');
+    expect(
+      (await (await call('/v2/account/saves', {}, other)).json<{ saves: unknown[] }>())
+        .saves
+    ).toEqual([]);
+    expect((await call('/v2/account/saves', {}, new Jar())).status).toBe(401);
+    expect(
+      (await send(jar, `/v2/account/saves/${saveId}`, 'DELETE')).status
+    ).toBe(204);
+    expect(
+      (await (await call('/v2/account/saves', {}, jar)).json<{ saves: unknown[] }>())
+        .saves
+    ).toEqual([]);
+  });
+
   it('signs out this session only', async () => {
     const { signIn, send, me } = setup();
     const phone = new Jar();

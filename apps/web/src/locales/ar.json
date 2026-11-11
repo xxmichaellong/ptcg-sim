@@ -723,6 +723,10 @@
     "message": "{deckName}: put on {seat}",
     "translation": "{deckName}: ضعها على {seat}"
   },
+  "3zfTm5": {
+    "message": "{deviceDecks} decks not in your account",
+    "translation": "{deviceDecks} مجموعات غير موجودة في حسابك"
+  },
   "j1pN5w": {
     "message": "{errorCount, plural, one {# thing to fix for {format}} other {# things to fix for {format}}}",
     "comments": [
@@ -1606,6 +1610,10 @@
     ],
     "translation": "1 يضيف 10، 9 يضيف 90"
   },
+  "AR8Lh0": {
+    "message": "1 deck not in your account",
+    "translation": "مجموعة واحدة غير موجودة في حسابك"
+  },
   "ngBvCd": {
     "message": "10 less damage",
     "translation": "ضرر أقل بمقدار 10"
@@ -1659,6 +1667,10 @@
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "اسم إحدى البطاقات طويل جدًا."
+  },
+  "08IhZS": {
+    "message": "A deck didn't fit in your account",
+    "translation": "لم تتسع إحدى المجموعات في حسابك"
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1783,6 +1795,10 @@
     ],
     "translation": "نشط"
   },
+  "m16xKo": {
+    "message": "Add",
+    "translation": "إضافة"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "إضافة {count} من الضرر"
@@ -1856,6 +1872,14 @@
       "Opens a form to write what a hand-made card says."
     ],
     "translation": "إضافة نص"
+  },
+  "lTvIUT": {
+    "message": "Add this device's {count} decks to your account?",
+    "translation": "هل تريد إضافة {count} مجموعات من هذا الجهاز إلى حسابك؟"
+  },
+  "Osu6-d": {
+    "message": "Add this device's deck to your account?",
+    "translation": "هل تريد إضافة مجموعة هذا الجهاز إلى حسابك؟"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -3132,6 +3156,10 @@
     "context": "go back to the saved decks",
     "translation": "المجموعات"
   },
+  "-zINRr": {
+    "message": "Decks added",
+    "translation": "تمت إضافة المجموعات"
+  },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
     "translation": "المجموعات التي تستوردها أو تبنيها تُحفظ هنا"
@@ -4358,6 +4386,10 @@
     "message": "Keep decks and replays everywhere",
     "translation": "احتفظ بالمجموعات وإعادات اللعب في كل مكان"
   },
+  "94aPBP": {
+    "message": "Keep your decks and settings here",
+    "translation": "احتفظ بمجموعاتك وإعداداتك هنا"
+  },
   "gsDcZw": {
     "message": "Keyboard map layer",
     "translation": "طبقة خريطة لوحة المفاتيح"
@@ -5424,10 +5456,6 @@
     "message": "Only Pokémon in play take damage",
     "translation": "Pokémon في اللعب فقط يتلقى الضرر"
   },
-  "Z8V1kN": {
-    "message": "Only signs you out on this device",
-    "translation": "يسجّل خروجك من هذا الجهاز فقط"
-  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "لاعب هذا المقعد فقط يستطيع ذلك."
@@ -6221,6 +6249,10 @@
     ],
     "translation": "إزالة هذا الهجوم"
   },
+  "Jt5upM": {
+    "message": "Remove your decks and settings from this device",
+    "translation": "أزل مجموعاتك وإعداداتك من هذا الجهاز"
+  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
@@ -6643,6 +6675,18 @@
     "message": "Saved for this visit only",
     "translation": "محفوظ لهذه الزيارة فقط"
   },
+  "NsOwyo": {
+    "message": "Saved game",
+    "translation": "لعبة محفوظة"
+  },
+  "V_F5oM": {
+    "message": "Saved games",
+    "translation": "الألعاب المحفوظة"
+  },
+  "Q2CRS7": {
+    "message": "Saved to your account",
+    "translation": "تم الحفظ في حسابك"
+  },
   "br8YKa": {
     "message": "Saves & replays",
     "translation": "الحفظ وإعادة العرض"
@@ -7054,6 +7098,10 @@
     "message": "Sign out",
     "translation": "تسجيل الخروج"
   },
+  "OelR1j": {
+    "message": "Sign out and clear",
+    "translation": "تسجيل الخروج والمسح"
+  },
   "WzENDu": {
     "message": "Sign-in method added",
     "translation": "تمت إضافة طريقة تسجيل الدخول"
@@ -7073,6 +7121,10 @@
   "GxoiaQ": {
     "message": "Signed out",
     "translation": "تم تسجيل الخروج"
+  },
+  "qNwERt": {
+    "message": "Signed out and cleared",
+    "translation": "تم تسجيل الخروج والمسح"
   },
   "utezqW": {
     "message": "Single Strike",
@@ -7801,6 +7853,10 @@
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "لن يحتفظ هذا المتصفح بمجموعاتك بعد إغلاق الصفحة."
+  },
+  "UaUf4s": {
+    "message": "This device's decks",
+    "translation": "مجموعات هذا الجهاز"
   },
   "5PdIYU": {
     "message": "This game will be lost.",

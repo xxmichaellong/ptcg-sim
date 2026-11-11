@@ -10,6 +10,7 @@ export interface LanguagePreferences {
 
 export const LANGUAGE_PREFERENCES = definePreference<LanguagePreferences>({
   key: 'ptcgsim.language.v1',
+  synced: true,
   defaults: Object.freeze({ language: 'auto' }),
   parse: (value) => {
     const language =

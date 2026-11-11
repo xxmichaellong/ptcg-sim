@@ -19,6 +19,7 @@ import {
 /** The player's own keyboard shortcuts: only what they changed is kept. */
 export const HOTKEY_PREFERENCES = definePreference<HotkeyOverrides>({
   key: 'ptcgsim.hotkeys.v1',
+  synced: true,
   defaults: NO_HOTKEY_OVERRIDES,
   parse: parseHotkeyOverrides,
 });

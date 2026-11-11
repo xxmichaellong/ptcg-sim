@@ -77,6 +77,7 @@ export const parseTablePreferences = (value: unknown): TablePreferences => {
 
 export const TABLE_PREFERENCES = definePreference<TablePreferences>({
   key: 'ptcgsim.table.v1',
+  synced: true,
   defaults: DEFAULT_TABLE_PREFERENCES,
   parse: parseTablePreferences,
   serialize: (value) => {

@@ -97,4 +97,32 @@ describe('accounts, through the Worker', () => {
     );
     expect(await response.text()).toContain('data-result="unavailable"');
   });
+
+  it('shares a deck between two browsers signed in as one person', async () => {
+    const phone = browser();
+    const laptop = browser();
+    const who = `Brock ${String(Date.now())}`;
+    expect(await phone.signIn(who)).toBe('signed_in');
+    expect(await laptop.signIn(who)).toBe('signed_in');
+    const body = JSON.stringify({ id: 'deck-1', name: 'Onix Rock' });
+    const pushed = await phone.send('/v2/account/sync', 'POST', {
+      since: 0,
+      changes: [{ kind: 'deck', id: 'deck-1', base: 0, changedAt: 1, body }],
+    });
+    expect(pushed.status).toBe(200);
+    const pulled = (await (
+      await laptop.send('/v2/account/sync', 'POST', { since: 0, changes: [] })
+    ).json()) as { rev: number; records: { id: string; body: string }[] };
+    expect(pulled.records).toEqual([
+      expect.objectContaining({ id: 'deck-1', body }),
+    ]);
+    // A stale change is answered with the newer one, not taken.
+    const stale = (await (
+      await laptop.send('/v2/account/sync', 'POST', {
+        since: 0,
+        changes: [{ kind: 'deck', id: 'deck-1', base: 0, changedAt: 2, body }],
+      })
+    ).json()) as { conflicts: unknown[] };
+    expect(stale.conflicts).toHaveLength(1);
+  }, 30_000);
 });

@@ -6,6 +6,8 @@ import type {
   SignInRecordObject,
 } from './account-http.js';
 import { AccountStoreSql, type AccountSql } from './account-store.js';
+import { AccountSavesSql } from './account-saves.js';
+import { AccountSyncSql } from './account-sync.js';
 import { SignInRecordCustody, type SignInRecord } from './sign-in-record.js';
 import type { Fetch, SignInConfiguration } from './sign-in-providers.js';
 
@@ -44,13 +46,18 @@ export const memoryAccounts = (
   fetch: Fetch = () => Promise.reject(new Error('no network in tests'))
 ) => {
   const stores = new Map<string, AccountStoreSql>();
+  const synced = new Map<string, AccountSyncSql>();
+  const saved = new Map<string, AccountSavesSql>();
   const records = new Map<string, SignInRecord>();
   let clock = 1_800_000_000_000;
   const storeOf = (accountId: string): AccountStoreSql => {
     let store = stores.get(accountId);
     if (!store) {
-      store = new AccountStoreSql(memorySql());
+      const sql = memorySql();
+      store = new AccountStoreSql(sql);
       stores.set(accountId, store);
+      synced.set(accountId, new AccountSyncSql(sql));
+      saved.set(accountId, new AccountSavesSql(sql));
     }
     return store;
   };
@@ -72,6 +79,23 @@ export const memoryAccounts = (
     erase: async (hash, now) => {
       if (!storeOf(accountId).read(hash, now)) return false;
       stores.delete(accountId);
+      synced.delete(accountId);
+      return true;
+    },
+    sync: async (hash, now, request) =>
+      storeOf(accountId).read(hash, now)
+        ? synced.get(accountId)!.sync(request, now)
+        : null,
+    saves: async (hash, now) =>
+      storeOf(accountId).read(hash, now) ? saved.get(accountId)!.list(now) : null,
+    putSave: async (hash, now, save) => {
+      if (!storeOf(accountId).read(hash, now)) return false;
+      saved.get(accountId)!.put(save);
+      return true;
+    },
+    removeSave: async (hash, now, id) => {
+      if (!storeOf(accountId).read(hash, now)) return false;
+      saved.get(accountId)!.remove(id);
       return true;
     },
   });

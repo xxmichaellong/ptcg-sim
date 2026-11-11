@@ -723,6 +723,10 @@
     "message": "{deckName}: put on {seat}",
     "translation": "{deckName}: {seat}에 놓기"
   },
+  "3zfTm5": {
+    "message": "{deviceDecks} decks not in your account",
+    "translation": "계정에 없는 덱 {deviceDecks}개"
+  },
   "j1pN5w": {
     "message": "{errorCount, plural, one {# thing to fix for {format}} other {# things to fix for {format}}}",
     "comments": [
@@ -1606,6 +1610,10 @@
     ],
     "translation": "1은 10, 9는 90 추가"
   },
+  "AR8Lh0": {
+    "message": "1 deck not in your account",
+    "translation": "계정에 없는 덱 1개"
+  },
   "ngBvCd": {
     "message": "10 less damage",
     "translation": "데미지 10 감소"
@@ -1659,6 +1667,10 @@
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "카드 이름이 너무 깁니다."
+  },
+  "08IhZS": {
+    "message": "A deck didn't fit in your account",
+    "translation": "계정에 담지 못한 덱이 있습니다"
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1783,6 +1795,10 @@
     ],
     "translation": "배틀필드"
   },
+  "m16xKo": {
+    "message": "Add",
+    "translation": "추가"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "데미지 {count} 추가"
@@ -1856,6 +1872,14 @@
       "Opens a form to write what a hand-made card says."
     ],
     "translation": "텍스트 추가"
+  },
+  "lTvIUT": {
+    "message": "Add this device's {count} decks to your account?",
+    "translation": "이 기기의 덱 {count}개를 계정에 추가할까요?"
+  },
+  "Osu6-d": {
+    "message": "Add this device's deck to your account?",
+    "translation": "이 기기의 덱을 계정에 추가할까요?"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -3132,6 +3156,10 @@
     "context": "go back to the saved decks",
     "translation": "덱"
   },
+  "-zINRr": {
+    "message": "Decks added",
+    "translation": "덱을 추가했습니다"
+  },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
     "translation": "가져오거나 만든 덱이 여기에 보관됩니다"
@@ -4358,6 +4386,10 @@
     "message": "Keep decks and replays everywhere",
     "translation": "덱과 리플레이를 어디서나 보관하세요"
   },
+  "94aPBP": {
+    "message": "Keep your decks and settings here",
+    "translation": "덱과 설정을 여기에 보관합니다"
+  },
   "gsDcZw": {
     "message": "Keyboard map layer",
     "translation": "키보드 맵 레이어"
@@ -5424,10 +5456,6 @@
     "message": "Only Pokémon in play take damage",
     "translation": "필드에 나와 있는 포켓몬만 데미지를 받습니다"
   },
-  "Z8V1kN": {
-    "message": "Only signs you out on this device",
-    "translation": "이 기기에서만 로그아웃됩니다"
-  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "해당 자리의 플레이어만 할 수 있습니다."
@@ -6221,6 +6249,10 @@
     ],
     "translation": "이 기술 제거"
   },
+  "Jt5upM": {
+    "message": "Remove your decks and settings from this device",
+    "translation": "이 기기에서 덱과 설정을 삭제합니다"
+  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
@@ -6643,6 +6675,18 @@
     "message": "Saved for this visit only",
     "translation": "이번 방문에만 저장됨"
   },
+  "NsOwyo": {
+    "message": "Saved game",
+    "translation": "저장된 게임"
+  },
+  "V_F5oM": {
+    "message": "Saved games",
+    "translation": "저장된 게임"
+  },
+  "Q2CRS7": {
+    "message": "Saved to your account",
+    "translation": "계정에 저장했습니다"
+  },
   "br8YKa": {
     "message": "Saves & replays",
     "translation": "저장 및 리플레이"
@@ -7054,6 +7098,10 @@
     "message": "Sign out",
     "translation": "로그아웃"
   },
+  "OelR1j": {
+    "message": "Sign out and clear",
+    "translation": "로그아웃하고 지우기"
+  },
   "WzENDu": {
     "message": "Sign-in method added",
     "translation": "로그인 방법을 추가했습니다"
@@ -7073,6 +7121,10 @@
   "GxoiaQ": {
     "message": "Signed out",
     "translation": "로그아웃했습니다"
+  },
+  "qNwERt": {
+    "message": "Signed out and cleared",
+    "translation": "로그아웃하고 지웠습니다"
   },
   "utezqW": {
     "message": "Single Strike",
@@ -7801,6 +7853,10 @@
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "이 브라우저는 페이지를 닫으면 덱을 보관하지 않습니다."
+  },
+  "UaUf4s": {
+    "message": "This device's decks",
+    "translation": "이 기기의 덱"
   },
   "5PdIYU": {
     "message": "This game will be lost.",

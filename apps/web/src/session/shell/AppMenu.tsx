@@ -89,6 +89,8 @@ export interface AppMenuModel {
     readonly onExportState?: () => void;
     readonly onSaveOnline?: () => void;
     readonly onResumeSaved?: () => void;
+    /** Resumes a save kept in the account, from its text. */
+    readonly onResumeSavedText?: (text: string, onResumed?: () => void) => void;
     readonly onExitReplay?: () => void;
     /** A save or import is in flight. */
     readonly busy?: boolean;

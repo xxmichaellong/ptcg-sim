@@ -723,6 +723,10 @@
     "message": "{deckName}: put on {seat}",
     "translation": "{deckName}：放到{seat}"
   },
+  "3zfTm5": {
+    "message": "{deviceDecks} decks not in your account",
+    "translation": "{deviceDecks} 套卡组不在你的账号中"
+  },
   "j1pN5w": {
     "message": "{errorCount, plural, one {# thing to fix for {format}} other {# things to fix for {format}}}",
     "comments": [
@@ -1606,6 +1610,10 @@
     ],
     "translation": "按1加10，按9加90"
   },
+  "AR8Lh0": {
+    "message": "1 deck not in your account",
+    "translation": "1 套卡组不在你的账号中"
+  },
   "ngBvCd": {
     "message": "10 less damage",
     "translation": "伤害减少10点"
@@ -1659,6 +1667,10 @@
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "卡牌名称过长。"
+  },
+  "08IhZS": {
+    "message": "A deck didn't fit in your account",
+    "translation": "有一套卡组未能放入你的账号"
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1783,6 +1795,10 @@
     ],
     "translation": "战斗场"
   },
+  "m16xKo": {
+    "message": "Add",
+    "translation": "添加"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "增加 {count} 点伤害"
@@ -1856,6 +1872,14 @@
       "Opens a form to write what a hand-made card says."
     ],
     "translation": "添加文本"
+  },
+  "lTvIUT": {
+    "message": "Add this device's {count} decks to your account?",
+    "translation": "将此设备上的 {count} 套卡组添加到你的账号？"
+  },
+  "Osu6-d": {
+    "message": "Add this device's deck to your account?",
+    "translation": "将此设备上的卡组添加到你的账号？"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -3132,6 +3156,10 @@
     "context": "go back to the saved decks",
     "translation": "卡组"
   },
+  "-zINRr": {
+    "message": "Decks added",
+    "translation": "卡组已添加"
+  },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
     "translation": "你导入或构筑的卡组会保存在这里"
@@ -4358,6 +4386,10 @@
     "message": "Keep decks and replays everywhere",
     "translation": "在所有设备上保留卡组和回放"
   },
+  "94aPBP": {
+    "message": "Keep your decks and settings here",
+    "translation": "将你的卡组和设置保存在这里"
+  },
   "gsDcZw": {
     "message": "Keyboard map layer",
     "translation": "键盘映射层"
@@ -5424,10 +5456,6 @@
     "message": "Only Pokémon in play take damage",
     "translation": "只有场上的宝可梦会受到伤害"
   },
-  "Z8V1kN": {
-    "message": "Only signs you out on this device",
-    "translation": "仅在此设备上退出登录"
-  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "只有该座位的玩家可以操作。"
@@ -6221,6 +6249,10 @@
     ],
     "translation": "移除此招式"
   },
+  "Jt5upM": {
+    "message": "Remove your decks and settings from this device",
+    "translation": "从此设备上移除你的卡组和设置"
+  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
@@ -6643,6 +6675,18 @@
     "message": "Saved for this visit only",
     "translation": "仅本次访问保存"
   },
+  "NsOwyo": {
+    "message": "Saved game",
+    "translation": "已保存的对局"
+  },
+  "V_F5oM": {
+    "message": "Saved games",
+    "translation": "已保存的对局"
+  },
+  "Q2CRS7": {
+    "message": "Saved to your account",
+    "translation": "已保存到你的账号"
+  },
   "br8YKa": {
     "message": "Saves & replays",
     "translation": "存档与回放"
@@ -7054,6 +7098,10 @@
     "message": "Sign out",
     "translation": "退出登录"
   },
+  "OelR1j": {
+    "message": "Sign out and clear",
+    "translation": "退出登录并清除"
+  },
   "WzENDu": {
     "message": "Sign-in method added",
     "translation": "已添加登录方式"
@@ -7073,6 +7121,10 @@
   "GxoiaQ": {
     "message": "Signed out",
     "translation": "已退出登录"
+  },
+  "qNwERt": {
+    "message": "Signed out and cleared",
+    "translation": "已退出登录并清除"
   },
   "utezqW": {
     "message": "Single Strike",
@@ -7801,6 +7853,10 @@
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "关闭页面后，此浏览器不会保留你的卡组。"
+  },
+  "UaUf4s": {
+    "message": "This device's decks",
+    "translation": "此设备上的卡组"
   },
   "5PdIYU": {
     "message": "This game will be lost.",

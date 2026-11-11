@@ -17,6 +17,7 @@ export const DECK_LOOK_THEMES = definePreference<{
   readonly themes: readonly DeckLookTheme[];
 }>({
   key: 'ptcgsim.deck-themes.v1',
+  synced: true,
   defaults: { themes: [] },
   parse: (value: unknown) => ({
     themes:

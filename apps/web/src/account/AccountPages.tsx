@@ -1,5 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro';
+import { BroomIcon } from '@phosphor-icons/react/dist/csr/Broom';
 import { CalendarBlankIcon } from '@phosphor-icons/react/dist/csr/CalendarBlank';
+import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
 import { DiscordLogoIcon } from '@phosphor-icons/react/dist/csr/DiscordLogo';
 import { FlaskIcon } from '@phosphor-icons/react/dist/csr/Flask';
@@ -32,6 +34,12 @@ import {
 } from './account-api.js';
 import { emblemFile } from '../card-backs/card-back-emblems.js';
 import {
+  addDeviceDecks,
+  clearAccountFromDevice,
+  syncAccountNow,
+  useAccountSync,
+} from './account-sync.js';
+import {
   announceAccountChange,
   providerName,
   refreshAccount,
@@ -51,7 +59,12 @@ import './account.css';
 
 /** The pages the account adds to Settings. */
 export type AccountSettingsPage =
-  'signIn' | 'account' | 'accountAvatar' | 'signInMethods' | 'deleteAccount';
+  | 'signIn'
+  | 'account'
+  | 'accountAvatar'
+  | 'signInMethods'
+  | 'signOut'
+  | 'deleteAccount';
 
 export interface AccountPageContext {
   readonly navigate: (page: AccountSettingsPage, opener: string) => void;
@@ -317,7 +330,7 @@ const InfoRow = ({
 export const AccountPage = ({ navigate, back }: AccountPageContext) => {
   const { t, i18n } = useLingui();
   const { account } = useAccount();
-  const [busy, setBusy] = useState(false);
+  const { deviceDecks } = useAccountSync();
   // Signed out (here or in another tab): nothing to show.
   const signedOut = account === null;
   useEffect(() => {
@@ -386,32 +399,37 @@ export const AccountPage = ({ navigate, back }: AccountPageContext) => {
           value={methods}
           onClick={() => navigate('signInMethods', 'signInMethodsRow')}
         />
+        {deviceDecks > 0 ? (
+          <InfoRow
+            icon={CardsIcon}
+            tone="green"
+            label={t`This device's decks`}
+            value={
+              deviceDecks === 1
+                ? t`1 deck not in your account`
+                : t`${deviceDecks} decks not in your account`
+            }
+            action={{
+              id: 'addDeviceDecks',
+              label: t`Add`,
+              onClick: () => {
+                void addDeviceDecks().then(() =>
+                  toast({
+                    title: t`Decks added`,
+                    tone: 'success',
+                    id: 'account-decks',
+                  })
+                );
+              },
+            }}
+          />
+        ) : null}
         <SettingsLinkRow
           id="signOutButton"
           icon={SignOutIcon}
           tone="slate"
           label={t`Sign out`}
-          subtitle={t`Only signs you out on this device`}
-          trailing="none"
-          disabled={busy}
-          onClick={() => {
-            setBusy(true);
-            postSignOut().then(
-              () => {
-                replaceAccount(null);
-                announceAccountChange();
-                toast({ title: t`Signed out`, id: 'account-sign-in' });
-              },
-              () => {
-                setBusy(false);
-                toast({
-                  title: t`Couldn't sign out. Try again.`,
-                  tone: 'danger',
-                  id: 'account-sign-in',
-                });
-              }
-            );
-          }}
+          onClick={() => navigate('signOut', 'signOutButton')}
         />
       </SettingsGroup>
       <SettingsFooter>
@@ -426,6 +444,71 @@ export const AccountPage = ({ navigate, back }: AccountPageContext) => {
         </button>
       </SettingsFooter>
     </>
+  );
+};
+
+/**
+ * Sign out: keep what the account brought to this device, or clear it (a
+ * device that isn't the player's). Either way, changes not yet sent go
+ * first.
+ */
+export const SignOutPage = ({ back }: { readonly back: () => void }) => {
+  const { t } = useLingui();
+  const { account } = useAccount();
+  const [busy, setBusy] = useState(false);
+  const signedOut = account === null;
+  useEffect(() => {
+    if (signedOut) back();
+  }, [signedOut, back]);
+  if (!account) return null;
+  const signOut = (clear: boolean) => {
+    setBusy(true);
+    const accountId = account.id;
+    void syncAccountNow(false)
+      .then(() => postSignOut())
+      .then(
+        async () => {
+          if (clear) await clearAccountFromDevice(accountId);
+          replaceAccount(null);
+          announceAccountChange();
+          toast({
+            title: clear ? t`Signed out and cleared` : t`Signed out`,
+            id: 'account-sign-in',
+          });
+        },
+        () => {
+          setBusy(false);
+          toast({
+            title: t`Couldn't sign out. Try again.`,
+            tone: 'danger',
+            id: 'account-sign-in',
+          });
+        }
+      );
+  };
+  return (
+    <SettingsGroup>
+      <SettingsLinkRow
+        id="signOutKeep"
+        icon={SignOutIcon}
+        tone="slate"
+        label={t`Sign out`}
+        subtitle={t`Keep your decks and settings here`}
+        trailing="none"
+        disabled={busy}
+        onClick={() => signOut(false)}
+      />
+      <SettingsLinkRow
+        id="signOutClear"
+        icon={BroomIcon}
+        tone="red"
+        label={t`Sign out and clear`}
+        subtitle={t`Remove your decks and settings from this device`}
+        trailing="none"
+        disabled={busy}
+        onClick={() => signOut(true)}
+      />
+    </SettingsGroup>
   );
 };
 

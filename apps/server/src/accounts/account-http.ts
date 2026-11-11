@@ -37,6 +37,12 @@ import {
   type SignInOutcome,
   type UnlinkOutcome,
 } from './account-store.js';
+import { readAccountSave, type AccountSave } from './account-saves.js';
+import {
+  readSyncRequest,
+  type SyncAnswer,
+  type SyncRequest,
+} from './account-sync.js';
 import {
   authorizeUrl,
   availableProviders,
@@ -59,11 +65,18 @@ import {
  *   /v2/account/sign-out` ends this session, `DELETE
  *   /v2/account/sign-in-methods/<provider>` removes a method, and `DELETE
  *   /v2/account` deletes the account. Each is same-origin only.
+ * - `POST /v2/account/sync` takes a device's changed decks and settings
+ *   and answers what changed elsewhere (account-sync.ts).
+ * - `GET /v2/account/saves` lists the saved games; `PUT` and `DELETE
+ *   /v2/account/saves/<save id>` keep and remove one (account-saves.ts).
  */
 
 export type AccountRoute =
   | { readonly kind: 'account' }
   | { readonly kind: 'sign_out' }
+  | { readonly kind: 'sync' }
+  | { readonly kind: 'saves' }
+  | { readonly kind: 'save'; readonly id: string }
   | { readonly kind: 'method'; readonly provider: AccountProvider }
   | { readonly kind: 'start'; readonly provider: AccountProvider }
   | { readonly kind: 'callback'; readonly provider: AccountProvider }
@@ -72,6 +85,10 @@ export type AccountRoute =
 export const accountRoute = (pathname: string): AccountRoute | undefined => {
   if (pathname === '/v2/account') return { kind: 'account' };
   if (pathname === '/v2/account/sign-out') return { kind: 'sign_out' };
+  if (pathname === '/v2/account/sync') return { kind: 'sync' };
+  if (pathname === '/v2/account/saves') return { kind: 'saves' };
+  const save = /^\/v2\/account\/saves\/([A-Za-z0-9_-]{22})$/u.exec(pathname);
+  if (save?.[1]) return { kind: 'save', id: save[1] };
   if (pathname === '/v2/auth/test/authorize') return { kind: 'test_authorize' };
   const method = /^\/v2\/account\/sign-in-methods\/([a-z]+)$/u.exec(pathname);
   if (method && isAccountProvider(method[1])) {
@@ -122,6 +139,14 @@ export interface AccountObject {
     }[];
   } | null>;
   erase(secretHash: string, now: number): Promise<boolean>;
+  sync(
+    secretHash: string,
+    now: number,
+    request: SyncRequest
+  ): Promise<SyncAnswer | null>;
+  saves(secretHash: string, now: number): Promise<readonly AccountSave[] | null>;
+  putSave(secretHash: string, now: number, save: AccountSave): Promise<boolean>;
+  removeSave(secretHash: string, now: number, id: string): Promise<boolean>;
 }
 
 /** One provider id's record (sign-in-record.ts), as the routes use it. */
@@ -170,6 +195,8 @@ interface SignInAttempt {
 
 const MAX_RETURN_LENGTH = 2048;
 const MAX_ACCOUNT_BODY_BYTES = 1024;
+/** One sync request: the device sends its changes in pieces this size. */
+export const MAX_SYNC_BODY_BYTES = 2 * 1024 * 1024;
 
 /** A place on this origin to come back to, or the app's page. */
 const returnPath = (value: string | null, origin: string): string => {
@@ -524,11 +551,12 @@ const readAccount = async (
 };
 
 const readAccountBody = async (
-  request: Request
+  request: Request,
+  maximumBytes = MAX_ACCOUNT_BODY_BYTES
 ): Promise<Record<string, unknown> | undefined> => {
   if (!isIdentityJsonRequest(request)) return undefined;
   try {
-    const body = await readBoundedJsonRequest(request, MAX_ACCOUNT_BODY_BYTES);
+    const body = await readBoundedJsonRequest(request, maximumBytes);
     return typeof body === 'object' && body !== null && !Array.isArray(body)
       ? (body as Record<string, unknown>)
       : undefined;
@@ -606,6 +634,66 @@ const removeMethod = async (
   }
 };
 
+const syncAccount = async (
+  request: Request,
+  dependencies: AccountHttpDependencies
+): Promise<Response> => {
+  if (!isIdentityJsonRequest(request)) {
+    return json({ error: 'invalid_request' }, 400);
+  }
+  let body: unknown;
+  try {
+    body = await readBoundedJsonRequest(request, MAX_SYNC_BODY_BYTES);
+  } catch (error) {
+    return error instanceof RangeError
+      ? json({ error: 'too_large' }, 413)
+      : json({ error: 'invalid_request' }, 400);
+  }
+  const sync = readSyncRequest(body);
+  if (!sync) return json({ error: 'invalid_request' }, 400);
+  const session = await signedInAccount(request, dependencies);
+  if (!session) return signedOut(request);
+  const answer = await session.account.sync(
+    session.secretHash,
+    dependencies.now(),
+    sync
+  );
+  return answer ? json({ ...answer }, 200) : signedOut(request);
+};
+
+const listSaves = async (
+  request: Request,
+  dependencies: AccountHttpDependencies
+): Promise<Response> => {
+  const session = await signedInAccount(request, dependencies);
+  if (!session) return signedOut(request);
+  const saves = await session.account.saves(
+    session.secretHash,
+    dependencies.now()
+  );
+  return saves ? json({ saves: [...saves] }, 200) : signedOut(request);
+};
+
+const changeSave = async (
+  request: Request,
+  id: string,
+  dependencies: AccountHttpDependencies
+): Promise<Response> => {
+  const session = await signedInAccount(request, dependencies);
+  if (!session) return signedOut(request);
+  const now = dependencies.now();
+  if (request.method === 'DELETE') {
+    return (await session.account.removeSave(session.secretHash, now, id))
+      ? browserNoContentResponse()
+      : signedOut(request);
+  }
+  const save = readAccountSave(id, await readAccountBody(request, 4096), now);
+  if (!save) return json({ error: 'invalid_request' }, 400);
+  return (await session.account.putSave(session.secretHash, now, save))
+    ? browserNoContentResponse()
+    : signedOut(request);
+};
+
 const deleteAccount = async (
   request: Request,
   dependencies: AccountHttpDependencies
@@ -676,7 +764,26 @@ export const handleAccountRequest = async (
       }
       break;
     }
+    case 'saves': {
+      if (request.method !== 'GET') {
+        return json({ error: 'method_not_allowed' }, 405, { Allow: 'GET' });
+      }
+      if (request.headers.get('Sec-Fetch-Site') === 'cross-site') {
+        return json({ error: 'forbidden' }, 403);
+      }
+      const decision = await dependencies.rateLimit('account');
+      if (!decision.allowed) return tooMany(decision);
+      return listSaves(request, dependencies);
+    }
+    case 'save':
+      if (request.method !== 'PUT' && request.method !== 'DELETE') {
+        return json({ error: 'method_not_allowed' }, 405, {
+          Allow: 'PUT, DELETE',
+        });
+      }
+      break;
     case 'sign_out':
+    case 'sync':
       if (request.method !== 'POST') {
         return json({ error: 'method_not_allowed' }, 405, { Allow: 'POST' });
       }
@@ -699,6 +806,10 @@ export const handleAccountRequest = async (
         : deleteAccount(request, dependencies);
     case 'sign_out':
       return signOut(request, dependencies);
+    case 'sync':
+      return syncAccount(request, dependencies);
+    case 'save':
+      return changeSave(request, route.id, dependencies);
     case 'method':
       return removeMethod(request, route.provider, dependencies);
   }

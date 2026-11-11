@@ -63,6 +63,7 @@ export const resolveTableDepth = (
 // never chose a view follows the default as it improves.
 export const TABLE_DEPTH_PREFERENCES = definePreference<TableDepthSettings>({
   key: 'ptcgsim.table-depth.v1',
+  synced: true,
   defaults: DEFAULT_TABLE_DEPTH,
   parse: parseTableDepth,
 });

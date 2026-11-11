@@ -136,6 +136,8 @@ export const settingsPageName = (page: SettingsPage): string => {
       return t`Avatar`;
     case 'signInMethods':
       return t`Sign-in methods`;
+    case 'signOut':
+      return t`Sign out`;
     case 'deleteAccount':
       return t`Delete account`;
     case 'saves':

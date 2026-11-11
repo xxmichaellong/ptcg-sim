@@ -723,6 +723,10 @@
     "message": "{deckName}: put on {seat}",
     "translation": "{deckName}: taruh di {seat}"
   },
+  "3zfTm5": {
+    "message": "{deviceDecks} decks not in your account",
+    "translation": "{deviceDecks} deck belum ada di akunmu"
+  },
   "j1pN5w": {
     "message": "{errorCount, plural, one {# thing to fix for {format}} other {# things to fix for {format}}}",
     "comments": [
@@ -1606,6 +1610,10 @@
     ],
     "translation": "1 menambah 10, 9 menambah 90"
   },
+  "AR8Lh0": {
+    "message": "1 deck not in your account",
+    "translation": "1 deck belum ada di akunmu"
+  },
   "ngBvCd": {
     "message": "10 less damage",
     "translation": "Kurangi 10 kerusakan"
@@ -1659,6 +1667,10 @@
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "Nama kartu terlalu panjang."
+  },
+  "08IhZS": {
+    "message": "A deck didn't fit in your account",
+    "translation": "Ada deck yang tidak muat di akunmu"
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1783,6 +1795,10 @@
     ],
     "translation": "Arena Bertarung"
   },
+  "m16xKo": {
+    "message": "Add",
+    "translation": "Tambah"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "Tambah {count} kerusakan"
@@ -1856,6 +1872,14 @@
       "Opens a form to write what a hand-made card says."
     ],
     "translation": "Tambah teks"
+  },
+  "lTvIUT": {
+    "message": "Add this device's {count} decks to your account?",
+    "translation": "Tambahkan {count} deck di perangkat ini ke akunmu?"
+  },
+  "Osu6-d": {
+    "message": "Add this device's deck to your account?",
+    "translation": "Tambahkan deck di perangkat ini ke akunmu?"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -3132,6 +3156,10 @@
     "context": "go back to the saved decks",
     "translation": "Deck"
   },
+  "-zINRr": {
+    "message": "Decks added",
+    "translation": "Deck ditambahkan"
+  },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
     "translation": "Deck yang kamu impor atau buat disimpan di sini"
@@ -4358,6 +4386,10 @@
     "message": "Keep decks and replays everywhere",
     "translation": "Simpan deck dan replay di mana saja"
   },
+  "94aPBP": {
+    "message": "Keep your decks and settings here",
+    "translation": "Simpan deck dan pengaturanmu di sini"
+  },
   "gsDcZw": {
     "message": "Keyboard map layer",
     "translation": "Lapisan peta keyboard"
@@ -5424,10 +5456,6 @@
     "message": "Only Pokémon in play take damage",
     "translation": "Hanya Pokémon di Arena yang menerima kerusakan"
   },
-  "Z8V1kN": {
-    "message": "Only signs you out on this device",
-    "translation": "Hanya mengeluarkanmu di perangkat ini"
-  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "Hanya pemain di kursi itu yang bisa."
@@ -6221,6 +6249,10 @@
     ],
     "translation": "Hapus serangan ini"
   },
+  "Jt5upM": {
+    "message": "Remove your decks and settings from this device",
+    "translation": "Hapus deck dan pengaturanmu dari perangkat ini"
+  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
@@ -6643,6 +6675,18 @@
     "message": "Saved for this visit only",
     "translation": "Disimpan hanya untuk kunjungan ini"
   },
+  "NsOwyo": {
+    "message": "Saved game",
+    "translation": "Game tersimpan"
+  },
+  "V_F5oM": {
+    "message": "Saved games",
+    "translation": "Game tersimpan"
+  },
+  "Q2CRS7": {
+    "message": "Saved to your account",
+    "translation": "Tersimpan di akunmu"
+  },
   "br8YKa": {
     "message": "Saves & replays",
     "translation": "Simpanan & replay"
@@ -7054,6 +7098,10 @@
     "message": "Sign out",
     "translation": "Keluar"
   },
+  "OelR1j": {
+    "message": "Sign out and clear",
+    "translation": "Keluar dan hapus"
+  },
   "WzENDu": {
     "message": "Sign-in method added",
     "translation": "Metode masuk ditambahkan"
@@ -7073,6 +7121,10 @@
   "GxoiaQ": {
     "message": "Signed out",
     "translation": "Sudah keluar"
+  },
+  "qNwERt": {
+    "message": "Signed out and cleared",
+    "translation": "Sudah keluar dan dihapus"
   },
   "utezqW": {
     "message": "Single Strike",
@@ -7801,6 +7853,10 @@
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "Browser ini tidak akan menyimpan deck-mu setelah halaman ditutup."
+  },
+  "UaUf4s": {
+    "message": "This device's decks",
+    "translation": "Deck di perangkat ini"
   },
   "5PdIYU": {
     "message": "This game will be lost.",

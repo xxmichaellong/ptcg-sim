@@ -723,6 +723,10 @@
     "message": "{deckName}: put on {seat}",
     "translation": "{deckName}: đặt vào {seat}"
   },
+  "3zfTm5": {
+    "message": "{deviceDecks} decks not in your account",
+    "translation": "{deviceDecks} bộ bài chưa có trong tài khoản của bạn"
+  },
   "j1pN5w": {
     "message": "{errorCount, plural, one {# thing to fix for {format}} other {# things to fix for {format}}}",
     "comments": [
@@ -1606,6 +1610,10 @@
     ],
     "translation": "Phím 1 thêm 10, phím 9 thêm 90"
   },
+  "AR8Lh0": {
+    "message": "1 deck not in your account",
+    "translation": "1 bộ bài chưa có trong tài khoản của bạn"
+  },
   "ngBvCd": {
     "message": "10 less damage",
     "translation": "Giảm 10 sát thương"
@@ -1659,6 +1667,10 @@
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "Tên của một lá bài quá dài."
+  },
+  "08IhZS": {
+    "message": "A deck didn't fit in your account",
+    "translation": "Một bộ bài không vừa trong tài khoản của bạn"
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1783,6 +1795,10 @@
     ],
     "translation": "Active"
   },
+  "m16xKo": {
+    "message": "Add",
+    "translation": "Thêm"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "Thêm {count} sát thương"
@@ -1856,6 +1872,14 @@
       "Opens a form to write what a hand-made card says."
     ],
     "translation": "Thêm văn bản"
+  },
+  "lTvIUT": {
+    "message": "Add this device's {count} decks to your account?",
+    "translation": "Thêm {count} bộ bài trên thiết bị này vào tài khoản của bạn?"
+  },
+  "Osu6-d": {
+    "message": "Add this device's deck to your account?",
+    "translation": "Thêm bộ bài trên thiết bị này vào tài khoản của bạn?"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -3132,6 +3156,10 @@
     "context": "go back to the saved decks",
     "translation": "Bộ bài"
   },
+  "-zINRr": {
+    "message": "Decks added",
+    "translation": "Đã thêm bộ bài"
+  },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
     "translation": "Các bộ bài bạn nhập hoặc xây dựng được lưu ở đây"
@@ -4358,6 +4386,10 @@
     "message": "Keep decks and replays everywhere",
     "translation": "Giữ bộ bài và bản ghi lại trên mọi thiết bị"
   },
+  "94aPBP": {
+    "message": "Keep your decks and settings here",
+    "translation": "Lưu bộ bài và cài đặt của bạn tại đây"
+  },
   "gsDcZw": {
     "message": "Keyboard map layer",
     "translation": "Lớp bản đồ bàn phím"
@@ -5424,10 +5456,6 @@
     "message": "Only Pokémon in play take damage",
     "translation": "Chỉ Pokémon trên sân mới nhận sát thương"
   },
-  "Z8V1kN": {
-    "message": "Only signs you out on this device",
-    "translation": "Chỉ đăng xuất trên thiết bị này"
-  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "Chỉ người chơi ở chỗ ngồi đó mới làm được."
@@ -6221,6 +6249,10 @@
     ],
     "translation": "Xóa chiêu thức này"
   },
+  "Jt5upM": {
+    "message": "Remove your decks and settings from this device",
+    "translation": "Xóa bộ bài và cài đặt của bạn khỏi thiết bị này"
+  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
@@ -6643,6 +6675,18 @@
     "message": "Saved for this visit only",
     "translation": "Chỉ lưu cho lần truy cập này"
   },
+  "NsOwyo": {
+    "message": "Saved game",
+    "translation": "Ván đã lưu"
+  },
+  "V_F5oM": {
+    "message": "Saved games",
+    "translation": "Các ván đã lưu"
+  },
+  "Q2CRS7": {
+    "message": "Saved to your account",
+    "translation": "Đã lưu vào tài khoản của bạn"
+  },
   "br8YKa": {
     "message": "Saves & replays",
     "translation": "Lưu và bản phát lại"
@@ -7054,6 +7098,10 @@
     "message": "Sign out",
     "translation": "Đăng xuất"
   },
+  "OelR1j": {
+    "message": "Sign out and clear",
+    "translation": "Đăng xuất và xóa dữ liệu"
+  },
   "WzENDu": {
     "message": "Sign-in method added",
     "translation": "Đã thêm cách đăng nhập"
@@ -7073,6 +7121,10 @@
   "GxoiaQ": {
     "message": "Signed out",
     "translation": "Đã đăng xuất"
+  },
+  "qNwERt": {
+    "message": "Signed out and cleared",
+    "translation": "Đã đăng xuất và xóa dữ liệu"
   },
   "utezqW": {
     "message": "Single Strike",
@@ -7801,6 +7853,10 @@
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "Trình duyệt này sẽ không giữ các bộ bài của bạn sau khi bạn đóng trang."
+  },
+  "UaUf4s": {
+    "message": "This device's decks",
+    "translation": "Bộ bài trên thiết bị này"
   },
   "5PdIYU": {
     "message": "This game will be lost.",

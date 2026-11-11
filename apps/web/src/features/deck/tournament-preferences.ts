@@ -28,6 +28,7 @@ const field = (value: unknown, key: string): unknown =>
 
 export const TOURNAMENT_PREFERENCES = definePreference<TournamentPreferences>({
   key: 'ptcgsim.tournaments.v1',
+  synced: true,
   defaults: DEFAULTS,
   parse: (value) => {
     const format = field(value, 'format');

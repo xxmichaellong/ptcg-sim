@@ -94,6 +94,8 @@ import { TableBanner, TableCentre, TableShell } from './shell/TableShell.js';
 import { useTableSeamShare } from '../board/view/table-seam.js';
 import { useActivityDocking } from './shell/useActivityDocking.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
+import { saveGameToAccount } from '../account/account-saves.js';
+import { accountSnapshot } from '../account/account-state.js';
 import { DeckIcon } from '../ui/DeckIcon.js';
 import { Tooltip } from '../ui/Tooltip.js';
 import { CommandSourceRegistration } from '../commands/registry.js';
@@ -237,6 +239,17 @@ const SettledByFailure = ({
  * turn's actions between the app menu and the activity log; everything else
  * opens over it -- the deck screen, Settings, Play online, the log.
  */
+
+/** A saved game's name in the account: who is playing. */
+const savedGameTitle = (runtime: RemoteRoomRuntime): string => {
+  const view = runtime.session.getSnapshot().view;
+  if (!view) return '';
+  return view.playerOrder
+    .map((playerId) => view.players[playerId]?.displayName ?? '')
+    .filter((name) => name.trim() !== '')
+    .join(' vs ');
+};
+
 export const RemoteRoomRoute = ({
   runtime,
   roomMode = 'multiplayer',
@@ -400,8 +413,15 @@ export const RemoteRoomRoute = ({
       runtime.replay.importReplayFileBytes(contents),
     ...(continuationAvailable
       ? {
+          // Signed in, the save goes to the account rather than a file.
           onSaveOnlineGame: (signal: AbortSignal) =>
-            runtime.saveOnlineGame(downloadTextFile, signal),
+            runtime.saveOnlineGame(
+              accountSnapshot().account
+                ? (_name, contents) =>
+                    saveGameToAccount(contents, savedGameTitle(runtime))
+                : downloadTextFile,
+              signal
+            ),
           ...(onResumeSavedGame ? { onResumeSavedGame } : {}),
         }
       : {}),
@@ -798,7 +818,10 @@ export const RemoteRoomRoute = ({
                     ? { onSaveOnline: live.saveOnlineGame }
                     : {}),
                   ...(live.canResumeSaved
-                    ? { onResumeSaved: live.resumeSavedGame }
+                    ? {
+                        onResumeSaved: live.resumeSavedGame,
+                        onResumeSavedText: live.resumeSavedText,
+                      }
                     : {}),
                   ...(live.exportState
                     ? { onExportState: live.exportState }

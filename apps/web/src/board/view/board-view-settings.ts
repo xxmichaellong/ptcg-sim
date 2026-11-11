@@ -157,6 +157,7 @@ export const hiddenPhysicalSideFor = (
 
 export const BOARD_VIEW_PREFERENCES = definePreference<BoardViewSettings>({
   key: 'ptcgsim.board-view.v1',
+  synced: true,
   defaults: DEFAULT_BOARD_VIEW,
   parse: parseBoardView,
 });

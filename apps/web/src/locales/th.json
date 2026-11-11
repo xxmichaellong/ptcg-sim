@@ -723,6 +723,10 @@
     "message": "{deckName}: put on {seat}",
     "translation": "{deckName}: วางที่ {seat}"
   },
+  "3zfTm5": {
+    "message": "{deviceDecks} decks not in your account",
+    "translation": "มี {deviceDecks} เด็คที่ไม่ได้อยู่ในบัญชีของคุณ"
+  },
   "j1pN5w": {
     "message": "{errorCount, plural, one {# thing to fix for {format}} other {# things to fix for {format}}}",
     "comments": [
@@ -1606,6 +1610,10 @@
     ],
     "translation": "1 เพิ่ม 10, 9 เพิ่ม 90"
   },
+  "AR8Lh0": {
+    "message": "1 deck not in your account",
+    "translation": "มี 1 เด็คที่ไม่ได้อยู่ในบัญชีของคุณ"
+  },
   "ngBvCd": {
     "message": "10 less damage",
     "translation": "แดเมจลดลง 10"
@@ -1659,6 +1667,10 @@
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "ชื่อการ์ดยาวเกินไป"
+  },
+  "08IhZS": {
+    "message": "A deck didn't fit in your account",
+    "translation": "มีเด็คที่ใส่ในบัญชีของคุณไม่ได้"
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1783,6 +1795,10 @@
     ],
     "translation": "ตำแหน่งต่อสู้"
   },
+  "m16xKo": {
+    "message": "Add",
+    "translation": "เพิ่ม"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "เพิ่มแดเมจ {count}"
@@ -1856,6 +1872,14 @@
       "Opens a form to write what a hand-made card says."
     ],
     "translation": "เพิ่มข้อความ"
+  },
+  "lTvIUT": {
+    "message": "Add this device's {count} decks to your account?",
+    "translation": "เพิ่ม {count} เด็คจากอุปกรณ์นี้ลงในบัญชีของคุณไหม"
+  },
+  "Osu6-d": {
+    "message": "Add this device's deck to your account?",
+    "translation": "เพิ่มเด็คจากอุปกรณ์นี้ลงในบัญชีของคุณไหม"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -3132,6 +3156,10 @@
     "context": "go back to the saved decks",
     "translation": "เด็ค"
   },
+  "-zINRr": {
+    "message": "Decks added",
+    "translation": "เพิ่มเด็คแล้ว"
+  },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
     "translation": "เด็คที่นำเข้าหรือสร้างจะเก็บไว้ที่นี่"
@@ -4358,6 +4386,10 @@
     "message": "Keep decks and replays everywhere",
     "translation": "เก็บเด็คและรีเพลย์ไว้ได้ทุกที่"
   },
+  "94aPBP": {
+    "message": "Keep your decks and settings here",
+    "translation": "เก็บเด็คและการตั้งค่าของคุณไว้ที่นี่"
+  },
   "gsDcZw": {
     "message": "Keyboard map layer",
     "translation": "เลเยอร์แผนผังคีย์บอร์ด"
@@ -5424,10 +5456,6 @@
     "message": "Only Pokémon in play take damage",
     "translation": "เฉพาะโปเกมอนบนกระดานที่รับแดเมจได้"
   },
-  "Z8V1kN": {
-    "message": "Only signs you out on this device",
-    "translation": "ออกจากระบบเฉพาะบนอุปกรณ์นี้"
-  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "เฉพาะผู้เล่นที่นั่งตรงนั้นเท่านั้นที่ทำได้"
@@ -6221,6 +6249,10 @@
     ],
     "translation": "นำท่าต่อสู้นี้ออก"
   },
+  "Jt5upM": {
+    "message": "Remove your decks and settings from this device",
+    "translation": "ลบเด็คและการตั้งค่าของคุณออกจากอุปกรณ์นี้"
+  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
@@ -6643,6 +6675,18 @@
     "message": "Saved for this visit only",
     "translation": "บันทึกไว้สำหรับการเข้าชมครั้งนี้เท่านั้น"
   },
+  "NsOwyo": {
+    "message": "Saved game",
+    "translation": "เกมที่บันทึกไว้"
+  },
+  "V_F5oM": {
+    "message": "Saved games",
+    "translation": "เกมที่บันทึกไว้"
+  },
+  "Q2CRS7": {
+    "message": "Saved to your account",
+    "translation": "บันทึกลงในบัญชีของคุณแล้ว"
+  },
   "br8YKa": {
     "message": "Saves & replays",
     "translation": "เซฟและรีเพลย์"
@@ -7054,6 +7098,10 @@
     "message": "Sign out",
     "translation": "ออกจากระบบ"
   },
+  "OelR1j": {
+    "message": "Sign out and clear",
+    "translation": "ออกจากระบบและล้างข้อมูล"
+  },
   "WzENDu": {
     "message": "Sign-in method added",
     "translation": "เพิ่มวิธีลงชื่อเข้าใช้แล้ว"
@@ -7073,6 +7121,10 @@
   "GxoiaQ": {
     "message": "Signed out",
     "translation": "ออกจากระบบแล้ว"
+  },
+  "qNwERt": {
+    "message": "Signed out and cleared",
+    "translation": "ออกจากระบบและล้างข้อมูลแล้ว"
   },
   "utezqW": {
     "message": "Single Strike",
@@ -7801,6 +7853,10 @@
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "เบราว์เซอร์นี้จะไม่เก็บเด็คของคุณไว้หลังปิดหน้านี้"
+  },
+  "UaUf4s": {
+    "message": "This device's decks",
+    "translation": "เด็คของอุปกรณ์นี้"
   },
   "5PdIYU": {
     "message": "This game will be lost.",

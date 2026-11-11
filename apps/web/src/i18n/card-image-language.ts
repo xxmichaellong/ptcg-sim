@@ -29,6 +29,7 @@ export interface CardImagePreferences {
 
 export const CARD_IMAGE_PREFERENCES = definePreference<CardImagePreferences>({
   key: 'ptcgsim.card-images.v1',
+  synced: true,
   defaults: Object.freeze({ cardImages: 'app' }),
   parse: (value) => {
     const cardImages =

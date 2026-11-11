@@ -1,13 +1,20 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { routeCardCatalog } from './support/card-catalog-fixture.js';
 import { ownRoomBudget } from './support/room-budget.js';
-import { dismissWelcome, openAppMenu } from './support/table-shell.js';
+import {
+  closeDeck,
+  dismissWelcome,
+  openAppMenu,
+  openDeck,
+} from './support/table-shell.js';
 
 /**
  * ADR-052: Settings' first row signs in through the stand-in provider's
  * popup (local and test builds only) and becomes the account; the Account
  * page renames it, the avatar takes an emblem, Sign out ends this session,
- * and Delete account takes a held press.
+ * and Delete account takes a held press. Decks and settings follow the
+ * account to another device (step 2), and Sign out and clear takes them off.
  */
 
 const openTable = async (page: Page): Promise<void> => {
@@ -94,6 +101,7 @@ test('signs in from Settings, renames, signs out and deletes', async ({
 
   // Sign out leaves the account; signing in again finds it.
   await page.locator('#settings #signOutButton').click();
+  await page.locator('#settings #signOutKeep').click();
   await expect(page.locator('#settings #signInRow')).toBeVisible();
   await signIn(page, dawn);
   await expect(page.locator('#settings #accountRow')).toContainText(
@@ -143,5 +151,108 @@ test('a sign-in finished in one tab shows in another', async ({ page }) => {
   // Signing out tells the other tab too.
   await page.locator('#settings #accountRow').click();
   await page.locator('#settings #signOutButton').click();
+  await page.locator('#settings #signOutKeep').click();
   await expect(other.locator('#settings #signInRow')).toBeVisible();
+});
+
+/** A new deck named `name`, from the deck screen. */
+const makeDeck = async (page: Page, name: string): Promise<void> => {
+  await openDeck(page);
+  await page.locator('#deckNewButton').click();
+  await page.locator('#deckNameInput').fill(name);
+  await page.locator('#deckNameInput').press('Enter');
+  await page.locator('#deckEditorBackButton').click();
+  await expect(
+    page
+      .getByRole('list', { name: 'Your decks' })
+      .getByRole('listitem')
+      .filter({
+        hasText: name,
+      })
+  ).toBeVisible();
+  await closeDeck(page);
+};
+
+const deckNames = async (page: Page): Promise<string[]> => {
+  await openDeck(page);
+  const names = await page
+    .getByRole('list', { name: 'Your decks' })
+    .getByRole('listitem')
+    .allInnerTexts();
+  await closeDeck(page);
+  return names;
+};
+
+/** Settled: nothing of this device's left to send. */
+const synced = async (page: Page, decks: number): Promise<void> => {
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const state = JSON.parse(
+            localStorage.getItem('ptcgsim.account-sync.v1') ?? '{}'
+          ) as { base?: Record<string, { hash: string | null }> };
+          return Object.entries(state.base ?? {}).filter(
+            ([key, entry]) => key.startsWith('deck:') && entry.hash !== null
+          ).length;
+        }),
+      { timeout: 20_000 }
+    )
+    .toBe(decks);
+};
+
+test('decks and settings follow the account to another device', async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(120_000);
+  const brock = someone('Brock');
+  await routeCardCatalog(page);
+  await openTable(page);
+  // A deck this device had before signing in waits to be added.
+  await makeDeck(page, 'Onix Rock');
+  await signIn(page, brock);
+  const offer = page.locator('[data-ptcgsim-overlay="toast"]').filter({
+    hasText: "Add this device's deck to your account?",
+  });
+  await expect(offer).toBeVisible();
+  await offer.getByRole('button', { name: 'Add' }).click();
+  await makeDeck(page, 'Geodude Wall');
+  // The table's theme, a setting that follows the account.
+  await openAppMenu(page);
+  await page.locator('#settings #settingsTableRow').click();
+  await page.locator('#darkModeCheckbox').uncheck();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'day');
+  await synced(page, 2);
+
+  // Another device, signed in as the same person.
+  const laptop = await browser.newContext();
+  const other = await laptop.newPage();
+  await routeCardCatalog(other);
+  await openTable(other);
+  await expect(other.locator('html')).not.toHaveAttribute('data-theme', 'day');
+  await signIn(other, brock);
+  await expect(other.locator('html')).toHaveAttribute('data-theme', 'day');
+  await synced(other, 2);
+  const names = (await deckNames(other)).join('\n');
+  expect(names).toContain('Onix Rock');
+  expect(names).toContain('Geodude Wall');
+  // No offer there: it had no decks of its own.
+  await expect(
+    other
+      .locator('[data-ptcgsim-overlay="toast"]')
+      .filter({ hasText: 'Add this device' })
+  ).toHaveCount(0);
+
+  // Signing out and clearing takes the account's decks and settings off it.
+  await openAppMenu(other);
+  await other.locator('#settings #accountRow').click();
+  await other.locator('#settings #signOutButton').click();
+  await other.locator('#settings #signOutClear').click();
+  await expect(other.locator('#settings #signInRow')).toBeVisible();
+  await expect(other.locator('html')).not.toHaveAttribute('data-theme', 'day');
+  expect(await deckNames(other)).toEqual([]);
+  // The first device keeps everything.
+  expect((await deckNames(page)).join('\n')).toContain('Geodude Wall');
+  await laptop.close();
 });

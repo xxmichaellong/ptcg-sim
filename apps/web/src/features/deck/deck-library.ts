@@ -429,6 +429,7 @@ export class DeckLibrary {
   #loaded: 'loading' | 'ready' | 'failed';
   #timer: ReturnType<typeof setTimeout> | undefined;
   #snapshot: DeckLibrarySnapshot;
+  #loading: Promise<void> = Promise.resolve();
   #detach: () => void = () => undefined;
 
   constructor(options: DeckLibraryOptions) {
@@ -460,7 +461,7 @@ export class DeckLibrary {
       options.window?.removeEventListener('pagehide', onLeave);
       options.document?.removeEventListener('visibilitychange', onVisibility);
     };
-    if (this.#backend) void this.#load(this.#backend);
+    if (this.#backend) this.#loading = this.#load(this.#backend);
   }
 
   getSnapshot = (): DeckLibrarySnapshot => this.#snapshot;
@@ -619,6 +620,52 @@ export class DeckLibrary {
   /** Puts a removed deck back exactly as it was. */
   restore(deck: SavedDeck): void {
     this.#put(deck, true);
+  }
+
+  /**
+   * The decks as storage has them now, every tab's writes included, after
+   * this tab's pending ones (account sync reads these, ADR-052). Undefined
+   * where storage isn't working: a library that lasts only for the visit
+   * can't say which decks the player deleted.
+   */
+  async readStored(): Promise<readonly SavedDeck[] | undefined> {
+    await this.#loading;
+    await this.flush();
+    if (!this.#backend || this.#loaded !== 'ready' || this.#unsaved.size > 0) {
+      return undefined;
+    }
+    try {
+      const records = await this.#backend.readAll();
+      return records.flatMap((record) => decodeSavedDeck(record) ?? []);
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * Takes decks another device saved, exactly as they were saved, and
+   * deletes the ones it deleted: written at once, in one go.
+   */
+  receive(decks: readonly SavedDeck[], removals: readonly string[]): void {
+    for (const deck of decks) {
+      this.#decks.set(deck.id, deck);
+      this.#drafts.delete(deck.id);
+      this.#removals.delete(deck.id);
+      this.#automatic.delete(deck.id);
+      this.#edited(deck.id);
+      if (this.#backend) this.#pending.add(deck.id);
+    }
+    for (const id of removals) {
+      if (!this.#decks.delete(id)) continue;
+      this.#drafts.delete(id);
+      this.#pending.delete(id);
+      this.#automatic.delete(id);
+      this.#edited(id);
+      if (this.#backend) this.#removals.add(id);
+    }
+    if (decks.length === 0 && removals.length === 0) return;
+    this.#publish();
+    void this.flush();
   }
 
   /** Writes every pending change, and removal, now. */

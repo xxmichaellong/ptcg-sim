@@ -723,6 +723,10 @@
     "message": "{deckName}: put on {seat}",
     "translation": "{deckName}: ustaw dla {seat}"
   },
+  "3zfTm5": {
+    "message": "{deviceDecks} decks not in your account",
+    "translation": "Talie spoza konta: {deviceDecks}"
+  },
   "j1pN5w": {
     "message": "{errorCount, plural, one {# thing to fix for {format}} other {# things to fix for {format}}}",
     "comments": [
@@ -1606,6 +1610,10 @@
     ],
     "translation": "1 dodaje 10, 9 dodaje 90"
   },
+  "AR8Lh0": {
+    "message": "1 deck not in your account",
+    "translation": "1 talia nie jest na koncie"
+  },
   "ngBvCd": {
     "message": "10 less damage",
     "translation": "O 10 obrażeń mniej"
@@ -1659,6 +1667,10 @@
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "Nazwa karty jest za długa."
+  },
+  "08IhZS": {
+    "message": "A deck didn't fit in your account",
+    "translation": "Talia nie zmieściła się na koncie"
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1783,6 +1795,10 @@
     ],
     "translation": "Aktywny"
   },
+  "m16xKo": {
+    "message": "Add",
+    "translation": "Dodaj"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "Dodaj obrażenia: {count}"
@@ -1856,6 +1872,14 @@
       "Opens a form to write what a hand-made card says."
     ],
     "translation": "Dodaj tekst"
+  },
+  "lTvIUT": {
+    "message": "Add this device's {count} decks to your account?",
+    "translation": "Dodać do konta talie z tego urządzenia ({count})?"
+  },
+  "Osu6-d": {
+    "message": "Add this device's deck to your account?",
+    "translation": "Dodać do konta talię z tego urządzenia?"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -3132,6 +3156,10 @@
     "context": "go back to the saved decks",
     "translation": "Talie"
   },
+  "-zINRr": {
+    "message": "Decks added",
+    "translation": "Talie dodane"
+  },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
     "translation": "Tutaj są zapisane zaimportowane i zbudowane przez ciebie talie"
@@ -4358,6 +4386,10 @@
     "message": "Keep decks and replays everywhere",
     "translation": "Miej talie i powtórki wszędzie"
   },
+  "94aPBP": {
+    "message": "Keep your decks and settings here",
+    "translation": "Trzymaj swoje talie i ustawienia tutaj"
+  },
   "gsDcZw": {
     "message": "Keyboard map layer",
     "translation": "Warstwa mapy klawiatury"
@@ -5424,10 +5456,6 @@
     "message": "Only Pokémon in play take damage",
     "translation": "Obrażenia otrzymują tylko Pokémony w grze"
   },
-  "Z8V1kN": {
-    "message": "Only signs you out on this device",
-    "translation": "Wylogowuje cię tylko na tym urządzeniu"
-  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "Może to zrobić tylko gracz z tego miejsca."
@@ -6221,6 +6249,10 @@
     ],
     "translation": "Usuń ten atak"
   },
+  "Jt5upM": {
+    "message": "Remove your decks and settings from this device",
+    "translation": "Usuń swoje talie i ustawienia z tego urządzenia"
+  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
@@ -6643,6 +6675,18 @@
     "message": "Saved for this visit only",
     "translation": "Zapisano tylko na czas tej wizyty"
   },
+  "NsOwyo": {
+    "message": "Saved game",
+    "translation": "Zapisana gra"
+  },
+  "V_F5oM": {
+    "message": "Saved games",
+    "translation": "Zapisane gry"
+  },
+  "Q2CRS7": {
+    "message": "Saved to your account",
+    "translation": "Zapisano na twoim koncie"
+  },
   "br8YKa": {
     "message": "Saves & replays",
     "translation": "Zapisy i powtórki"
@@ -7054,6 +7098,10 @@
     "message": "Sign out",
     "translation": "Wyloguj się"
   },
+  "OelR1j": {
+    "message": "Sign out and clear",
+    "translation": "Wyloguj i wyczyść"
+  },
   "WzENDu": {
     "message": "Sign-in method added",
     "translation": "Dodano metodę logowania"
@@ -7073,6 +7121,10 @@
   "GxoiaQ": {
     "message": "Signed out",
     "translation": "Wylogowano"
+  },
+  "qNwERt": {
+    "message": "Signed out and cleared",
+    "translation": "Wylogowano i wyczyszczono"
   },
   "utezqW": {
     "message": "Single Strike",
@@ -7801,6 +7853,10 @@
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "Ta przeglądarka nie zachowa twoich talii po zamknięciu strony."
+  },
+  "UaUf4s": {
+    "message": "This device's decks",
+    "translation": "Talie z tego urządzenia"
   },
   "5PdIYU": {
     "message": "This game will be lost.",

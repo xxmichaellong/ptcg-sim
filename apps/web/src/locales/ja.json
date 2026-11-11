@@ -723,6 +723,10 @@
     "message": "{deckName}: put on {seat}",
     "translation": "{deckName}：{seat}にセット"
   },
+  "3zfTm5": {
+    "message": "{deviceDecks} decks not in your account",
+    "translation": "アカウントにないデッキが{deviceDecks}個あります"
+  },
   "j1pN5w": {
     "message": "{errorCount, plural, one {# thing to fix for {format}} other {# things to fix for {format}}}",
     "comments": [
@@ -1606,6 +1610,10 @@
     ],
     "translation": "1で10、9で90を追加"
   },
+  "AR8Lh0": {
+    "message": "1 deck not in your account",
+    "translation": "アカウントにないデッキが1個あります"
+  },
   "ngBvCd": {
     "message": "10 less damage",
     "translation": "ダメージ-10"
@@ -1659,6 +1667,10 @@
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "カード名が長すぎます。"
+  },
+  "08IhZS": {
+    "message": "A deck didn't fit in your account",
+    "translation": "アカウントに入りきらなかったデッキがあります"
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1783,6 +1795,10 @@
     ],
     "translation": "バトル場"
   },
+  "m16xKo": {
+    "message": "Add",
+    "translation": "追加"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "ダメージを{count}追加"
@@ -1856,6 +1872,14 @@
       "Opens a form to write what a hand-made card says."
     ],
     "translation": "テキストを追加"
+  },
+  "lTvIUT": {
+    "message": "Add this device's {count} decks to your account?",
+    "translation": "この端末のデッキ{count}個をアカウントに追加しますか?"
+  },
+  "Osu6-d": {
+    "message": "Add this device's deck to your account?",
+    "translation": "この端末のデッキをアカウントに追加しますか?"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -3132,6 +3156,10 @@
     "context": "go back to the saved decks",
     "translation": "デッキ"
   },
+  "-zINRr": {
+    "message": "Decks added",
+    "translation": "デッキを追加しました"
+  },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
     "translation": "取り込んだデッキや作成したデッキはここに保存されます"
@@ -4358,6 +4386,10 @@
     "message": "Keep decks and replays everywhere",
     "translation": "デッキとリプレイをどの端末でも使えます"
   },
+  "94aPBP": {
+    "message": "Keep your decks and settings here",
+    "translation": "デッキと設定をここに保存します"
+  },
   "gsDcZw": {
     "message": "Keyboard map layer",
     "translation": "キーボードマップのレイヤー"
@@ -5424,10 +5456,6 @@
     "message": "Only Pokémon in play take damage",
     "translation": "ダメージを受けるのは場のポケモンだけです"
   },
-  "Z8V1kN": {
-    "message": "Only signs you out on this device",
-    "translation": "この端末のみログアウトします"
-  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "その席のプレイヤーだけが操作できます。"
@@ -6221,6 +6249,10 @@
     ],
     "translation": "このワザを削除"
   },
+  "Jt5upM": {
+    "message": "Remove your decks and settings from this device",
+    "translation": "この端末からデッキと設定を削除します"
+  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
@@ -6643,6 +6675,18 @@
     "message": "Saved for this visit only",
     "translation": "このセッション中のみ保存されています"
   },
+  "NsOwyo": {
+    "message": "Saved game",
+    "translation": "保存したゲーム"
+  },
+  "V_F5oM": {
+    "message": "Saved games",
+    "translation": "保存したゲーム"
+  },
+  "Q2CRS7": {
+    "message": "Saved to your account",
+    "translation": "アカウントに保存しました"
+  },
   "br8YKa": {
     "message": "Saves & replays",
     "translation": "セーブとリプレイ"
@@ -7054,6 +7098,10 @@
     "message": "Sign out",
     "translation": "ログアウト"
   },
+  "OelR1j": {
+    "message": "Sign out and clear",
+    "translation": "サインアウトして消去"
+  },
   "WzENDu": {
     "message": "Sign-in method added",
     "translation": "ログイン方法を追加しました"
@@ -7073,6 +7121,10 @@
   "GxoiaQ": {
     "message": "Signed out",
     "translation": "ログアウトしました"
+  },
+  "qNwERt": {
+    "message": "Signed out and cleared",
+    "translation": "サインアウトして消去しました"
   },
   "utezqW": {
     "message": "Single Strike",
@@ -7801,6 +7853,10 @@
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "このブラウザでは、ページを閉じるとデッキが保存されません。"
+  },
+  "UaUf4s": {
+    "message": "This device's decks",
+    "translation": "この端末のデッキ"
   },
   "5PdIYU": {
     "message": "This game will be lost.",

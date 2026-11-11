@@ -18,8 +18,9 @@
  * - Another tab's change arrives through the `storage` event and is
  *   published here as if it had been made here.
  *
- * Nothing about a room or a game belongs here: preferences never leave the
- * browser and never enter commands.
+ * Nothing about a room or a game belongs here: preferences never enter
+ * commands. Those marked `synced` follow a signed-in player to their other
+ * devices (ADR-052, account/account-sync.ts); the rest stay on this one.
  */
 
 export interface PreferenceStorage {
@@ -43,10 +44,27 @@ export interface Preference<T> {
    * top-level fields that differ from the defaults.
    */
   readonly serialize?: (value: T) => unknown;
+  /**
+   * Follows the player's account to their other devices: what they'd want
+   * the same everywhere (names, looks, shortcuts), not what fits one screen
+   * or one visit (layout, recent commands).
+   */
+  readonly synced?: boolean;
 }
 
-export const definePreference = <T>(preference: Preference<T>): Preference<T> =>
-  Object.freeze({ ...preference });
+const definitions = new Map<string, Preference<unknown>>();
+
+export const definePreference = <T>(
+  preference: Preference<T>
+): Preference<T> => {
+  const defined = Object.freeze({ ...preference });
+  definitions.set(defined.key, defined as Preference<unknown>);
+  return defined;
+};
+
+/** Every preference that follows the account, of those defined so far. */
+export const syncedPreferences = (): readonly Preference<unknown>[] =>
+  [...definitions.values()].filter((preference) => preference.synced === true);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -89,6 +107,7 @@ export class PreferenceStore {
   private readonly values = new Map<string, unknown>();
   private readonly definitions = new Map<string, Preference<unknown>>();
   private readonly listeners = new Map<string, Set<() => void>>();
+  private readonly changeListeners = new Set<(key: string) => void>();
   private readonly pending = new Set<string>();
   private timer: ReturnType<typeof setTimeout> | undefined;
   private readonly detach: () => void;
@@ -129,6 +148,46 @@ export class PreferenceStore {
     this.values.set(preference.key, value);
     this.schedule(preference.key);
     this.notify(preference.key);
+    for (const listener of [...this.changeListeners]) listener(preference.key);
+  }
+
+  /** Listens to every change made in this tab (not another tab's). */
+  onChange(listener: (key: string) => void): () => void {
+    this.changeListeners.add(listener);
+    return () => {
+      this.changeListeners.delete(listener);
+    };
+  }
+
+  /**
+   * What storage holds for a preference, as JSON text, or null at its
+   * defaults: written first if pending, so it is the value now.
+   */
+  storedText(preference: Preference<unknown>): string | null {
+    this.get(preference);
+    if (this.pending.has(preference.key)) this.flush();
+    if (!this.storage) {
+      const stored = this.storedFormOf(preference);
+      return stored === undefined ? null : JSON.stringify(stored);
+    }
+    try {
+      return this.storage.getItem(preference.key);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Takes a value as another device stored it (null for the defaults), as
+   * if chosen here, and writes it now. Returns what storage then holds.
+   */
+  applyStoredText(
+    preference: Preference<unknown>,
+    text: string | null
+  ): string | null {
+    this.set(preference, this.parse(preference, text));
+    this.flush();
+    return this.storedText(preference);
   }
 
   /** `set` for object preferences: changes only the given fields. */
@@ -170,6 +229,7 @@ export class PreferenceStore {
     this.flush();
     this.detach();
     this.listeners.clear();
+    this.changeListeners.clear();
   }
 
   private read<T>(preference: Preference<T>): T {
@@ -201,13 +261,17 @@ export class PreferenceStore {
     }, this.writeDelayMs);
   }
 
+  private storedFormOf(preference: Preference<unknown>): unknown {
+    const value = this.values.get(preference.key);
+    return preference.serialize
+      ? preference.serialize(value)
+      : changesFromDefaults(value, preference.defaults);
+  }
+
   private write(key: string): void {
     const preference = this.definitions.get(key);
     if (!preference || !this.storage) return;
-    const value = this.values.get(key);
-    const stored = preference.serialize
-      ? preference.serialize(value)
-      : changesFromDefaults(value, preference.defaults);
+    const stored = this.storedFormOf(preference);
     try {
       if (stored === undefined) this.storage.removeItem(key);
       else this.storage.setItem(key, JSON.stringify(stored));

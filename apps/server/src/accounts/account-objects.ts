@@ -12,6 +12,12 @@ import {
   type SignInOutcome,
   type UnlinkOutcome,
 } from './account-store.js';
+import { AccountSavesSql, type AccountSave } from './account-saves.js';
+import {
+  AccountSyncSql,
+  type SyncAnswer,
+  type SyncRequest,
+} from './account-sync.js';
 import { SignInRecordCustody, type SignInRecord } from './sign-in-record.js';
 
 /** One account (ADR-052), by its id: its profile, methods and sessions. */
@@ -20,6 +26,8 @@ export class PtcgAccount
   implements AccountObject
 {
   private store = new AccountStoreSql(this.ctx.storage.sql);
+  private synced = new AccountSyncSql(this.ctx.storage.sql);
+  private saved = new AccountSavesSql(this.ctx.storage.sql);
 
   async signIn(
     accountId: string,
@@ -74,6 +82,47 @@ export class PtcgAccount
     if (!this.store.read(secretHash, now)) return false;
     await this.ctx.storage.deleteAll();
     this.store = new AccountStoreSql(this.ctx.storage.sql);
+    this.synced = new AccountSyncSql(this.ctx.storage.sql);
+    this.saved = new AccountSavesSql(this.ctx.storage.sql);
+    return true;
+  }
+
+  /** A device's changes and what changed since it last asked (step 2). */
+  async sync(
+    secretHash: string,
+    now: number,
+    request: SyncRequest
+  ): Promise<SyncAnswer | null> {
+    if (!this.store.read(secretHash, now)) return null;
+    return this.synced.sync(request, now);
+  }
+
+  /** The saved games, for the player's own session only. */
+  async saves(
+    secretHash: string,
+    now: number
+  ): Promise<readonly AccountSave[] | null> {
+    if (!this.store.read(secretHash, now)) return null;
+    return this.saved.list(now);
+  }
+
+  async putSave(
+    secretHash: string,
+    now: number,
+    save: AccountSave
+  ): Promise<boolean> {
+    if (!this.store.read(secretHash, now)) return false;
+    this.saved.put(save);
+    return true;
+  }
+
+  async removeSave(
+    secretHash: string,
+    now: number,
+    id: string
+  ): Promise<boolean> {
+    if (!this.store.read(secretHash, now)) return false;
+    this.saved.remove(id);
     return true;
   }
 }

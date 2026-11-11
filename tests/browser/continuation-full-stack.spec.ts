@@ -22,7 +22,11 @@ import {
   roomStatus,
   type OpenedLobby,
 } from './continuation-browser-helpers.js';
-import { chooseMenuItem, openActivity } from './support/table-shell.js';
+import {
+  chooseMenuItem,
+  openActivity,
+  openAppMenu,
+} from './support/table-shell.js';
 
 test('online save downloads, restores, rotates both players, and revokes its bearer', async ({
   browser,
@@ -283,6 +287,86 @@ test('online save downloads, restores, rotates both players, and revokes its bea
     expect(creator.errors).toEqual([EXPECTED_REVOKED_CONSOLE_ERROR]);
     expect(sourceOpponent.errors).toEqual([]);
     expect(restoredOpponent.errors).toEqual([]);
+  } finally {
+    await Promise.all(contexts.map((context) => context.close()));
+  }
+});
+
+test('a signed-in player saves to the account and resumes from the list', async ({
+  browser,
+  baseURL,
+}) => {
+  if (!baseURL) throw new Error('Continuation preview base URL is required');
+  const contextOptions = {
+    baseURL,
+    permissions: ['clipboard-read', 'clipboard-write'],
+  };
+  const contexts = await Promise.all([
+    browser.newContext(contextOptions),
+    browser.newContext(contextOptions),
+  ]);
+  try {
+    const [creator, opponent] = (await Promise.all(
+      contexts.map(openLobby)
+    )) as [OpenedLobby, OpenedLobby];
+    const invitation = await createRoomAndInvite(creator.page, 'Blue');
+    await pasteInvitation(opponent.page, invitation, 'Red');
+    await joinReadyRoom(opponent.page);
+
+    // Signed in (the stand-in provider, ADR-052), Save game goes to the
+    // account and no file is written.
+    await openAppMenu(creator.page);
+    await creator.page.locator('#settings #signInRow').click();
+    const popupOpened = creator.page.waitForEvent('popup');
+    await creator.page.locator('#settings #signInWith-test').click();
+    const popup = await popupOpened;
+    await popup
+      .locator('#testSignInName')
+      .fill(`Blue ${Math.random().toString(36).slice(2, 7)}`);
+    const closed = popup.waitForEvent('close');
+    await popup.locator('#testSignInContinue').click();
+    await closed;
+    await expect(creator.page.locator('#settings #accountRow')).toBeVisible();
+    let downloaded = false;
+    creator.page.on('download', () => {
+      downloaded = true;
+    });
+    const kept = creator.page.waitForResponse(
+      (response) =>
+        response.request().method() === 'PUT' &&
+        new URL(response.url()).pathname.startsWith('/v2/account/saves/')
+    );
+    await chooseMenuItem(creator.page, 'saveOnlineGame');
+    expect((await kept).status()).toBe(204);
+    await expect(
+      creator.page
+        .locator('[data-ptcgsim-overlay="toast"]')
+        .filter({ hasText: 'Saved to your account' })
+    ).toBeVisible();
+    expect(downloaded).toBe(false);
+
+    // Saves & replays lists it; it resumes as its file would, then goes.
+    await openAppMenu(creator.page);
+    await creator.page.locator('#settings #settingsSavesRow').click();
+    const saved = creator.page.locator('#settings [id^="accountSave-"]');
+    await expect(saved).toHaveCount(1);
+    await expect(saved).toContainText('Blue vs Red');
+    const restored = creator.page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        /^\/v2\/continuations\/[^/]+\/restore$/u.test(
+          new URL(response.url()).pathname
+        )
+    );
+    await saved.click();
+    expect((await restored).status()).toBe(201);
+    await expectContinuationRestoreSuccess(creator.page);
+    await expectReadyRoom(creator.page);
+    await openAppMenu(creator.page);
+    await creator.page.locator('#settings #settingsSavesRow').click();
+    await expect(
+      creator.page.locator('#settings [id^="accountSave-"]')
+    ).toHaveCount(0);
   } finally {
     await Promise.all(contexts.map((context) => context.close()));
   }

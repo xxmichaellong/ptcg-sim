@@ -723,6 +723,10 @@
     "message": "{deckName}: put on {seat}",
     "translation": "{deckName}: poner en {seat}"
   },
+  "3zfTm5": {
+    "message": "{deviceDecks} decks not in your account",
+    "translation": "{deviceDecks} barajas que no están en tu cuenta"
+  },
   "j1pN5w": {
     "message": "{errorCount, plural, one {# thing to fix for {format}} other {# things to fix for {format}}}",
     "comments": [
@@ -1606,6 +1610,10 @@
     ],
     "translation": "1 suma 10, 9 suma 90"
   },
+  "AR8Lh0": {
+    "message": "1 deck not in your account",
+    "translation": "1 baraja que no está en tu cuenta"
+  },
   "ngBvCd": {
     "message": "10 less damage",
     "translation": "10 de daño menos"
@@ -1659,6 +1667,10 @@
   "L-vNWm": {
     "message": "A card's name is too long.",
     "translation": "El nombre de una carta es demasiado largo."
+  },
+  "08IhZS": {
+    "message": "A deck didn't fit in your account",
+    "translation": "Una baraja no cupo en tu cuenta"
   },
   "fbfxt7": {
     "message": "A Pokémon in play can't join a group going to the Bench",
@@ -1783,6 +1795,10 @@
     ],
     "translation": "Activo"
   },
+  "m16xKo": {
+    "message": "Add",
+    "translation": "Añadir"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "Añadir {count} de daño"
@@ -1856,6 +1872,14 @@
       "Opens a form to write what a hand-made card says."
     ],
     "translation": "Añadir texto"
+  },
+  "lTvIUT": {
+    "message": "Add this device's {count} decks to your account?",
+    "translation": "¿Añadir las {count} barajas de este dispositivo a tu cuenta?"
+  },
+  "Osu6-d": {
+    "message": "Add this device's deck to your account?",
+    "translation": "¿Añadir la baraja de este dispositivo a tu cuenta?"
   },
   "ZVI875": {
     "message": "Add to deck",
@@ -3132,6 +3156,10 @@
     "context": "go back to the saved decks",
     "translation": "Barajas"
   },
+  "-zINRr": {
+    "message": "Decks added",
+    "translation": "Barajas añadidas"
+  },
   "xLeOjM": {
     "message": "Decks you import or build are kept here",
     "translation": "Aquí se guardan las barajas que importes o crees"
@@ -4358,6 +4386,10 @@
     "message": "Keep decks and replays everywhere",
     "translation": "Conserva tus barajas y repeticiones en todas partes"
   },
+  "94aPBP": {
+    "message": "Keep your decks and settings here",
+    "translation": "Guarda aquí tus barajas y ajustes"
+  },
   "gsDcZw": {
     "message": "Keyboard map layer",
     "translation": "Capa del mapa del teclado"
@@ -5424,10 +5456,6 @@
     "message": "Only Pokémon in play take damage",
     "translation": "Solo los Pokémon en juego reciben daño"
   },
-  "Z8V1kN": {
-    "message": "Only signs you out on this device",
-    "translation": "Solo cierra la sesión en este dispositivo"
-  },
   "kQ0v6x": {
     "message": "Only that seat's player can.",
     "translation": "Solo el jugador de ese asiento puede hacerlo."
@@ -6221,6 +6249,10 @@
     ],
     "translation": "Quitar este ataque"
   },
+  "Jt5upM": {
+    "message": "Remove your decks and settings from this device",
+    "translation": "Elimina tus barajas y ajustes de este dispositivo"
+  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
@@ -6643,6 +6675,18 @@
     "message": "Saved for this visit only",
     "translation": "Guardado solo para esta visita"
   },
+  "NsOwyo": {
+    "message": "Saved game",
+    "translation": "Partida guardada"
+  },
+  "V_F5oM": {
+    "message": "Saved games",
+    "translation": "Partidas guardadas"
+  },
+  "Q2CRS7": {
+    "message": "Saved to your account",
+    "translation": "Guardado en tu cuenta"
+  },
   "br8YKa": {
     "message": "Saves & replays",
     "translation": "Partidas guardadas y repeticiones"
@@ -7054,6 +7098,10 @@
     "message": "Sign out",
     "translation": "Cerrar sesión"
   },
+  "OelR1j": {
+    "message": "Sign out and clear",
+    "translation": "Cerrar sesión y borrar"
+  },
   "WzENDu": {
     "message": "Sign-in method added",
     "translation": "Método de inicio de sesión añadido"
@@ -7073,6 +7121,10 @@
   "GxoiaQ": {
     "message": "Signed out",
     "translation": "Sesión cerrada"
+  },
+  "qNwERt": {
+    "message": "Signed out and cleared",
+    "translation": "Sesión cerrada y datos borrados"
   },
   "utezqW": {
     "message": "Single Strike",
@@ -7801,6 +7853,10 @@
   "WsAkgd": {
     "message": "This browser won't keep your decks after you close the page.",
     "translation": "Este navegador no guardará tus barajas al cerrar la página."
+  },
+  "UaUf4s": {
+    "message": "This device's decks",
+    "translation": "Barajas de este dispositivo"
   },
   "5PdIYU": {
     "message": "This game will be lost.",

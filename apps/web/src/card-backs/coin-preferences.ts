@@ -4,6 +4,7 @@ import { RECENT_CARD_BACK_PREFERENCES } from './card-back-preferences.js';
 
 export const COIN_PREFERENCES = definePreference({
   key: 'ptcgsim.coin.v1',
+  synced: true,
   defaults: Object.freeze({ coin: STANDARD_COIN }),
   parse: (stored: unknown) => {
     const coin: unknown =
@@ -17,4 +18,5 @@ export const COIN_PREFERENCES = definePreference({
 export const RECENT_COIN_PREFERENCES = definePreference({
   ...RECENT_CARD_BACK_PREFERENCES,
   key: 'ptcgsim.coin-recent.v1',
+  synced: true,
 });
