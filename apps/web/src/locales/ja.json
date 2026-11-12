@@ -2106,6 +2106,10 @@
     "context": "the app toolbar",
     "translation": "アプリ"
   },
+  "qMX0LI": {
+    "message": "Appear offline",
+    "translation": "オフライン表示にする"
+  },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
     "translation": "本当に退出しますか?保存していないゲームデータは失われます。"
@@ -4076,6 +4080,10 @@
     "context": "the list of friends",
     "translation": "フレンド"
   },
+  "0p52Kr": {
+    "message": "Friends see you as offline.",
+    "translation": "フレンドにはオフラインと表示されます。"
+  },
   "N5Cyfw": {
     "message": "Friends since {0}",
     "translation": "{0}からフレンド"
@@ -4474,6 +4482,11 @@
     "message": "Imported deck",
     "translation": "インポートしたデッキ"
   },
+  "v5HyAK": {
+    "message": "In a game",
+    "context": "a friend is playing",
+    "translation": "対戦中"
+  },
   "wUH8Wz": {
     "message": "in deck",
     "comments": [
@@ -4638,6 +4651,13 @@
   "NMzrpD": {
     "message": "Larger cards",
     "translation": "カードを大きく"
+  },
+  "1JpmhC": {
+    "message": "Last seen {0}",
+    "comments": [
+      "e.g. \"Last seen 5 minutes ago\""
+    ],
+    "translation": "最終ログイン: {0}"
   },
   "0Wyf2w": {
     "message": "Lavender",
@@ -5579,6 +5599,11 @@
     "context": "setting",
     "translation": "オフ"
   },
+  "r4xzQE": {
+    "message": "Offline",
+    "context": "a friend is offline",
+    "translation": "オフライン"
+  },
   "zga9sT": {
     "message": "OK",
     "translation": "OK"
@@ -5644,6 +5669,11 @@
     "message": "One more",
     "context": "card count",
     "translation": "1枚増やす"
+  },
+  "MqLcIU": {
+    "message": "Online",
+    "context": "a friend is online",
+    "translation": "オンライン"
   },
   "Ycz7VO": {
     "message": "Online",
@@ -8753,6 +8783,11 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "リプレイを見る…"
+  },
+  "oGWXbZ": {
+    "message": "Watching",
+    "context": "a friend is spectating",
+    "translation": "観戦中"
   },
   "tKJuEd": {
     "message": "Watching",

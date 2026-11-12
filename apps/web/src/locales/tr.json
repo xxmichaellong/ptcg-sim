@@ -2106,6 +2106,10 @@
     "context": "the app toolbar",
     "translation": "Uygulama"
   },
+  "qMX0LI": {
+    "message": "Appear offline",
+    "translation": "Çevrimdışı görün"
+  },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
     "translation": "Ayrılmak istediğine emin misin? Kaydedilmemiş oyun verileri kaybolacak."
@@ -4076,6 +4080,10 @@
     "context": "the list of friends",
     "translation": "Arkadaşlar"
   },
+  "0p52Kr": {
+    "message": "Friends see you as offline.",
+    "translation": "Arkadaşların seni çevrimdışı görür."
+  },
   "N5Cyfw": {
     "message": "Friends since {0}",
     "translation": "{0} tarihinden beri arkadaşsınız"
@@ -4474,6 +4482,11 @@
     "message": "Imported deck",
     "translation": "İçe aktarılan deste"
   },
+  "v5HyAK": {
+    "message": "In a game",
+    "context": "a friend is playing",
+    "translation": "Oyunda"
+  },
   "wUH8Wz": {
     "message": "in deck",
     "comments": [
@@ -4638,6 +4651,13 @@
   "NMzrpD": {
     "message": "Larger cards",
     "translation": "Daha büyük kartlar"
+  },
+  "1JpmhC": {
+    "message": "Last seen {0}",
+    "comments": [
+      "e.g. \"Last seen 5 minutes ago\""
+    ],
+    "translation": "Son görülme: {0}"
   },
   "0Wyf2w": {
     "message": "Lavender",
@@ -5579,6 +5599,11 @@
     "context": "setting",
     "translation": "Kapalı"
   },
+  "r4xzQE": {
+    "message": "Offline",
+    "context": "a friend is offline",
+    "translation": "Çevrimdışı"
+  },
   "zga9sT": {
     "message": "OK",
     "translation": "Tamam"
@@ -5644,6 +5669,11 @@
     "message": "One more",
     "context": "card count",
     "translation": "Bir fazla"
+  },
+  "MqLcIU": {
+    "message": "Online",
+    "context": "a friend is online",
+    "translation": "Çevrimiçi"
   },
   "Ycz7VO": {
     "message": "Online",
@@ -8753,6 +8783,11 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Tekrar izle…"
+  },
+  "oGWXbZ": {
+    "message": "Watching",
+    "context": "a friend is spectating",
+    "translation": "İzliyor"
   },
   "tKJuEd": {
     "message": "Watching",

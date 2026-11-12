@@ -88,6 +88,12 @@
         "name": "PTCG_SIGN_IN",
         "class_name": "PtcgSignIn",
       },
+      // Who is online, for friends (ADR-055): one hub, a row per account
+      // written only when its state changes.
+      {
+        "name": "PTCG_PRESENCE",
+        "class_name": "PtcgPresence",
+      },
     ],
   },
   "ratelimits": [
@@ -234,6 +240,10 @@
       "type": "durable-object",
       "storage": "sqlite",
     },
+    "PtcgPresence": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
   },
   // Once a day: refreshes the deck picker's current lists from Limitless,
   // the deck builder's card catalog from TCGdex, and starts the tournament
@@ -306,6 +316,10 @@
           {
             "name": "PTCG_SIGN_IN",
             "class_name": "PtcgSignIn",
+          },
+          {
+            "name": "PTCG_PRESENCE",
+            "class_name": "PtcgPresence",
           },
         ],
       },
@@ -441,6 +455,10 @@
           "storage": "sqlite",
         },
         "PtcgSignIn": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgPresence": {
           "type": "durable-object",
           "storage": "sqlite",
         },

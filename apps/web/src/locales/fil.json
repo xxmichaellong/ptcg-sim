@@ -2106,6 +2106,10 @@
     "context": "the app toolbar",
     "translation": "App"
   },
+  "qMX0LI": {
+    "message": "Appear offline",
+    "translation": "Magpakita na offline"
+  },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
     "translation": "Sigurado ka bang gusto mong umalis? Mawawala ang anumang hindi na-save na data ng laro."
@@ -4076,6 +4080,10 @@
     "context": "the list of friends",
     "translation": "Mga friend"
   },
+  "0p52Kr": {
+    "message": "Friends see you as offline.",
+    "translation": "Offline ang tingin sa iyo ng mga kaibigan."
+  },
   "N5Cyfw": {
     "message": "Friends since {0}",
     "translation": "Magkaibigan mula {0}"
@@ -4474,6 +4482,11 @@
     "message": "Imported deck",
     "translation": "Na-import na deck"
   },
+  "v5HyAK": {
+    "message": "In a game",
+    "context": "a friend is playing",
+    "translation": "Naglalaro"
+  },
   "wUH8Wz": {
     "message": "in deck",
     "comments": [
@@ -4638,6 +4651,13 @@
   "NMzrpD": {
     "message": "Larger cards",
     "translation": "Mas malalaking card"
+  },
+  "1JpmhC": {
+    "message": "Last seen {0}",
+    "comments": [
+      "e.g. \"Last seen 5 minutes ago\""
+    ],
+    "translation": "Huling nakita {0}"
   },
   "0Wyf2w": {
     "message": "Lavender",
@@ -5579,6 +5599,11 @@
     "context": "setting",
     "translation": "Naka-off"
   },
+  "r4xzQE": {
+    "message": "Offline",
+    "context": "a friend is offline",
+    "translation": "Offline"
+  },
   "zga9sT": {
     "message": "OK",
     "translation": "OK"
@@ -5644,6 +5669,11 @@
     "message": "One more",
     "context": "card count",
     "translation": "Dagdagan ng isa"
+  },
+  "MqLcIU": {
+    "message": "Online",
+    "context": "a friend is online",
+    "translation": "Online"
   },
   "Ycz7VO": {
     "message": "Online",
@@ -8753,6 +8783,11 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Manood ng replay…"
+  },
+  "oGWXbZ": {
+    "message": "Watching",
+    "context": "a friend is spectating",
+    "translation": "Nanonood"
   },
   "tKJuEd": {
     "message": "Watching",

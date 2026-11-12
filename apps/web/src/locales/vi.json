@@ -2106,6 +2106,10 @@
     "context": "the app toolbar",
     "translation": "Ứng dụng"
   },
+  "qMX0LI": {
+    "message": "Appear offline",
+    "translation": "Hiển thị ngoại tuyến"
+  },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
     "translation": "Bạn có chắc muốn rời đi không? Mọi dữ liệu ván đấu chưa lưu sẽ bị mất."
@@ -4076,6 +4080,10 @@
     "context": "the list of friends",
     "translation": "Bạn bè"
   },
+  "0p52Kr": {
+    "message": "Friends see you as offline.",
+    "translation": "Bạn bè thấy bạn đang ngoại tuyến."
+  },
   "N5Cyfw": {
     "message": "Friends since {0}",
     "translation": "Là bạn bè từ {0}"
@@ -4474,6 +4482,11 @@
     "message": "Imported deck",
     "translation": "Bộ bài đã nhập"
   },
+  "v5HyAK": {
+    "message": "In a game",
+    "context": "a friend is playing",
+    "translation": "Đang trong trận"
+  },
   "wUH8Wz": {
     "message": "in deck",
     "comments": [
@@ -4638,6 +4651,13 @@
   "NMzrpD": {
     "message": "Larger cards",
     "translation": "Lá bài lớn hơn"
+  },
+  "1JpmhC": {
+    "message": "Last seen {0}",
+    "comments": [
+      "e.g. \"Last seen 5 minutes ago\""
+    ],
+    "translation": "Hoạt động lần cuối {0}"
   },
   "0Wyf2w": {
     "message": "Lavender",
@@ -5579,6 +5599,11 @@
     "context": "setting",
     "translation": "Tắt"
   },
+  "r4xzQE": {
+    "message": "Offline",
+    "context": "a friend is offline",
+    "translation": "Ngoại tuyến"
+  },
   "zga9sT": {
     "message": "OK",
     "translation": "OK"
@@ -5644,6 +5669,11 @@
     "message": "One more",
     "context": "card count",
     "translation": "Thêm một lá"
+  },
+  "MqLcIU": {
+    "message": "Online",
+    "context": "a friend is online",
+    "translation": "Trực tuyến"
   },
   "Ycz7VO": {
     "message": "Online",
@@ -8753,6 +8783,11 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Xem bản xem lại…"
+  },
+  "oGWXbZ": {
+    "message": "Watching",
+    "context": "a friend is spectating",
+    "translation": "Đang xem"
   },
   "tKJuEd": {
     "message": "Watching",

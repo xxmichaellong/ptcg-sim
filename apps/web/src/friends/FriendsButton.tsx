@@ -6,8 +6,7 @@ import { useCompactLayout } from '../ui/breakpoints.js';
 import { SettingsGroup, SettingsLinkRow } from '../ui/SettingsList.js';
 import { Tooltip } from '../ui/Tooltip.js';
 import { openFriends, useFriendsAvailable } from './friends-sheet-state.js';
-import { useFriends } from './friends-state.js';
-import { useOnlineFriends } from './friends-presence.js';
+import { useFriends, useOnlineFriends } from './friends-state.js';
 import './friends.css';
 
 /**

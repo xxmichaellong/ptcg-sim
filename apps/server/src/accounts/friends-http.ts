@@ -50,12 +50,18 @@ const isFriendAction = (value: unknown): value is FriendAction =>
 export type FriendsRoute =
   | { readonly kind: 'friends' }
   | { readonly kind: 'friend'; readonly id: string }
-  | { readonly kind: 'player'; readonly id: string };
+  | { readonly kind: 'player'; readonly id: string }
+  /** `PUT { appearOffline }` (step 2). */
+  | { readonly kind: 'settings' }
+  /** A tab's live line, a WebSocket to its account (step 2). */
+  | { readonly kind: 'live' };
 
 const ID = '(a_[A-Za-z0-9_-]{16})';
 
 export const friendsRoute = (pathname: string): FriendsRoute | undefined => {
   if (pathname === '/v2/friends') return { kind: 'friends' };
+  if (pathname === '/v2/friends/settings') return { kind: 'settings' };
+  if (pathname === '/v2/account/live') return { kind: 'live' };
   const friend = new RegExp(`^/v2/friends/${ID}$`, 'u').exec(pathname);
   if (friend?.[1]) return { kind: 'friend', id: friend[1] };
   const player = new RegExp(`^/v2/players/${ID}$`, 'u').exec(pathname);
@@ -76,6 +82,13 @@ export interface FriendsAccountObject {
     readonly friends: FriendsView;
   } | null>;
   publicProfile(): Promise<FriendProfile | null>;
+  setAppearOffline(
+    secretHash: string,
+    now: number,
+    hidden: boolean
+  ): Promise<FriendsView | null>;
+  /** Takes the live line's upgrade (checks the session itself). */
+  fetch(request: Request): Promise<Response>;
 }
 
 export interface FriendsHttpDependencies {
@@ -102,11 +115,76 @@ const readAction = async (request: Request): Promise<FriendAction | undefined> =
   }
 };
 
+const readHidden = async (request: Request): Promise<boolean | undefined> => {
+  if (!isIdentityJsonRequest(request)) return undefined;
+  try {
+    const value: unknown = Reflect.get(
+      Object(await readBoundedJsonRequest(request, 256)),
+      'appearOffline'
+    );
+    return typeof value === 'boolean' ? value : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * The live line: a same-origin WebSocket upgrade, counted, handed to the
+ * account's object, which checks the session itself.
+ */
+const openLive = async (
+  request: Request,
+  dependencies: FriendsHttpDependencies
+): Promise<Response> => {
+  if (request.method !== 'GET') {
+    return json({ error: 'method_not_allowed' }, 405, { Allow: 'GET' });
+  }
+  if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') {
+    return json({ error: 'upgrade_required' }, 426);
+  }
+  const origin = request.headers.get('Origin');
+  if (origin !== new URL(request.url).origin) {
+    return json({ error: 'forbidden' }, 403);
+  }
+  const token = readSessionToken(request);
+  if (!token) return signedOut(request);
+  const decision = await dependencies.rateLimit();
+  if (!decision.allowed) {
+    return json({ error: 'rate_limited' }, 429, {
+      'Retry-After': String(decision.retryAfterSeconds),
+    });
+  }
+  return dependencies.account(token.accountId).fetch(request);
+};
+
 export const handleFriendsRequest = async (
   request: Request,
   route: FriendsRoute,
   dependencies: FriendsHttpDependencies
 ): Promise<Response> => {
+  if (route.kind === 'live') return openLive(request, dependencies);
+  if (route.kind === 'settings') {
+    if (request.method !== 'PUT') {
+      return json({ error: 'method_not_allowed' }, 405, { Allow: 'PUT' });
+    }
+    if (!isSameOriginBrowserRequest(request)) {
+      return json({ error: 'forbidden' }, 403);
+    }
+    const hidden = await readHidden(request);
+    if (hidden === undefined) return json({ error: 'invalid_request' }, 400);
+    const token = readSessionToken(request);
+    if (!token) return signedOut(request);
+    const decision = await dependencies.rateLimit();
+    if (!decision.allowed) {
+      return json({ error: 'rate_limited' }, 429, {
+        'Retry-After': String(decision.retryAfterSeconds),
+      });
+    }
+    const friends = await dependencies
+      .account(token.accountId)
+      .setAppearOffline(await sha256Hex(token.secret), dependencies.now(), hidden);
+    return friends ? json({ friends: { ...friends } }, 200) : signedOut(request);
+  }
   const reading = route.kind !== 'friend';
   if (reading && request.method !== 'GET') {
     return json({ error: 'method_not_allowed' }, 405, { Allow: 'GET' });

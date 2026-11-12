@@ -2106,6 +2106,10 @@
     "context": "the app toolbar",
     "translation": "Приложение"
   },
+  "qMX0LI": {
+    "message": "Appear offline",
+    "translation": "Показывать себя не в сети"
+  },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
     "translation": "Ты уверен, что хочешь выйти? Все несохранённые данные игры будут потеряны."
@@ -4076,6 +4080,10 @@
     "context": "the list of friends",
     "translation": "Друзья"
   },
+  "0p52Kr": {
+    "message": "Friends see you as offline.",
+    "translation": "Друзья видят тебя не в сети."
+  },
   "N5Cyfw": {
     "message": "Friends since {0}",
     "translation": "Друзья с {0}"
@@ -4474,6 +4482,11 @@
     "message": "Imported deck",
     "translation": "Импортированная колода"
   },
+  "v5HyAK": {
+    "message": "In a game",
+    "context": "a friend is playing",
+    "translation": "В игре"
+  },
   "wUH8Wz": {
     "message": "in deck",
     "comments": [
@@ -4638,6 +4651,13 @@
   "NMzrpD": {
     "message": "Larger cards",
     "translation": "Крупные карты"
+  },
+  "1JpmhC": {
+    "message": "Last seen {0}",
+    "comments": [
+      "e.g. \"Last seen 5 minutes ago\""
+    ],
+    "translation": "Был(а) в сети {0}"
   },
   "0Wyf2w": {
     "message": "Lavender",
@@ -5579,6 +5599,11 @@
     "context": "setting",
     "translation": "Выкл."
   },
+  "r4xzQE": {
+    "message": "Offline",
+    "context": "a friend is offline",
+    "translation": "Не в сети"
+  },
   "zga9sT": {
     "message": "OK",
     "translation": "ОК"
@@ -5644,6 +5669,11 @@
     "message": "One more",
     "context": "card count",
     "translation": "На одну больше"
+  },
+  "MqLcIU": {
+    "message": "Online",
+    "context": "a friend is online",
+    "translation": "В сети"
   },
   "Ycz7VO": {
     "message": "Online",
@@ -8753,6 +8783,11 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Смотреть повтор…"
+  },
+  "oGWXbZ": {
+    "message": "Watching",
+    "context": "a friend is spectating",
+    "translation": "Наблюдает"
   },
   "tKJuEd": {
     "message": "Watching",

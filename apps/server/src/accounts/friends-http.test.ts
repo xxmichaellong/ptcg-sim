@@ -38,6 +38,12 @@ const setup = async () => {
       return { answer: { outcome: 'sent', name: 'May' }, friends: EMPTY };
     },
     publicProfile: async () => ({ id: DAWN, name: 'Dawn', avatar: 'initials' }),
+    setAppearOffline: async (hash, _now, hidden) => {
+      if (hash !== secretHash) return null;
+      changes.push(`appear-offline:${String(hidden)}`);
+      return { ...EMPTY, appearOffline: hidden };
+    },
+    fetch: async () => new Response('live', { status: 200 }),
   };
   const may: FriendsAccountObject = {
     ...dawn,
@@ -112,6 +118,35 @@ describe('friends over HTTP', () => {
       friends: EMPTY,
     });
     expect(changes).toEqual([`request:${MAY}`]);
+  });
+
+  it('sets Appear offline, and hands a same-origin live line to the account', async () => {
+    const { send, changes } = await setup();
+    const set = await send('/v2/friends/settings', {
+      ...post({ appearOffline: true }),
+      method: 'PUT',
+    });
+    expect(await set.json()).toEqual({
+      friends: { ...EMPTY, appearOffline: true },
+    });
+    expect(changes).toEqual(['appear-offline:true']);
+    const upgrade = { Upgrade: 'websocket', Origin: ORIGIN };
+    expect(await (await send('/v2/account/live', { headers: upgrade })).text()).toBe(
+      'live'
+    );
+    expect(
+      (
+        await send('/v2/account/live', {
+          headers: { ...upgrade, Origin: 'https://evil.example' },
+        })
+      ).status
+    ).toBe(403);
+    expect((await send('/v2/account/live', { headers: { Origin: ORIGIN } })).status).toBe(
+      426
+    );
+    expect(
+      (await send('/v2/account/live', { headers: upgrade, signedIn: false })).status
+    ).toBe(401);
   });
 
   it('refuses the signed out, other sites, odd actions and floods', async () => {

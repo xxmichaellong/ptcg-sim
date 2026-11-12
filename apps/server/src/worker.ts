@@ -23,7 +23,11 @@ import {
   accountRoute,
   handleAccountRequest,
 } from './accounts/account-http.js';
-import { PtcgAccount, PtcgSignIn } from './accounts/account-objects.js';
+import {
+  PtcgAccount,
+  PtcgPresence,
+  PtcgSignIn,
+} from './accounts/account-objects.js';
 import {
   readSessionToken,
   sha256Hex as sessionSecretHash,
@@ -237,6 +241,8 @@ interface Env {
   /** Accounts (ADR-052): one per account, one per provider id. */
   readonly PTCG_ACCOUNT: DurableObjectNamespace<PtcgAccount>;
   readonly PTCG_SIGN_IN: DurableObjectNamespace<PtcgSignIn>;
+  /** Who is online, for friends (ADR-055): one hub. */
+  readonly PTCG_PRESENCE: DurableObjectNamespace<PtcgPresence>;
   readonly SIGN_IN_RATE_LIMITER: RateLimit;
   readonly ACCOUNT_RATE_LIMITER: RateLimit;
   /**
@@ -2167,6 +2173,6 @@ const worker: ExportedHandler<Env> = {
   },
 };
 
-export { PtcgAccount, PtcgSignIn };
+export { PtcgAccount, PtcgPresence, PtcgSignIn };
 
 export default worker;

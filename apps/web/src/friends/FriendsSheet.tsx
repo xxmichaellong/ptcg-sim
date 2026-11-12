@@ -1,6 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { CaretLeftIcon } from '@phosphor-icons/react/dist/csr/CaretLeft';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
+import { EyeSlashIcon } from '@phosphor-icons/react/dist/csr/EyeSlash';
 import { LinkIcon } from '@phosphor-icons/react/dist/csr/Link';
 import { ProhibitIcon } from '@phosphor-icons/react/dist/csr/Prohibit';
 import { UserMinusIcon } from '@phosphor-icons/react/dist/csr/UserMinus';
@@ -17,6 +18,7 @@ import {
   SettingsGroup,
   SettingsIcon,
   SettingsLinkRow,
+  SettingsSwitchRow,
 } from '../ui/SettingsList.js';
 import { toast } from '../ui/toast.js';
 import { onFriendLink, takeFriendLink } from './friend-link-capture.js';
@@ -26,13 +28,17 @@ import {
   isUserId,
   lookUpPlayer,
   type FriendAction,
+  type FriendEntry,
+  type FriendPresence,
   type FriendProfile,
   type FriendsList,
 } from './friends-api.js';
+import { usePresence, usePresenceMap } from './friends-presence.js';
 import {
   changeFriend,
   markRequestsSeen,
   refreshFriends,
+  setAppearOffline,
   setOpenFriendsHandler,
   useFriends,
 } from './friends-state.js';
@@ -53,6 +59,67 @@ import './friends.css';
  * Add a friend takes a User ID or an invite link; a player's page has
  * their actions, with Remove and Block apart.
  */
+
+/** "5 minutes ago", "yesterday", in the page's language. */
+const ago = (time: number, locale: string): string => {
+  const minutes = Math.round((time - Date.now()) / 60_000);
+  const format = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  if (Math.abs(minutes) < 60)
+    return format.format(Math.min(0, minutes), 'minute');
+  const hours = Math.round(minutes / 60);
+  if (Math.abs(hours) < 24) return format.format(hours, 'hour');
+  return format.format(Math.round(hours / 24), 'day');
+};
+
+/** A friend's presence: a light, and Online, In a game, Watching or when. */
+const PresenceLine = ({
+  presence,
+}: {
+  readonly presence: FriendPresence | undefined;
+}) => {
+  const { t, i18n } = useLingui();
+  const state = presence?.state ?? 'offline';
+  const text =
+    state === 'online'
+      ? t({ message: 'Online', context: 'a friend is online' })
+      : state === 'playing'
+        ? t({ message: 'In a game', context: 'a friend is playing' })
+        : state === 'watching'
+          ? t({ message: 'Watching', context: 'a friend is spectating' })
+          : presence?.lastSeen
+            ? t({
+                message: `Last seen ${ago(presence.lastSeen, i18n.locale)}`,
+                comment: 'e.g. "Last seen 5 minutes ago"',
+              })
+            : t({ message: 'Offline', context: 'a friend is offline' });
+  return (
+    <span className="friends-status" data-state={state}>
+      <span className="friends-status__light" aria-hidden="true" />
+      {text}
+    </span>
+  );
+};
+
+/** In a game, then watching, then online, then offline by last seen. */
+const PRESENCE_RANK: Readonly<Record<FriendPresence['state'], number>> = {
+  playing: 0,
+  watching: 1,
+  online: 2,
+  offline: 3,
+};
+
+const byPresence =
+  (presence: ReadonlyMap<string, FriendPresence>) =>
+  (left: FriendEntry, right: FriendEntry): number => {
+    const a = presence.get(left.id);
+    const b = presence.get(right.id);
+    return (
+      PRESENCE_RANK[a?.state ?? 'offline'] -
+        PRESENCE_RANK[b?.state ?? 'offline'] ||
+      (b?.lastSeen ?? 0) - (a?.lastSeen ?? 0) ||
+      left.name.localeCompare(right.name)
+    );
+  };
 
 const formatDate = (time: number, locale: string): string =>
   new Date(time).toLocaleDateString(locale, {
@@ -166,7 +233,9 @@ const relationOf = (list: FriendsList, id: string) =>
 const HomePage = () => {
   const { t, i18n } = useLingui();
   const { status, list } = useFriends();
+  const presence = usePresenceMap();
   const { busy, run } = useChange();
+  const friends = [...list.friends].sort(byPresence(presence));
   // Coming back to the list reads it again: answers may have come.
   useEffect(() => {
     void refreshFriends();
@@ -180,6 +249,16 @@ const HomePage = () => {
   return (
     <>
       <SettingsGroup>
+        <SettingsSwitchRow
+          id="friendsAppearOffline"
+          icon={EyeSlashIcon}
+          tone="slate"
+          label={t`Appear offline`}
+          subtitle={t`Friends see you as offline.`}
+          checked={list.appearOffline}
+          disabled={status !== 'ready'}
+          onChange={(checked) => void setAppearOffline(checked)}
+        />
         <SettingsLinkRow
           id="friendsAddRow"
           icon={UserPlusIcon}
@@ -219,7 +298,7 @@ const HomePage = () => {
         heading={t({ message: 'Friends', context: 'the list of friends' })}
         id="friendsList"
       >
-        {list.friends.length === 0 ? (
+        {friends.length === 0 ? (
           <div className="settings-row friends-empty" data-kind="block">
             {status === 'loading' ? (
               <Trans>Loading friends…</Trans>
@@ -232,12 +311,12 @@ const HomePage = () => {
             )}
           </div>
         ) : (
-          list.friends.map((entry) => (
+          friends.map((entry) => (
             <PersonRow
               key={entry.id}
               rowId={`friend-${entry.id}`}
               person={entry}
-              subtitle={t`Friends since ${formatDate(entry.since, i18n.locale)}`}
+              subtitle={<PresenceLine presence={presence.get(entry.id)} />}
               onOpen={() => push({ kind: 'player', id: entry.id })}
             />
           ))
@@ -523,6 +602,7 @@ const PlayerPage = ({ id }: { readonly id: string }) => {
   const { list } = useFriends();
   const { busy, run } = useChange();
   const relation = relationOf(list, id);
+  const presence = usePresence(id);
   const entry =
     list.friends.find((item) => item.id === id) ??
     list.incoming.find((item) => item.id === id) ??
@@ -556,6 +636,11 @@ const PlayerPage = ({ id }: { readonly id: string }) => {
           <AccountAvatar account={person} size={56} />
           <span className="settings-row__text">
             <span className="settings-row__label">{person.name}</span>
+            {relation === 'friend' ? (
+              <span className="settings-row__subtitle" id="friendPresence">
+                <PresenceLine presence={presence} />
+              </span>
+            ) : null}
             {subtitle ? (
               <span className="settings-row__subtitle">{subtitle}</span>
             ) : null}

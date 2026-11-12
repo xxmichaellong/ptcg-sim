@@ -2106,6 +2106,10 @@
     "context": "the app toolbar",
     "translation": "แอป"
   },
+  "qMX0LI": {
+    "message": "Appear offline",
+    "translation": "แสดงสถานะออฟไลน์"
+  },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
     "translation": "ต้องการออกหรือไม่ ข้อมูลเกมที่ยังไม่ได้บันทึกจะหายไป"
@@ -4076,6 +4080,10 @@
     "context": "the list of friends",
     "translation": "เพื่อน"
   },
+  "0p52Kr": {
+    "message": "Friends see you as offline.",
+    "translation": "เพื่อนจะเห็นว่าคุณออฟไลน์"
+  },
   "N5Cyfw": {
     "message": "Friends since {0}",
     "translation": "เป็นเพื่อนกันตั้งแต่ {0}"
@@ -4474,6 +4482,11 @@
     "message": "Imported deck",
     "translation": "เด็คที่นำเข้า"
   },
+  "v5HyAK": {
+    "message": "In a game",
+    "context": "a friend is playing",
+    "translation": "กำลังเล่นเกม"
+  },
   "wUH8Wz": {
     "message": "in deck",
     "comments": [
@@ -4638,6 +4651,13 @@
   "NMzrpD": {
     "message": "Larger cards",
     "translation": "การ์ดขนาดใหญ่ขึ้น"
+  },
+  "1JpmhC": {
+    "message": "Last seen {0}",
+    "comments": [
+      "e.g. \"Last seen 5 minutes ago\""
+    ],
+    "translation": "ออนไลน์ล่าสุด {0}"
   },
   "0Wyf2w": {
     "message": "Lavender",
@@ -5579,6 +5599,11 @@
     "context": "setting",
     "translation": "ปิด"
   },
+  "r4xzQE": {
+    "message": "Offline",
+    "context": "a friend is offline",
+    "translation": "ออฟไลน์"
+  },
   "zga9sT": {
     "message": "OK",
     "translation": "ตกลง"
@@ -5644,6 +5669,11 @@
     "message": "One more",
     "context": "card count",
     "translation": "มากขึ้นหนึ่งใบ"
+  },
+  "MqLcIU": {
+    "message": "Online",
+    "context": "a friend is online",
+    "translation": "ออนไลน์"
   },
   "Ycz7VO": {
     "message": "Online",
@@ -8753,6 +8783,11 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "ดูรีเพลย์…"
+  },
+  "oGWXbZ": {
+    "message": "Watching",
+    "context": "a friend is spectating",
+    "translation": "กำลังดู"
   },
   "tKJuEd": {
     "message": "Watching",

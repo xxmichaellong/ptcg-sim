@@ -59,8 +59,69 @@ const browser = () => {
         body: JSON.stringify({ action }),
       })
     ).json()) as { outcome: string; name?: string };
-  return { fetch, signIn, friends, act };
+  /** The tab's live line: messages as they come, and a way to wait for one. */
+  const live = async () => {
+    const response = await fetch('/v2/account/live', {
+      headers: { Upgrade: 'websocket', Origin: ORIGIN },
+    });
+    const socket = response.webSocket;
+    if (!socket) throw new Error(`no socket: ${String(response.status)}`);
+    socket.accept();
+    const messages: unknown[] = [];
+    const waiting: {
+      readonly test: (message: unknown) => boolean;
+      readonly resolve: (message: unknown) => void;
+    }[] = [];
+    socket.addEventListener('message', (event) => {
+      if (typeof event.data !== 'string' || event.data === 'pong') return;
+      const message: unknown = JSON.parse(event.data);
+      messages.push(message);
+      for (const waiter of [...waiting]) {
+        if (waiter.test(message)) {
+          waiting.splice(waiting.indexOf(waiter), 1);
+          waiter.resolve(message);
+        }
+      }
+    });
+    const next = (test: (message: unknown) => boolean) =>
+      new Promise<unknown>((resolve, reject) => {
+        const found = messages.find(test);
+        if (found) {
+          messages.splice(messages.indexOf(found), 1);
+          resolve(found);
+          return;
+        }
+        waiting.push({ test, resolve });
+        setTimeout(
+          () =>
+            reject(
+              new Error(`no such message; had ${JSON.stringify(messages)}`)
+            ),
+          5000
+        );
+      });
+    const send = (message: unknown) => socket.send(JSON.stringify(message));
+    return { socket, next, send };
+  };
+  return { fetch, signIn, friends, act, live };
 };
+
+const presenceOf =
+  (id: string, state: string) =>
+  (message: unknown): boolean => {
+    const value = message as {
+      type?: string;
+      id?: string;
+      view?: { state?: string };
+      friends?: Record<string, { state?: string }>;
+    };
+    return (
+      value.type === 'presence' &&
+      (value.id === id
+        ? value.view?.state === state
+        : value.friends?.[id]?.state === state)
+    );
+  };
 
 const someone = (name: string) =>
   `${name} ${Math.random().toString(36).slice(2, 7)}`;
@@ -112,5 +173,51 @@ describe('friends, through the Worker', () => {
       body: JSON.stringify({ expectedAccountId: dawnId }),
     });
     expect((await may.friends()).friends).toEqual([]);
+  }, 30_000);
+
+  it('tells friends who is online, in a game and gone, over live lines', async () => {
+    const dawn = browser();
+    const may = browser();
+    const dawnId = await dawn.signIn(someone('Dawn'));
+    const mayId = await may.signIn(someone('May'));
+    await dawn.act(mayId, 'request');
+    await may.act(dawnId, 'accept');
+
+    const dawnTab = await dawn.live();
+    dawnTab.send({ type: 'hello', where: { kind: 'none' } });
+    await dawnTab.next(presenceOf(mayId, 'offline'));
+
+    const mayTab = await may.live();
+    mayTab.send({ type: 'hello', where: { kind: 'none' } });
+    // May hears Dawn is online; Dawn hears May came online.
+    await mayTab.next(presenceOf(dawnId, 'online'));
+    await dawnTab.next(presenceOf(mayId, 'online'));
+
+    // In a game: the room's code comes with it, to join through.
+    mayTab.send({
+      type: 'where',
+      where: { kind: 'room', role: 'player', room: 'K7PQ' },
+    });
+    const playing = (await dawnTab.next(presenceOf(mayId, 'playing'))) as {
+      view: { room?: string };
+    };
+    expect(playing.view.room).toBe('K7PQ');
+
+    // Appear offline: Dawn sees May offline though her tab is open.
+    await may.fetch('/v2/friends/settings', {
+      method: 'PUT',
+      headers: { Origin: ORIGIN, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ appearOffline: true }),
+    });
+    await dawnTab.next(presenceOf(mayId, 'offline'));
+    const listed = (await (await dawn.fetch('/v2/friends')).json()) as {
+      friends: { presence: Record<string, { state: string }> };
+    };
+    expect(listed.friends.presence[mayId]?.state).toBe('offline');
+
+    // Dawn closing her tab tells May.
+    dawnTab.socket.close(1000, 'bye');
+    await mayTab.next(presenceOf(dawnId, 'offline'));
+    mayTab.socket.close(1000, 'bye');
   }, 30_000);
 });

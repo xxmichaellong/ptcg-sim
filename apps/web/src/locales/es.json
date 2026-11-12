@@ -2106,6 +2106,10 @@
     "context": "the app toolbar",
     "translation": "App"
   },
+  "qMX0LI": {
+    "message": "Appear offline",
+    "translation": "Aparecer desconectado"
+  },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
     "translation": "¿Seguro que quieres salir? Se perderán los datos de partida sin guardar."
@@ -4076,6 +4080,10 @@
     "context": "the list of friends",
     "translation": "Amigos"
   },
+  "0p52Kr": {
+    "message": "Friends see you as offline.",
+    "translation": "Tus amigos te ven desconectado."
+  },
   "N5Cyfw": {
     "message": "Friends since {0}",
     "translation": "Amigos desde {0}"
@@ -4474,6 +4482,11 @@
     "message": "Imported deck",
     "translation": "Baraja importada"
   },
+  "v5HyAK": {
+    "message": "In a game",
+    "context": "a friend is playing",
+    "translation": "En partida"
+  },
   "wUH8Wz": {
     "message": "in deck",
     "comments": [
@@ -4638,6 +4651,13 @@
   "NMzrpD": {
     "message": "Larger cards",
     "translation": "Cartas más grandes"
+  },
+  "1JpmhC": {
+    "message": "Last seen {0}",
+    "comments": [
+      "e.g. \"Last seen 5 minutes ago\""
+    ],
+    "translation": "Última conexión: {0}"
   },
   "0Wyf2w": {
     "message": "Lavender",
@@ -5579,6 +5599,11 @@
     "context": "setting",
     "translation": "Desactivado"
   },
+  "r4xzQE": {
+    "message": "Offline",
+    "context": "a friend is offline",
+    "translation": "Desconectado"
+  },
   "zga9sT": {
     "message": "OK",
     "translation": "Aceptar"
@@ -5644,6 +5669,11 @@
     "message": "One more",
     "context": "card count",
     "translation": "Una más"
+  },
+  "MqLcIU": {
+    "message": "Online",
+    "context": "a friend is online",
+    "translation": "Conectado"
   },
   "Ycz7VO": {
     "message": "Online",
@@ -8753,6 +8783,11 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Ver repetición…"
+  },
+  "oGWXbZ": {
+    "message": "Watching",
+    "context": "a friend is spectating",
+    "translation": "Viendo"
   },
   "tKJuEd": {
     "message": "Watching",

@@ -12,10 +12,17 @@ import {
   EMPTY_FRIENDS,
   fetchFriends,
   postFriendChange,
+  putAppearOffline,
   type FriendAction,
   type FriendChangeAnswer,
   type FriendsList,
 } from './friends-api.js';
+import {
+  clearPresence,
+  presenceOf,
+  replacePresence,
+  subscribePresence,
+} from './friends-presence.js';
 
 /**
  * The signed-in player's friends (ADR-055), for every screen: read when
@@ -44,6 +51,9 @@ const listeners = new Set<() => void>();
 const publish = (next: FriendsSnapshot): void => {
   snapshot = next;
   noticeRequests(next);
+  // A list read with its friends' presence brings that up to date too.
+  if (next.status === 'signed-out') clearPresence();
+  else if (next.list.presence) replacePresence(next.list.presence);
   for (const listener of listeners) listener();
 };
 
@@ -58,6 +68,27 @@ export const subscribeFriends = (listener: () => void): (() => void) => {
 
 export const useFriends = (): FriendsSnapshot =>
   useSyncExternalStore(subscribeFriends, friendsSnapshot, friendsSnapshot);
+
+const onlineCount = (): number =>
+  snapshot.list.friends.filter((entry) => {
+    const state = presenceOf(entry.id)?.state;
+    return state !== undefined && state !== 'offline';
+  }).length;
+
+/** How many friends are online now: the bar's count. */
+export const useOnlineFriends = (): number =>
+  useSyncExternalStore(
+    (listener) => {
+      const unsubscribePresence = subscribePresence(listener);
+      const unsubscribeFriends = subscribeFriends(listener);
+      return () => {
+        unsubscribePresence();
+        unsubscribeFriends();
+      };
+    },
+    onlineCount,
+    onlineCount
+  );
 
 // ---- Requests announced once a device ------------------------------------
 
@@ -229,6 +260,35 @@ const outcomeNotice = (
  * Changes one friendship and says how it went. Taps are spaced as the
  * server asks: one that comes too soon waits its second and goes once.
  */
+/** When this tab last changed the list: its own echo is not read again. */
+let changedAt = 0;
+export const changedJustNow = (): boolean => Date.now() - changedAt < 1500;
+
+/** Appear offline on or off (ADR-055 presence). */
+export const setAppearOffline = async (hidden: boolean): Promise<void> => {
+  const accountId = snapshot.accountId;
+  if (!accountId) return;
+  // Shown at once; put back if the server says no.
+  publish({ ...snapshot, list: { ...snapshot.list, appearOffline: hidden } });
+  try {
+    const list = await putAppearOffline(hidden);
+    changedAt = Date.now();
+    if (accountSnapshot().account?.id === accountId) {
+      publish({ status: 'ready', list, accountId });
+    }
+  } catch {
+    publish({
+      ...snapshot,
+      list: { ...snapshot.list, appearOffline: !hidden },
+    });
+    toast({
+      id: 'friend-change',
+      title: t`Couldn't do that. Try again.`,
+      tone: 'danger',
+    });
+  }
+};
+
 export const changeFriend = async (
   id: string,
   action: FriendAction
@@ -253,6 +313,7 @@ export const changeFriend = async (
     });
     return undefined;
   }
+  changedAt = Date.now();
   if (accountId && accountSnapshot().account?.id === accountId) {
     publish({ status: 'ready', list: answer.friends, accountId });
   }

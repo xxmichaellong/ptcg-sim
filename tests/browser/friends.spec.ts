@@ -93,9 +93,8 @@ test('adds a friend by User ID, answers from the list, removes', async ({
   await expect(
     toast(may.page, `You and ${dawn.name} are now friends!`)
   ).toBeVisible();
-  await expect(may.page.locator(`#friend-${dawn.id}`)).toContainText(
-    'Friends since'
-  );
+  // Dawn's tab is open: she shows online.
+  await expect(may.page.locator(`#friend-${dawn.id}`)).toContainText('Online');
 
   // Dawn sees May among her friends, and removes her from May's page.
   await dawn.page.locator('#friendsBackButton').click();
@@ -136,7 +135,15 @@ test('an invite link opens Friends on the player, and the button shows waiting r
     'Request sent'
   );
 
-  // May's button says requests wait once her list is read again.
+  // May hears at once, on her live line: a notice, and the button's dot.
+  await expect(
+    toast(may.page, `${dawn.name} wants to be friends`)
+  ).toBeVisible();
+  await expect(may.page.locator('#friendsButton')).toHaveAttribute(
+    'data-requests',
+    'true'
+  );
+  // Read again, the request isn't announced twice.
   await may.page.reload();
   await expect(
     may.page.locator(
@@ -147,10 +154,69 @@ test('an invite link opens Friends on the player, and the button shows waiting r
     'data-requests',
     'true'
   );
-  await expect(
-    toast(may.page, `${dawn.name} wants to be friends`)
-  ).toBeVisible();
+  await expect(toast(may.page, `${dawn.name} wants to be friends`)).toHaveCount(
+    0
+  );
 
   await dawn.context.close();
+  await may.context.close();
+});
+
+/** Befriends two signed-in players through the routes, as the sheet would. */
+const befriend = async (
+  first: { readonly page: Page; readonly id: string },
+  second: { readonly page: Page; readonly id: string }
+): Promise<void> => {
+  const act = (page: Page, id: string, action: string) =>
+    page.evaluate(
+      async ({ id: other, action: change }) =>
+        (
+          (await (
+            await fetch(`/v2/friends/${other}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: change }),
+            })
+          ).json()) as { outcome: string }
+        ).outcome,
+      { id, action }
+    );
+  expect(await act(first.page, second.id, 'request')).toBe('sent');
+  expect(await act(second.page, first.id, 'accept')).toBe('friends');
+};
+
+test('friends see each other come and go, and appear offline', async ({
+  browser,
+}) => {
+  test.setTimeout(120_000);
+  const dawn = await player(browser, someone('Dawn'));
+  const may = await player(browser, someone('May'));
+  await befriend(dawn, may);
+
+  // The bar counts friends online, once the list says so.
+  await may.page.reload();
+  await expect(
+    may.page.locator(
+      '[data-app-route="remote-room"][data-session-phase="ready"]'
+    )
+  ).toBeVisible({ timeout: 30_000 });
+  const badge = may.page.locator('#friendsButton .ptcgsim-rail-button__badge');
+  await expect(badge).toHaveText('1');
+  await openFriends(may.page);
+  const row = may.page.locator(`#friend-${dawn.id}`);
+  await expect(row).toContainText('Online');
+
+  // Dawn appears offline: May sees her go, live.
+  await openFriends(dawn.page);
+  await dawn.page.locator('label[for="friendsAppearOffline"]').click();
+  await expect(dawn.page.locator('#friendsAppearOffline')).toBeChecked();
+  await expect(row).toContainText('Last seen');
+  await expect(badge).toHaveCount(0);
+
+  // And back, then gone for real when her page closes.
+  await dawn.page.locator('label[for="friendsAppearOffline"]').click();
+  await expect(row).toContainText('Online');
+  await dawn.context.close();
+  await expect(row).toContainText('Last seen', { timeout: 15_000 });
   await may.context.close();
 });

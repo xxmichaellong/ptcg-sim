@@ -16,6 +16,7 @@ import { App, type AppRoute } from './App.js';
 import { CommandPaletteHost } from './commands/CommandPalette.js';
 import { FriendsSheetHost } from './friends/FriendsSheet.js';
 import { startFriends } from './friends/friends-state.js';
+import { startFriendsLive } from './friends/friends-live.js';
 import { ShortcutsDialogHost } from './hotkeys/ShortcutsDialog.js';
 import { installLeaveGuard } from './leave-guard.js';
 import { installPageMotion } from './motion/page-motion.js';
@@ -112,8 +113,10 @@ await startLocalization();
 // or another tab tells this one.
 startAccount();
 startAccountSync();
-// The signed-in player's friends (ADR-055).
+// The signed-in player's friends (ADR-055), and the tab's live line to
+// the account for their presence.
 startFriends();
+startFriendsLive();
 
 // One overlay host for the whole page: the lobby, the room, the Deck panel
 // and the dev room all raise their dialogs and toasts through it.

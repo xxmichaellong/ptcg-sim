@@ -1,4 +1,5 @@
 import { isAccountId } from './account-session.js';
+import type { PresenceView } from './presence-hub.js';
 import {
   isAccountAvatar,
   type AccountAvatar,
@@ -319,6 +320,8 @@ export interface FriendsView {
   readonly blocked: readonly FriendProfile[];
   readonly recent: readonly RecentPlayer[];
   readonly appearOffline: boolean;
+  /** Friends' presence, by id, where the hub could be asked (step 2). */
+  readonly presence?: Readonly<Record<string, PresenceView>>;
 }
 
 /** Recent players listed, newest first. */

@@ -2106,6 +2106,10 @@
     "context": "the app toolbar",
     "translation": "App"
   },
+  "qMX0LI": {
+    "message": "Appear offline",
+    "translation": "Visa som offline"
+  },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
     "translation": "Vill du verkligen lämna? All osparad speldata går förlorad."
@@ -4076,6 +4080,10 @@
     "context": "the list of friends",
     "translation": "Vänner"
   },
+  "0p52Kr": {
+    "message": "Friends see you as offline.",
+    "translation": "Vänner ser dig som offline."
+  },
   "N5Cyfw": {
     "message": "Friends since {0}",
     "translation": "Vänner sedan {0}"
@@ -4474,6 +4482,11 @@
     "message": "Imported deck",
     "translation": "Importerad lek"
   },
+  "v5HyAK": {
+    "message": "In a game",
+    "context": "a friend is playing",
+    "translation": "I ett spel"
+  },
   "wUH8Wz": {
     "message": "in deck",
     "comments": [
@@ -4638,6 +4651,13 @@
   "NMzrpD": {
     "message": "Larger cards",
     "translation": "Större kort"
+  },
+  "1JpmhC": {
+    "message": "Last seen {0}",
+    "comments": [
+      "e.g. \"Last seen 5 minutes ago\""
+    ],
+    "translation": "Senast sedd {0}"
   },
   "0Wyf2w": {
     "message": "Lavender",
@@ -5579,6 +5599,11 @@
     "context": "setting",
     "translation": "Av"
   },
+  "r4xzQE": {
+    "message": "Offline",
+    "context": "a friend is offline",
+    "translation": "Offline"
+  },
   "zga9sT": {
     "message": "OK",
     "translation": "OK"
@@ -5644,6 +5669,11 @@
     "message": "One more",
     "context": "card count",
     "translation": "Ett till"
+  },
+  "MqLcIU": {
+    "message": "Online",
+    "context": "a friend is online",
+    "translation": "Online"
   },
   "Ycz7VO": {
     "message": "Online",
@@ -8753,6 +8783,11 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Titta på repris…"
+  },
+  "oGWXbZ": {
+    "message": "Watching",
+    "context": "a friend is spectating",
+    "translation": "Tittar på"
   },
   "tKJuEd": {
     "message": "Watching",

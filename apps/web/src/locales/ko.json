@@ -2106,6 +2106,10 @@
     "context": "the app toolbar",
     "translation": "앱"
   },
+  "qMX0LI": {
+    "message": "Appear offline",
+    "translation": "오프라인으로 표시"
+  },
   "Lx0XC_": {
     "message": "Are you sure you want to leave? Any unsaved game data will be lost.",
     "translation": "정말 나가시겠습니까? 저장하지 않은 게임 데이터가 사라집니다."
@@ -4076,6 +4080,10 @@
     "context": "the list of friends",
     "translation": "친구"
   },
+  "0p52Kr": {
+    "message": "Friends see you as offline.",
+    "translation": "친구에게 오프라인으로 보입니다."
+  },
   "N5Cyfw": {
     "message": "Friends since {0}",
     "translation": "{0}부터 친구"
@@ -4474,6 +4482,11 @@
     "message": "Imported deck",
     "translation": "가져온 덱"
   },
+  "v5HyAK": {
+    "message": "In a game",
+    "context": "a friend is playing",
+    "translation": "게임 중"
+  },
   "wUH8Wz": {
     "message": "in deck",
     "comments": [
@@ -4638,6 +4651,13 @@
   "NMzrpD": {
     "message": "Larger cards",
     "translation": "카드 크게"
+  },
+  "1JpmhC": {
+    "message": "Last seen {0}",
+    "comments": [
+      "e.g. \"Last seen 5 minutes ago\""
+    ],
+    "translation": "마지막 접속 {0}"
   },
   "0Wyf2w": {
     "message": "Lavender",
@@ -5579,6 +5599,11 @@
     "context": "setting",
     "translation": "끔"
   },
+  "r4xzQE": {
+    "message": "Offline",
+    "context": "a friend is offline",
+    "translation": "오프라인"
+  },
   "zga9sT": {
     "message": "OK",
     "translation": "확인"
@@ -5644,6 +5669,11 @@
     "message": "One more",
     "context": "card count",
     "translation": "한 장 더"
+  },
+  "MqLcIU": {
+    "message": "Online",
+    "context": "a friend is online",
+    "translation": "온라인"
   },
   "Ycz7VO": {
     "message": "Online",
@@ -8753,6 +8783,11 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "리플레이 보기…"
+  },
+  "oGWXbZ": {
+    "message": "Watching",
+    "context": "a friend is spectating",
+    "translation": "관전 중"
   },
   "tKJuEd": {
     "message": "Watching",

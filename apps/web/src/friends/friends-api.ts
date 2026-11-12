@@ -1,3 +1,5 @@
+import { ROOM_ALIAS_PATTERN } from '@ptcgsim/protocol';
+
 import { AccountRequestError } from '../account/account-api.js';
 
 /**
@@ -35,6 +37,61 @@ export interface RecentPlayer {
   readonly playedAt: number;
 }
 
+export const PRESENCE_STATES = [
+  'online',
+  'playing',
+  'watching',
+  'offline',
+] as const;
+export type PresenceState = (typeof PRESENCE_STATES)[number];
+
+/**
+ * Where a friend is (ADR-055 presence): Online, In a game, Watching, or
+ * Offline with when they were last seen.
+ */
+export interface FriendPresence {
+  readonly state: PresenceState;
+  /** Offline: when they were last seen. */
+  readonly lastSeen?: number;
+  /**
+   * Their room's code, to join or watch through (never shown): only for a
+   * friend in a game or watching who doesn't appear offline.
+   */
+  readonly room?: string;
+}
+
+const isPresenceState = (value: unknown): value is PresenceState =>
+  (PRESENCE_STATES as readonly unknown[]).includes(value);
+
+/** A presence from the server, checked. */
+export const readPresence = (value: unknown): FriendPresence | undefined => {
+  const state: unknown = Reflect.get(Object(value), 'state');
+  const lastSeen: unknown = Reflect.get(Object(value), 'lastSeen');
+  const room: unknown = Reflect.get(Object(value), 'room');
+  if (!isPresenceState(state)) return undefined;
+  return {
+    state,
+    ...(typeof lastSeen === 'number' ? { lastSeen } : {}),
+    ...(typeof room === 'string' && ROOM_ALIAS_PATTERN.test(room)
+      ? { room }
+      : {}),
+  };
+};
+
+/** Presences by friend, checked. */
+export const readPresenceMap = (
+  value: unknown
+): Readonly<Record<string, FriendPresence>> => {
+  const entries: Record<string, FriendPresence> = {};
+  if (value && typeof value === 'object') {
+    for (const [id, item] of Object.entries(value)) {
+      const presence = readPresence(item);
+      if (isUserId(id) && presence) entries[id] = presence;
+    }
+  }
+  return entries;
+};
+
 export interface FriendsList {
   readonly friends: readonly FriendEntry[];
   readonly incoming: readonly FriendEntry[];
@@ -42,6 +99,8 @@ export interface FriendsList {
   readonly blocked: readonly FriendProfile[];
   readonly recent: readonly RecentPlayer[];
   readonly appearOffline: boolean;
+  /** Friends' presence as the list was read, where the hub answered. */
+  readonly presence?: Readonly<Record<string, FriendPresence>>;
 }
 
 export const EMPTY_FRIENDS: FriendsList = Object.freeze({
@@ -147,6 +206,9 @@ export const readFriendsList = (value: unknown): FriendsList => {
     blocked: list(read('blocked'), readProfile),
     recent: list(read('recent'), readRecent),
     appearOffline: read('appearOffline') === true,
+    ...(read('presence') === undefined
+      ? {}
+      : { presence: readPresenceMap(read('presence')) }),
   };
 };
 
@@ -204,6 +266,17 @@ export const postFriendChange = async (
 };
 
 /** Who an id belongs to; undefined when nobody has it. */
+/** Appear offline on or off; answers the list. */
+export const putAppearOffline = async (
+  appearOffline: boolean
+): Promise<FriendsList> =>
+  readFriendsList(
+    Reflect.get(
+      Object(await send('/v2/friends/settings', 'PUT', { appearOffline })),
+      'friends'
+    )
+  );
+
 export const lookUpPlayer = async (
   id: string
 ): Promise<FriendProfile | undefined> => {

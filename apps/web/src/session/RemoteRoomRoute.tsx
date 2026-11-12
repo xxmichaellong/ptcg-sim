@@ -105,6 +105,7 @@ import {
   stopWatching,
 } from '../account/account-replay-player.js';
 import { useAccount } from '../account/account-state.js';
+import { FriendsWhere } from '../friends/friends-live.js';
 import { roomCommands } from '../commands/room-commands.js';
 import { tutorialLessonCommands } from '../commands/ui-commands.js';
 
@@ -1233,6 +1234,26 @@ export const RemoteRoomRoute = ({
                 drawn, never while it is still arriving. */}
             <DeckScreenWarmup ready={state.sessionPhase === 'ready'} />
             <AccountSeat runtime={runtime} />
+            {/* Where friends see this tab (ADR-055): an online room, as
+                its player or a spectator, or nowhere. */}
+            <FriendsWhere
+              where={
+                !solo &&
+                !replaying &&
+                tutorial === undefined &&
+                roomCode &&
+                state.sessionPhase === 'ready'
+                  ? {
+                      kind: 'room',
+                      role:
+                        state.view?.viewer.kind === 'player'
+                          ? 'player'
+                          : 'spectator',
+                      room: roomCode,
+                    }
+                  : { kind: 'none' }
+              }
+            />
             <AccountReplayTable
               enabled={
                 live.canImportReplay &&
