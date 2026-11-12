@@ -1872,7 +1872,7 @@ describe('table layout (geometry v2)', () => {
       );
       // The name is in the pill on a wide window; a portrait phone's hand
       // keeps its strip and sets the name beside the pill (2026-11-12).
-      expect(pill.nameRoomPx ?? 0, label).toBe(width < 500 ? 0 : 96);
+      expect(pill.nameRoomPx ?? 0, label).toBe(width < 500 ? 0 : 72);
       const mat = region(snapshot, 'local', 'deck').physicalDeclaredBounds;
       expect(hand.x + hand.width, label).toBeGreaterThanOrEqual(
         Math.min(mat.x + mat.width, width - 12) - 0.01

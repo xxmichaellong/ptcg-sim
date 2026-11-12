@@ -216,7 +216,7 @@ const HAND_PILL_HEIGHT_PX = 26;
  * device QA left it); less than HAND_PILL_NAME_MIN_PX is no room at all,
  * and the web app sets the name beside the pill instead.
  */
-const HAND_PILL_NAME_MAX_PX = 96;
+const HAND_PILL_NAME_MAX_PX = 72;
 const HAND_PILL_NAME_MIN_PX = 48;
 const HAND_STRIP_KEPT_PX = 420;
 

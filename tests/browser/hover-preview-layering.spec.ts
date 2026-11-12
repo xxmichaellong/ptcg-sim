@@ -81,7 +81,15 @@ const paint = (page: Page, drawer: string) =>
 
 const hover = async (page: Page, last = false) => {
   const cards = page.locator('[data-in-hand][data-card-side="local"]');
-  await (last ? cards.last() : cards.first()).hover();
+  // The first card is read where it shows: a hand fanned into a narrow
+  // strip (a docked log) lays the next card over the first one's middle.
+  if (last) await cards.last().hover();
+  else {
+    const box = await cards.first().boundingBox();
+    await cards
+      .first()
+      .hover({ position: { x: 8, y: (box?.height ?? 80) / 2 } });
+  }
   const inspector = page.locator('[data-card-inspector][data-open="true"]');
   await expect(inspector).toBeVisible();
   await expect(inspector).toHaveCSS('opacity', '1');
