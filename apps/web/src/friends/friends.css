@@ -1,0 +1,104 @@
+/* Friends (FriendsSheet.tsx, ADR-055), in Settings' rows. */
+
+.settings-row.friends-row {
+  cursor: auto;
+  gap: var(--space-2);
+}
+
+/* A person's avatar and words, as one press that opens their page. */
+.friends-row__open {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.friends-row__open:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.friends-row > .settings-row__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.friends-row .settings-row__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friends-row__state {
+  flex: none;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+/* Status beside a friend's name (presence, ADR-055 step 2). */
+.friends-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.friends-status__light {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-text-faint);
+}
+
+.friends-status[data-state='online'] .friends-status__light {
+  background: oklch(0.72 0.15 150);
+}
+
+.friends-status[data-state='playing'] .friends-status__light {
+  background: oklch(0.78 0.14 82);
+}
+
+.friends-status[data-state='watching'] .friends-status__light {
+  background: oklch(0.72 0.12 255);
+}
+
+.settings-row.friends-empty {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+.friends-add__field {
+  width: 100%;
+}
+
+.friends-add__field .ds-input {
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+/* The bar's people button: waiting requests light a small dot. */
+.ptcgsim-friends-button {
+  position: relative;
+}
+
+.ptcgsim-friends-button[data-requests='true']::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: oklch(0.9 0.035 80);
+  box-shadow: 0 0 0 2px oklch(0.25 0.02 60 / 0.9);
+  pointer-events: none;
+}

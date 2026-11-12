@@ -100,6 +100,10 @@
     ],
     "translation": "{0}장 선택됨"
   },
+  "eC0xf_": {
+    "message": "{0} wants to be friends",
+    "translation": "{0}님이 친구가 되고 싶어 합니다"
+  },
   "THa0qf": {
     "message": "{0}, {count} in deck",
     "translation": "{0}, 덱에 {count}장"
@@ -805,6 +809,20 @@
     ],
     "translation": "{label}, 새 항목 {badge}개"
   },
+  "Jijcis": {
+    "message": "{label}, {online} online",
+    "comments": [
+      "The Friends button with how many friends are online"
+    ],
+    "translation": "{label}, {online}명 접속 중"
+  },
+  "xi1vOj": {
+    "message": "{label}, {waiting} requests",
+    "comments": [
+      "The Friends button while friend requests wait"
+    ],
+    "translation": "{label}, 요청 {waiting}개"
+  },
   "VOuY7n": {
     "message": "{label}: {spoken}. Change",
     "comments": [
@@ -913,12 +931,20 @@
     ],
     "translation": "{name}의 벤치"
   },
+  "u3z-wx": {
+    "message": "{name} blocked",
+    "translation": "{name}님을 차단했습니다"
+  },
   "Mk1A2U": {
     "message": "{name} board",
     "comments": [
       "A zone's name for screen readers; name is its player. The open play area."
     ],
     "translation": "{name}의 보드"
+  },
+  "xpUnH3": {
+    "message": "{name} can't take friend requests right now",
+    "translation": "{name}님은 지금 친구 요청을 받을 수 없습니다"
   },
   "IensRv": {
     "message": "{name} changed {card} into {category, select, energy {an energy} pokemon {a Pokémon} trainer {a tool} other {an unknown type}}",
@@ -1216,6 +1242,10 @@
     ],
     "translation": "{name}님이 {card}의 특수 상태를 없앴습니다"
   },
+  "uVKANG": {
+    "message": "{name} unblocked",
+    "translation": "{name}님의 차단을 해제했습니다"
+  },
   "cV1aTX": {
     "message": "{name} used",
     "comments": [
@@ -1308,6 +1338,10 @@
       "Shown across the table when a player starts their turn."
     ],
     "translation": "{name}님의 차례"
+  },
+  "S6v-69": {
+    "message": "{online} online",
+    "translation": "{online}명 접속 중"
   },
   "cgJmF-": {
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
@@ -1520,6 +1554,10 @@
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
     "translation": "{viewer}님이 {owner}님의 {source, select, hand {패} prizes {프라이즈} discard {트래쉬} board {보드} stadium {스타디움} active {배틀필드} bench {벤치} lostZone {로스트존} attachmentResolution {붙은 카드} inspection {확인 구역} other {덱}}에 있는 카드 확인을 마쳤습니다"
+  },
+  "VnR9fs": {
+    "message": "{waiting} requests",
+    "translation": "요청 {waiting}개"
   },
   "-AEMvi": {
     "message": "{zoneName}, {0} selected",
@@ -1741,6 +1779,11 @@
     "context": "sleeve",
     "translation": "포인트"
   },
+  "7Zf_4b": {
+    "message": "Accept",
+    "context": "a friend request",
+    "translation": "수락"
+  },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
     "translation": "우선 제안, 기능 요청, 문제 해결 지원을 위한 전용 Discord 채널에 접근할 수 있습니다."
@@ -1807,6 +1850,15 @@
     "message": "Add",
     "translation": "추가"
   },
+  "H4GEd-": {
+    "message": "Add",
+    "context": "add as a friend",
+    "translation": "추가"
+  },
+  "BDfqMd": {
+    "message": "Add {0} as a friend",
+    "translation": "{0}님을 친구로 추가"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "데미지 {count} 추가"
@@ -1814,6 +1866,10 @@
   "T-qRMv": {
     "message": "Add a card that isn't listed",
     "translation": "목록에 없는 카드 추가"
+  },
+  "fJzzbI": {
+    "message": "Add a friend",
+    "translation": "친구 추가"
   },
   "mOTci6": {
     "message": "Add a multi-piece card",
@@ -1853,6 +1909,10 @@
   "mOz7te": {
     "message": "Add damage…",
     "translation": "데미지 추가…"
+  },
+  "lICjHG": {
+    "message": "Add friend",
+    "translation": "친구 추가"
   },
   "Pn1N14": {
     "message": "Add one",
@@ -2026,6 +2086,11 @@
     "message": "Announce mulligan",
     "translation": "멀리건 알림"
   },
+  "nGkdoK": {
+    "message": "Answer",
+    "context": "a friend request",
+    "translation": "응답"
+  },
   "Y_nxYt": {
     "message": "Any",
     "context": "filter",
@@ -2185,6 +2250,11 @@
     "context": "replay: one step back",
     "translation": "뒤로"
   },
+  "ifZryV": {
+    "message": "Back",
+    "context": "to the friends page before",
+    "translation": "뒤로"
+  },
   "_8WPEl": {
     "message": "Back",
     "context": "to the settings page before",
@@ -2292,6 +2362,18 @@
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
     "translation": "<0>{0}</0>도 벤치로 내보내세요."
+  },
+  "CJkEfx": {
+    "message": "Block",
+    "translation": "차단"
+  },
+  "n_j1xf": {
+    "message": "Block {0}?",
+    "translation": "{0}님을 차단하시겠습니까?"
+  },
+  "32TndD": {
+    "message": "Blocked",
+    "translation": "차단됨"
   },
   "O2HdKg": {
     "message": "Board",
@@ -2417,6 +2499,23 @@
   "dEgA5A": {
     "message": "Cancel",
     "translation": "취소"
+  },
+  "NCLglM": {
+    "message": "Cancel",
+    "context": "a sent friend request",
+    "translation": "취소"
+  },
+  "HoYkSd": {
+    "message": "Cancel request",
+    "translation": "요청 취소"
+  },
+  "BEZRSx": {
+    "message": "Cancel request to {0}",
+    "translation": "{0}님에게 보낸 요청 취소"
+  },
+  "e1e3Eb": {
+    "message": "Cancel your friend request to {0}?",
+    "translation": "{0}님에게 보낸 친구 요청을 취소하시겠습니까?"
   },
   "4GkLKV": {
     "message": "Caps",
@@ -2858,6 +2957,10 @@
     "message": "Couldn't copy the link",
     "translation": "링크를 복사하지 못했습니다"
   },
+  "HlJJR9": {
+    "message": "Couldn't copy. Try again.",
+    "translation": "복사하지 못했습니다. 다시 시도하세요."
+  },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "방을 만들 수 없습니다. 다시 시도하세요."
@@ -2873,6 +2976,10 @@
   "vighKL": {
     "message": "Couldn't disconnect. Try again.",
     "translation": "연결을 해제하지 못했습니다. 다시 시도하세요."
+  },
+  "PZXB_f": {
+    "message": "Couldn't do that. Try again.",
+    "translation": "처리하지 못했습니다. 다시 시도하세요."
   },
   "2TYlNr": {
     "message": "Couldn't get an image from that link.",
@@ -2894,9 +3001,17 @@
     "message": "Couldn't load this",
     "translation": "불러올 수 없습니다"
   },
+  "JeVfD4": {
+    "message": "Couldn't load your friends.",
+    "translation": "친구 목록을 불러오지 못했습니다."
+  },
   "ZHwYJT": {
     "message": "Couldn't load your games. Try again.",
     "translation": "게임을 불러오지 못했습니다. 다시 시도하세요."
+  },
+  "_ukJJq": {
+    "message": "Couldn't look that up. Try again.",
+    "translation": "조회하지 못했습니다. 다시 시도하세요."
   },
   "w--GsN": {
     "message": "Couldn't open that file",
@@ -3211,6 +3326,15 @@
   "6soIXc": {
     "message": "Decks, replays, friends & more, on every device.",
     "translation": "덱, 리플레이, 친구 등을 모든 기기에서 이용하세요."
+  },
+  "7Ky3Xn": {
+    "message": "Decline",
+    "context": "a friend request",
+    "translation": "거절"
+  },
+  "KuA7Zt": {
+    "message": "Decline {0}",
+    "translation": "{0}님 거절"
   },
   "cnGeoo": {
     "message": "Delete",
@@ -3929,6 +4053,33 @@
     "context": "deck format",
     "translation": "포맷"
   },
+  "OkDDjA": {
+    "message": "Friend request sent to {name}",
+    "translation": "{name}님에게 친구 요청을 보냈습니다"
+  },
+  "RjrvaO": {
+    "message": "Friend requests",
+    "translation": "친구 요청"
+  },
+  "rztzRH": {
+    "message": "Friends",
+    "context": "already friends",
+    "translation": "친구"
+  },
+  "OVlhKw": {
+    "message": "Friends",
+    "context": "the friends sheet",
+    "translation": "친구"
+  },
+  "kqnCg6": {
+    "message": "Friends",
+    "context": "the list of friends",
+    "translation": "친구"
+  },
+  "N5Cyfw": {
+    "message": "Friends since {0}",
+    "translation": "{0}부터 친구"
+  },
   "hGDVDa": {
     "message": "From {0}",
     "comments": [
@@ -4361,6 +4512,10 @@
     "message": "Invitation link ready",
     "translation": "초대 링크가 준비되었습니다"
   },
+  "qsqt0w": {
+    "message": "Invite link",
+    "translation": "초대 링크"
+  },
   "KLJ4eD": {
     "message": "Invite link copied",
     "translation": "초대 링크를 복사했습니다"
@@ -4428,6 +4583,11 @@
   "N2lSEn": {
     "message": "Joins matching pieces",
     "translation": "같은 조각을 합칩니다"
+  },
+  "QbFLpT": {
+    "message": "Keep",
+    "context": "a friend",
+    "translation": "유지"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -4629,6 +4789,10 @@
     "message": "Loading events…",
     "translation": "이벤트 불러오는 중…"
   },
+  "_o0pHI": {
+    "message": "Loading friends…",
+    "translation": "친구를 불러오는 중…"
+  },
   "Pwqkdw": {
     "message": "Loading…",
     "translation": "불러오는 중…"
@@ -4736,6 +4900,10 @@
   "pKU2VG": {
     "message": "Looking at cards",
     "translation": "카드를 보는 중"
+  },
+  "7R-0aV": {
+    "message": "Looking…",
+    "translation": "찾는 중…"
   },
   "cGgbAH": {
     "message": "Lost the room during the replay.",
@@ -5249,6 +5417,10 @@
     "message": "No foil",
     "translation": "포일 없음"
   },
+  "QY50Ed": {
+    "message": "No friends yet. Share your User ID or invite link to add one.",
+    "translation": "아직 친구가 없습니다. 사용자 ID나 초대 링크를 공유해 친구를 추가하세요."
+  },
   "nivaRq": {
     "message": "No list",
     "translation": "리스트 없음"
@@ -5267,6 +5439,10 @@
   "mNXjQA": {
     "message": "No match",
     "translation": "일치하는 항목 없음"
+  },
+  "jZr9la": {
+    "message": "No player has that ID.",
+    "translation": "해당 ID의 플레이어가 없습니다."
   },
   "v5Ta3F": {
     "message": "No Pokémon by that name",
@@ -5706,6 +5882,10 @@
     "message": "Paste a link to an image.",
     "translation": "이미지 링크를 붙여넣으세요."
   },
+  "t95T01": {
+    "message": "Paste a User ID or invite link",
+    "translation": "유저 ID 또는 초대 링크 붙여넣기"
+  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "상세 정보를 신고 내용에 붙여넣으세요. 문제를 찾는 데 도움이 됩니다."
@@ -5815,6 +5995,10 @@
   "hrmat7": {
     "message": "Play these decks",
     "translation": "이 덱으로 플레이"
+  },
+  "Vcesbu": {
+    "message": "Played {0}",
+    "translation": "{0} 플레이"
   },
   "2qhgQG": {
     "message": "Played last",
@@ -6156,6 +6340,10 @@
     ],
     "translation": "최근"
   },
+  "4KDShY": {
+    "message": "Recent players",
+    "translation": "최근 플레이한 플레이어"
+  },
   "gcoiFh": {
     "message": "Reconnect",
     "translation": "다시 연결"
@@ -6228,6 +6416,15 @@
     ],
     "translation": "리마인더"
   },
+  "AnDcX_": {
+    "message": "Remove",
+    "context": "a friend",
+    "translation": "삭제"
+  },
+  "HfbMnA": {
+    "message": "Remove {0} as a friend?",
+    "translation": "{0}님을 친구에서 삭제할까요?"
+  },
   "HLazKQ": {
     "message": "Remove {name}",
     "translation": "{name} 제거"
@@ -6262,6 +6459,10 @@
   "sR6lTH": {
     "message": "Remove condition",
     "translation": "상태 제거"
+  },
+  "LZlsoq": {
+    "message": "Remove friend",
+    "translation": "친구 삭제"
   },
   "8IMRlK": {
     "message": "Remove from {seat}",
@@ -6357,6 +6558,10 @@
   "732i9s": {
     "message": "Report on Discord",
     "translation": "Discord에서 신고"
+  },
+  "1RVBJe": {
+    "message": "Request sent",
+    "translation": "요청을 보냈습니다"
   },
   "OfhWJH": {
     "message": "Reset",
@@ -6894,6 +7099,10 @@
     "message": "Send message",
     "translation": "메시지 보내기"
   },
+  "_VW54L": {
+    "message": "Sent requests",
+    "translation": "보낸 요청"
+  },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
     "translation": "솔직히 구독해 주실 분이 있을 거라고는 생각하지 않지만, 그래도 정말 감사할 것 같습니다."
@@ -6978,6 +7187,10 @@
   "Z8lGw6": {
     "message": "Share",
     "translation": "공유"
+  },
+  "LdSvsJ": {
+    "message": "Share it so friends can add you.",
+    "translation": "친구가 나를 추가할 수 있도록 공유하세요."
   },
   "2D-NYE": {
     "message": "Shift",
@@ -7233,6 +7446,10 @@
   "Se3Re8": {
     "message": "Sleeve sheen",
     "translation": "슬리브 광택"
+  },
+  "H2UIkh": {
+    "message": "Slow down! Try again in a moment.",
+    "translation": "너무 빠릅니다. 잠시 후 다시 시도하세요."
   },
   "P12gHj": {
     "message": "Smaller cards",
@@ -7743,17 +7960,34 @@
     "message": "That image is over 20 MB.",
     "translation": "이미지가 20MB를 넘습니다."
   },
+  "KB3gFS": {
+    "message": "That isn't a User ID.",
+    "translation": "유저 ID가 아닙니다."
+  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "건너뛰었습니다."
+  },
+  "YRGPpX": {
+    "message": "That player",
+    "context": "friends",
+    "translation": "해당 플레이어"
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
     "translation": "리플레이 파일을 열 수 없습니다."
   },
+  "BfMjlP": {
+    "message": "That request was withdrawn",
+    "translation": "요청이 철회되었습니다"
+  },
   "6Z1wXH": {
     "message": "That side starts over with the new deck",
     "translation": "새 덱으로 해당 쪽이 처음부터 다시 시작됩니다"
+  },
+  "drHrdz": {
+    "message": "That's your own User ID.",
+    "translation": "내 유저 ID입니다."
   },
   "hPwR-j": {
     "message": "The card went back.",
@@ -8288,6 +8522,18 @@
     "context": "item",
     "translation": "하이퍼볼"
   },
+  "tuS5Jz": {
+    "message": "Unblock",
+    "translation": "차단 해제"
+  },
+  "TQMvTB": {
+    "message": "Unblock {0}",
+    "translation": "{0}님 차단 해제"
+  },
+  "mw1HnN": {
+    "message": "Unblock {name} to send a friend request",
+    "translation": "친구 요청을 보내려면 {name}님의 차단을 해제하세요"
+  },
   "9uI_rE": {
     "message": "Undo",
     "translation": "되돌리기"
@@ -8417,6 +8663,14 @@
     "message": "User ID",
     "translation": "사용자 ID"
   },
+  "PNJdRU": {
+    "message": "User ID copied",
+    "translation": "유저 ID를 복사했습니다"
+  },
+  "ELEf3-": {
+    "message": "User ID or invite link",
+    "translation": "유저 ID 또는 초대 링크"
+  },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
     "translation": "Limitless TCG의 검색 구문을 사용합니다."
@@ -8474,9 +8728,18 @@
     "message": "VSTAR marker",
     "translation": "VSTAR 마커"
   },
+  "BjBy0G": {
+    "message": "Wait",
+    "context": "keep a request",
+    "translation": "보류"
+  },
   "LE8SQj": {
     "message": "Wallpaper {0}",
     "translation": "배경화면 {0}"
+  },
+  "6fsB0P": {
+    "message": "Wants to be friends",
+    "translation": "친구가 되고 싶어 합니다"
   },
   "vbMHW0": {
     "message": "Watch",
@@ -8586,13 +8849,45 @@
     "context": "filter",
     "translation": "예"
   },
+  "xi-TMk": {
+    "message": "You and {name} are now friends!",
+    "translation": "{name}님과 친구가 되었습니다!"
+  },
+  "7pucj_": {
+    "message": "You can ask {name} again tomorrow",
+    "translation": "내일 {name}님에게 다시 요청할 수 있습니다"
+  },
+  "qc_qoy": {
+    "message": "You can have up to 200 friends",
+    "translation": "친구는 최대 200명까지 둘 수 있습니다"
+  },
+  "kFU-ep": {
+    "message": "You can send another one tomorrow.",
+    "translation": "내일 다시 보낼 수 있습니다."
+  },
+  "Jlf4l7": {
+    "message": "You can send them a new friend request any time.",
+    "translation": "언제든지 새 친구 요청을 보낼 수 있습니다."
+  },
   "aylG7j": {
     "message": "You can't move that card",
     "translation": "그 카드는 옮길 수 없습니다"
   },
+  "wRa3wc": {
+    "message": "You have {count} friend requests",
+    "translation": "친구 요청이 {count}개 있습니다"
+  },
+  "gymL5v": {
+    "message": "You won't be friends, and they can't send you requests or invites. They won't be told.",
+    "translation": "서로 친구가 되지 않으며, 상대는 나에게 요청이나 초대를 보낼 수 없습니다. 상대에게 알림은 가지 않습니다."
+  },
   "VvkF_g": {
     "message": "You're watching",
     "translation": "관전 중입니다"
+  },
+  "npW9N-": {
+    "message": "You've sent 50 requests. Wait for answers or cancel some.",
+    "translation": "요청을 50개 보냈습니다. 응답을 기다리거나 일부를 취소하세요."
   },
   "vblI2b": {
     "message": "Your account already has a {name} sign-in",
@@ -8632,6 +8927,10 @@
     "message": "Your discard pile",
     "translation": "내 트래쉬"
   },
+  "a4OOqX": {
+    "message": "Your friend can copy their User ID from Account, in Settings.",
+    "translation": "친구는 설정의 계정에서 자신의 유저 ID를 복사할 수 있습니다."
+  },
   "pa5Fda": {
     "message": "Your games",
     "translation": "내 게임"
@@ -8663,6 +8962,10 @@
   "yuM-lV": {
     "message": "Your turn",
     "translation": "내 차례"
+  },
+  "yBT9fU": {
+    "message": "Your User ID",
+    "translation": "내 유저 ID"
   },
   "X0l3In": {
     "message": "Yours",

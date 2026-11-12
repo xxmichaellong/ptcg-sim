@@ -328,6 +328,23 @@ export class AccountStoreSql {
     this.sql.exec('DELETE FROM session WHERE hash = ?', secretHash);
   }
 
+  /**
+   * Who this account is to another player (ADR-055): its id, name and
+   * avatar, with no session. Nothing for an account never made.
+   */
+  publicProfile():
+    | {
+        readonly id: string;
+        readonly name: string;
+        readonly avatar: AccountAvatar;
+      }
+    | undefined {
+    const profile = this.profile();
+    return profile
+      ? { id: profile.id, name: profile.name, avatar: profile.avatar }
+      : undefined;
+  }
+
   /** Changes the name and/or avatar; unchanged values write nothing. */
   update(
     secretHash: string,

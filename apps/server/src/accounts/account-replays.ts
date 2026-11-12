@@ -21,6 +21,7 @@ import {
   type ReplayFiling,
   type ReplayFilingMeta,
 } from '../replay-archive.js';
+import { isAccountId } from './account-session.js';
 import type { AccountSql } from './account-store.js';
 
 /**
@@ -60,6 +61,8 @@ export interface ReplayListing {
   readonly parts: number;
   readonly players: readonly string[];
   readonly playerOrder: readonly string[];
+  /** Each seat's account in `playerOrder`, '' for nobody signed in. */
+  readonly accounts?: readonly string[];
   /** The seat it is watched from. */
   readonly viewer: string;
   readonly mode: AuthorityMode;
@@ -104,6 +107,13 @@ export const readReplayFilingMeta = (
     moves,
     players: strings(value['players'], 4),
     playerOrder: strings(value['playerOrder'], 4),
+    ...(Array.isArray(value['accounts'])
+      ? {
+          accounts: strings(value['accounts'], 4).map((account) =>
+            isAccountId(account) ? account : ''
+          ),
+        }
+      : {}),
     viewer,
     mode,
     truncated,

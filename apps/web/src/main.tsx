@@ -3,6 +3,8 @@
 import { pageOpenedBy } from './session/invitation-link-capture.js';
 // A shared game's link (ADR-053) likewise.
 import './account/replay-link-capture.js';
+// And a friend's invite link (ADR-055).
+import './friends/friend-link-capture.js';
 // Then the language, active before any other module runs.
 import { startLocalization } from './i18n/localization.js';
 import { watchCardImageFailures } from './i18n/card-image-language.js';
@@ -12,6 +14,8 @@ import { startAccount } from './account/account-state.js';
 import { startAccountSync } from './account/account-sync.js';
 import { App, type AppRoute } from './App.js';
 import { CommandPaletteHost } from './commands/CommandPalette.js';
+import { FriendsSheetHost } from './friends/FriendsSheet.js';
+import { startFriends } from './friends/friends-state.js';
 import { ShortcutsDialogHost } from './hotkeys/ShortcutsDialog.js';
 import { installLeaveGuard } from './leave-guard.js';
 import { installPageMotion } from './motion/page-motion.js';
@@ -108,6 +112,8 @@ await startLocalization();
 // or another tab tells this one.
 startAccount();
 startAccountSync();
+// The signed-in player's friends (ADR-055).
+startFriends();
 
 // One overlay host for the whole page: the lobby, the room, the Deck panel
 // and the dev room all raise their dialogs and toasts through it.
@@ -135,6 +141,7 @@ createRoot(root).render(
       <ShortcutsDialogHost />
       <CommandPaletteHost />
       <HelpSheetHost />
+      <FriendsSheetHost />
     </OverlayHost>
   </StrictMode>
 );

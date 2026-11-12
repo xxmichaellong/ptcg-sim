@@ -39,6 +39,7 @@ import {
   SignInMethodsPage,
   SignInPage,
 } from '../../account/AccountPages.js';
+import { FriendsSettingsRow } from '../../friends/FriendsButton.js';
 import {
   AccountReplaysPage,
   AccountReplaysRow,
@@ -1117,6 +1118,7 @@ export const SettingsSheet = ({
         <>
           {' '}
           <AccountRow navigate={pages.navigate} />
+          <FriendsSettingsRow onOpen={context.leave} />
           <HomePage context={context} menu={menu} boardFlip={boardFlip} />
         </>
       ) : top === 'signIn' ? (

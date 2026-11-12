@@ -100,6 +100,10 @@
     ],
     "translation": "已选择 {0} 张"
   },
+  "eC0xf_": {
+    "message": "{0} wants to be friends",
+    "translation": "{0} 想加你为好友"
+  },
   "THa0qf": {
     "message": "{0}, {count} in deck",
     "translation": "{0}，卡组中{count}张"
@@ -805,6 +809,20 @@
     ],
     "translation": "{label}，{badge}条新消息"
   },
+  "Jijcis": {
+    "message": "{label}, {online} online",
+    "comments": [
+      "The Friends button with how many friends are online"
+    ],
+    "translation": "{label}，{online} 人在线"
+  },
+  "xi1vOj": {
+    "message": "{label}, {waiting} requests",
+    "comments": [
+      "The Friends button while friend requests wait"
+    ],
+    "translation": "{label}，{waiting} 个请求"
+  },
   "VOuY7n": {
     "message": "{label}: {spoken}. Change",
     "comments": [
@@ -913,12 +931,20 @@
     ],
     "translation": "{name}的备战区"
   },
+  "u3z-wx": {
+    "message": "{name} blocked",
+    "translation": "已屏蔽 {name}"
+  },
   "Mk1A2U": {
     "message": "{name} board",
     "comments": [
       "A zone's name for screen readers; name is its player. The open play area."
     ],
     "translation": "{name}的场地"
+  },
+  "xpUnH3": {
+    "message": "{name} can't take friend requests right now",
+    "translation": "{name} 暂时无法接收好友请求"
   },
   "IensRv": {
     "message": "{name} changed {card} into {category, select, energy {an energy} pokemon {a Pokémon} trainer {a tool} other {an unknown type}}",
@@ -1216,6 +1242,10 @@
     ],
     "translation": "{name} 移除了 {card} 的特殊状态"
   },
+  "uVKANG": {
+    "message": "{name} unblocked",
+    "translation": "已取消屏蔽 {name}"
+  },
   "cV1aTX": {
     "message": "{name} used",
     "comments": [
@@ -1308,6 +1338,10 @@
       "Shown across the table when a player starts their turn."
     ],
     "translation": "{name}的回合"
+  },
+  "S6v-69": {
+    "message": "{online} online",
+    "translation": "{online} 人在线"
   },
   "cgJmF-": {
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
@@ -1520,6 +1554,10 @@
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
     "translation": "{viewer}不再查看{owner}的{source, select, hand {手牌} prizes {奖赏卡} discard {弃牌区} board {场地} stadium {竞技场} active {战斗场} bench {备战区} lostZone {放逐区} attachmentResolution {附着的卡牌} inspection {查看区} other {牌库}}中的卡牌"
+  },
+  "VnR9fs": {
+    "message": "{waiting} requests",
+    "translation": "{waiting} 个请求"
   },
   "-AEMvi": {
     "message": "{zoneName}, {0} selected",
@@ -1741,6 +1779,11 @@
     "context": "sleeve",
     "translation": "点缀色"
   },
+  "7Zf_4b": {
+    "message": "Accept",
+    "context": "a friend request",
+    "translation": "接受"
+  },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
     "translation": "可加入专属Discord频道，获得优先建议、功能提案和问题排查支持。"
@@ -1807,6 +1850,15 @@
     "message": "Add",
     "translation": "添加"
   },
+  "H4GEd-": {
+    "message": "Add",
+    "context": "add as a friend",
+    "translation": "添加"
+  },
+  "BDfqMd": {
+    "message": "Add {0} as a friend",
+    "translation": "添加 {0} 为好友"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "增加 {count} 点伤害"
@@ -1814,6 +1866,10 @@
   "T-qRMv": {
     "message": "Add a card that isn't listed",
     "translation": "添加未列出的卡牌"
+  },
+  "fJzzbI": {
+    "message": "Add a friend",
+    "translation": "添加好友"
   },
   "mOTci6": {
     "message": "Add a multi-piece card",
@@ -1853,6 +1909,10 @@
   "mOz7te": {
     "message": "Add damage…",
     "translation": "增加伤害…"
+  },
+  "lICjHG": {
+    "message": "Add friend",
+    "translation": "添加好友"
   },
   "Pn1N14": {
     "message": "Add one",
@@ -2026,6 +2086,11 @@
     "message": "Announce mulligan",
     "translation": "宣告重抽"
   },
+  "nGkdoK": {
+    "message": "Answer",
+    "context": "a friend request",
+    "translation": "回应"
+  },
   "Y_nxYt": {
     "message": "Any",
     "context": "filter",
@@ -2185,6 +2250,11 @@
     "context": "replay: one step back",
     "translation": "后退"
   },
+  "ifZryV": {
+    "message": "Back",
+    "context": "to the friends page before",
+    "translation": "返回"
+  },
   "_8WPEl": {
     "message": "Back",
     "context": "to the settings page before",
@@ -2292,6 +2362,18 @@
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
     "translation": "也将 <0>{0}</0> 放到备战区。"
+  },
+  "CJkEfx": {
+    "message": "Block",
+    "translation": "屏蔽"
+  },
+  "n_j1xf": {
+    "message": "Block {0}?",
+    "translation": "屏蔽 {0}？"
+  },
+  "32TndD": {
+    "message": "Blocked",
+    "translation": "已屏蔽"
   },
   "O2HdKg": {
     "message": "Board",
@@ -2417,6 +2499,23 @@
   "dEgA5A": {
     "message": "Cancel",
     "translation": "取消"
+  },
+  "NCLglM": {
+    "message": "Cancel",
+    "context": "a sent friend request",
+    "translation": "取消"
+  },
+  "HoYkSd": {
+    "message": "Cancel request",
+    "translation": "取消请求"
+  },
+  "BEZRSx": {
+    "message": "Cancel request to {0}",
+    "translation": "取消发给 {0} 的请求"
+  },
+  "e1e3Eb": {
+    "message": "Cancel your friend request to {0}?",
+    "translation": "要取消发给 {0} 的好友请求吗？"
   },
   "4GkLKV": {
     "message": "Caps",
@@ -2858,6 +2957,10 @@
     "message": "Couldn't copy the link",
     "translation": "无法复制链接"
   },
+  "HlJJR9": {
+    "message": "Couldn't copy. Try again.",
+    "translation": "复制失败，请重试。"
+  },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "无法创建房间，请重试。"
@@ -2873,6 +2976,10 @@
   "vighKL": {
     "message": "Couldn't disconnect. Try again.",
     "translation": "无法断开连接，请重试。"
+  },
+  "PZXB_f": {
+    "message": "Couldn't do that. Try again.",
+    "translation": "操作失败，请重试。"
   },
   "2TYlNr": {
     "message": "Couldn't get an image from that link.",
@@ -2894,9 +3001,17 @@
     "message": "Couldn't load this",
     "translation": "无法加载"
   },
+  "JeVfD4": {
+    "message": "Couldn't load your friends.",
+    "translation": "无法加载你的好友。"
+  },
   "ZHwYJT": {
     "message": "Couldn't load your games. Try again.",
     "translation": "无法加载你的对局，请重试。"
+  },
+  "_ukJJq": {
+    "message": "Couldn't look that up. Try again.",
+    "translation": "查找失败，请重试。"
   },
   "w--GsN": {
     "message": "Couldn't open that file",
@@ -3211,6 +3326,15 @@
   "6soIXc": {
     "message": "Decks, replays, friends & more, on every device.",
     "translation": "卡组、回放、好友等更多功能，所有设备通用。"
+  },
+  "7Ky3Xn": {
+    "message": "Decline",
+    "context": "a friend request",
+    "translation": "拒绝"
+  },
+  "KuA7Zt": {
+    "message": "Decline {0}",
+    "translation": "拒绝 {0}"
   },
   "cnGeoo": {
     "message": "Delete",
@@ -3929,6 +4053,33 @@
     "context": "deck format",
     "translation": "赛制"
   },
+  "OkDDjA": {
+    "message": "Friend request sent to {name}",
+    "translation": "已向 {name} 发送好友请求"
+  },
+  "RjrvaO": {
+    "message": "Friend requests",
+    "translation": "好友请求"
+  },
+  "rztzRH": {
+    "message": "Friends",
+    "context": "already friends",
+    "translation": "好友"
+  },
+  "OVlhKw": {
+    "message": "Friends",
+    "context": "the friends sheet",
+    "translation": "好友"
+  },
+  "kqnCg6": {
+    "message": "Friends",
+    "context": "the list of friends",
+    "translation": "好友"
+  },
+  "N5Cyfw": {
+    "message": "Friends since {0}",
+    "translation": "自 {0} 起成为好友"
+  },
   "hGDVDa": {
     "message": "From {0}",
     "comments": [
@@ -4361,6 +4512,10 @@
     "message": "Invitation link ready",
     "translation": "邀请链接已就绪"
   },
+  "qsqt0w": {
+    "message": "Invite link",
+    "translation": "邀请链接"
+  },
   "KLJ4eD": {
     "message": "Invite link copied",
     "translation": "邀请链接已复制"
@@ -4428,6 +4583,11 @@
   "N2lSEn": {
     "message": "Joins matching pieces",
     "translation": "合并相同的部件"
+  },
+  "QbFLpT": {
+    "message": "Keep",
+    "context": "a friend",
+    "translation": "保留"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -4629,6 +4789,10 @@
     "message": "Loading events…",
     "translation": "正在加载赛事…"
   },
+  "_o0pHI": {
+    "message": "Loading friends…",
+    "translation": "正在加载好友…"
+  },
   "Pwqkdw": {
     "message": "Loading…",
     "translation": "正在载入…"
@@ -4736,6 +4900,10 @@
   "pKU2VG": {
     "message": "Looking at cards",
     "translation": "正在查看卡牌"
+  },
+  "7R-0aV": {
+    "message": "Looking…",
+    "translation": "查找中…"
   },
   "cGgbAH": {
     "message": "Lost the room during the replay.",
@@ -5249,6 +5417,10 @@
     "message": "No foil",
     "translation": "无闪箔"
   },
+  "QY50Ed": {
+    "message": "No friends yet. Share your User ID or invite link to add one.",
+    "translation": "还没有好友。分享你的用户 ID 或邀请链接来添加好友。"
+  },
   "nivaRq": {
     "message": "No list",
     "translation": "无卡组列表"
@@ -5267,6 +5439,10 @@
   "mNXjQA": {
     "message": "No match",
     "translation": "无匹配项"
+  },
+  "jZr9la": {
+    "message": "No player has that ID.",
+    "translation": "没有玩家使用该 ID。"
   },
   "v5Ta3F": {
     "message": "No Pokémon by that name",
@@ -5706,6 +5882,10 @@
     "message": "Paste a link to an image.",
     "translation": "粘贴图片链接。"
   },
+  "t95T01": {
+    "message": "Paste a User ID or invite link",
+    "translation": "粘贴用户 ID 或邀请链接"
+  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "请将详情粘贴到你的反馈中，有助于定位问题。"
@@ -5815,6 +5995,10 @@
   "hrmat7": {
     "message": "Play these decks",
     "translation": "使用这些卡组对战"
+  },
+  "Vcesbu": {
+    "message": "Played {0}",
+    "translation": "对战于 {0}"
   },
   "2qhgQG": {
     "message": "Played last",
@@ -6156,6 +6340,10 @@
     ],
     "translation": "最近使用"
   },
+  "4KDShY": {
+    "message": "Recent players",
+    "translation": "最近的玩家"
+  },
   "gcoiFh": {
     "message": "Reconnect",
     "translation": "重新连接"
@@ -6228,6 +6416,15 @@
     ],
     "translation": "提示"
   },
+  "AnDcX_": {
+    "message": "Remove",
+    "context": "a friend",
+    "translation": "移除"
+  },
+  "HfbMnA": {
+    "message": "Remove {0} as a friend?",
+    "translation": "要将 {0} 从好友中移除吗？"
+  },
   "HLazKQ": {
     "message": "Remove {name}",
     "translation": "移除{name}"
@@ -6262,6 +6459,10 @@
   "sR6lTH": {
     "message": "Remove condition",
     "translation": "移除状态"
+  },
+  "LZlsoq": {
+    "message": "Remove friend",
+    "translation": "移除好友"
   },
   "8IMRlK": {
     "message": "Remove from {seat}",
@@ -6357,6 +6558,10 @@
   "732i9s": {
     "message": "Report on Discord",
     "translation": "在 Discord 上反馈"
+  },
+  "1RVBJe": {
+    "message": "Request sent",
+    "translation": "请求已发送"
   },
   "OfhWJH": {
     "message": "Reset",
@@ -6894,6 +7099,10 @@
     "message": "Send message",
     "translation": "发送消息"
   },
+  "_VW54L": {
+    "message": "Sent requests",
+    "translation": "已发送的请求"
+  },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
     "translation": "说真的，我不指望有人会订阅，但如果有，我会非常感激。"
@@ -6978,6 +7187,10 @@
   "Z8lGw6": {
     "message": "Share",
     "translation": "分享"
+  },
+  "LdSvsJ": {
+    "message": "Share it so friends can add you.",
+    "translation": "分享给好友，对方就能添加你。"
   },
   "2D-NYE": {
     "message": "Shift",
@@ -7233,6 +7446,10 @@
   "Se3Re8": {
     "message": "Sleeve sheen",
     "translation": "牌套光泽"
+  },
+  "H2UIkh": {
+    "message": "Slow down! Try again in a moment.",
+    "translation": "太快了！请稍后再试。"
   },
   "P12gHj": {
     "message": "Smaller cards",
@@ -7743,17 +7960,34 @@
     "message": "That image is over 20 MB.",
     "translation": "该图片超过20 MB。"
   },
+  "KB3gFS": {
+    "message": "That isn't a User ID.",
+    "translation": "这不是有效的用户 ID。"
+  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "该项已跳过。"
+  },
+  "YRGPpX": {
+    "message": "That player",
+    "context": "friends",
+    "translation": "该玩家"
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
     "translation": "无法打开该回放文件。"
   },
+  "BfMjlP": {
+    "message": "That request was withdrawn",
+    "translation": "该请求已被撤回"
+  },
   "6Z1wXH": {
     "message": "That side starts over with the new deck",
     "translation": "该方将使用新卡组重新开始"
+  },
+  "drHrdz": {
+    "message": "That's your own User ID.",
+    "translation": "这是你自己的用户 ID。"
   },
   "hPwR-j": {
     "message": "The card went back.",
@@ -8288,6 +8522,18 @@
     "context": "item",
     "translation": "高级球"
   },
+  "tuS5Jz": {
+    "message": "Unblock",
+    "translation": "取消屏蔽"
+  },
+  "TQMvTB": {
+    "message": "Unblock {0}",
+    "translation": "取消屏蔽 {0}"
+  },
+  "mw1HnN": {
+    "message": "Unblock {name} to send a friend request",
+    "translation": "取消屏蔽 {name} 后才能发送好友请求"
+  },
   "9uI_rE": {
     "message": "Undo",
     "translation": "撤销"
@@ -8417,6 +8663,14 @@
     "message": "User ID",
     "translation": "用户 ID"
   },
+  "PNJdRU": {
+    "message": "User ID copied",
+    "translation": "用户 ID 已复制"
+  },
+  "ELEf3-": {
+    "message": "User ID or invite link",
+    "translation": "用户 ID 或邀请链接"
+  },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
     "translation": "使用 Limitless TCG 的搜索语法。"
@@ -8474,9 +8728,18 @@
     "message": "VSTAR marker",
     "translation": "VSTAR标记"
   },
+  "BjBy0G": {
+    "message": "Wait",
+    "context": "keep a request",
+    "translation": "保留"
+  },
   "LE8SQj": {
     "message": "Wallpaper {0}",
     "translation": "壁纸 {0}"
+  },
+  "6fsB0P": {
+    "message": "Wants to be friends",
+    "translation": "想加你为好友"
   },
   "vbMHW0": {
     "message": "Watch",
@@ -8586,13 +8849,45 @@
     "context": "filter",
     "translation": "是"
   },
+  "xi-TMk": {
+    "message": "You and {name} are now friends!",
+    "translation": "你和 {name} 已成为好友！"
+  },
+  "7pucj_": {
+    "message": "You can ask {name} again tomorrow",
+    "translation": "你可以明天再向 {name} 发送请求"
+  },
+  "qc_qoy": {
+    "message": "You can have up to 200 friends",
+    "translation": "最多可以有 200 位好友"
+  },
+  "kFU-ep": {
+    "message": "You can send another one tomorrow.",
+    "translation": "你明天可以再发送一个。"
+  },
+  "Jlf4l7": {
+    "message": "You can send them a new friend request any time.",
+    "translation": "你随时可以再向对方发送好友请求。"
+  },
   "aylG7j": {
     "message": "You can't move that card",
     "translation": "不能移动那张卡牌"
   },
+  "wRa3wc": {
+    "message": "You have {count} friend requests",
+    "translation": "你有 {count} 条好友请求"
+  },
+  "gymL5v": {
+    "message": "You won't be friends, and they can't send you requests or invites. They won't be told.",
+    "translation": "你们不会成为好友，对方也无法向你发送请求或邀请。对方不会收到通知。"
+  },
   "VvkF_g": {
     "message": "You're watching",
     "translation": "你正在观战"
+  },
+  "npW9N-": {
+    "message": "You've sent 50 requests. Wait for answers or cancel some.",
+    "translation": "你已发送 50 条请求。请等待回复或取消一些请求。"
   },
   "vblI2b": {
     "message": "Your account already has a {name} sign-in",
@@ -8632,6 +8927,10 @@
     "message": "Your discard pile",
     "translation": "我方弃牌区"
   },
+  "a4OOqX": {
+    "message": "Your friend can copy their User ID from Account, in Settings.",
+    "translation": "你的好友可以在设置的账号页面中复制自己的用户 ID。"
+  },
   "pa5Fda": {
     "message": "Your games",
     "translation": "你的对局"
@@ -8663,6 +8962,10 @@
   "yuM-lV": {
     "message": "Your turn",
     "translation": "你的回合"
+  },
+  "yBT9fU": {
+    "message": "Your User ID",
+    "translation": "你的用户 ID"
   },
   "X0l3In": {
     "message": "Yours",

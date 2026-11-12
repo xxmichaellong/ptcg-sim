@@ -38,6 +38,8 @@ import {
 } from '../../ui/breakpoints.js';
 import type { SettingsTone } from '../../ui/SettingsList.js';
 import { Tooltip, withKeyHint } from '../../ui/Tooltip.js';
+import { FriendsBarButton } from '../../friends/FriendsButton.js';
+import { useFriendsAvailable } from '../../friends/friends-sheet-state.js';
 import { useModeSwitchSlide } from './mode-switch-motion.js';
 import { DISCORD_URL, openHelpPage, RELEASE_NAME } from './help-pages.js';
 
@@ -430,14 +432,17 @@ export const useAppBarReserve = (): {
   const coarse = useMediaQuery(COARSE_POINTER_QUERY);
   const compact = useCompactLayout();
   const narrow = useMediaQuery(NARROW_BAR_QUERY);
+  // Friends (ADR-055) takes a slot of its own for a signed-in player.
+  const friends = useFriendsAvailable() && !compact;
   return useMemo(
     () =>
       appBarSize(
-        compact ? APP_BAR_SLOTS.compact : APP_BAR_SLOTS.full,
+        (compact ? APP_BAR_SLOTS.compact : APP_BAR_SLOTS.full) +
+          (friends ? 1 : 0),
         coarse,
         !narrow
       ),
-    [compact, coarse, narrow]
+    [compact, coarse, narrow, friends]
   );
 };
 
@@ -738,6 +743,8 @@ export const AppBar = ({
   const compact = useCompactLayout();
   const { modeSwitch, places, commands, narrow } = useAppBarPlacement(model);
   const settingsLabel = t`Settings`;
+  // A phone's bar has no room: Friends leads Settings there instead.
+  const friends = useFriendsAvailable() && !compact;
   return (
     <div
       className="ptcgsim-app-bar"
@@ -778,6 +785,7 @@ export const AppBar = ({
         </div>
       ) : null}
       <div className="ptcgsim-app-bar__group">
+        {friends ? <FriendsBarButton /> : null}
         {/* Quiet while Settings is open, as a menu's button is: the bar
             may move under a resting pointer as the drawer docks. */}
         <Tooltip

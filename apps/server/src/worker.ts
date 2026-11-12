@@ -29,6 +29,10 @@ import {
   sha256Hex as sessionSecretHash,
 } from './accounts/account-session.js';
 import { handleReplayRequest, replayRoute } from './accounts/replay-http.js';
+import {
+  friendsRoute,
+  handleFriendsRequest,
+} from './accounts/friends-http.js';
 import { readSignInConfiguration } from './accounts/sign-in-providers.js';
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
 import { RoomReplayArchive, seatOfResumeToken } from './replay-archive.js';
@@ -1904,6 +1908,21 @@ const worker: ExportedHandler<Env> = {
     if (replay !== undefined) {
       return observeHttp(telemetry, 'account', () =>
         handleReplayRequest(request, replay, {
+          account: (accountId) => env.PTCG_ACCOUNT.getByName(accountId),
+          now: Date.now,
+          rateLimit: () =>
+            consumeAccountRateLimit(
+              request,
+              env.ACCOUNT_RATE_LIMITER,
+              'account'
+            ),
+        })
+      );
+    }
+    const friends = friendsRoute(url.pathname);
+    if (friends !== undefined) {
+      return observeHttp(telemetry, 'account', () =>
+        handleFriendsRequest(request, friends, {
           account: (accountId) => env.PTCG_ACCOUNT.getByName(accountId),
           now: Date.now,
           rateLimit: () =>

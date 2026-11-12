@@ -318,6 +318,11 @@ export interface ReplayFilingMeta {
   readonly moves: number;
   readonly players: readonly string[];
   readonly playerOrder: readonly string[];
+  /**
+   * Each seat's account, in `playerOrder`, '' where nobody signed in sat
+   * (ADR-055: recent players come from these).
+   */
+  readonly accounts?: readonly string[];
   readonly viewer: string;
   readonly mode: AuthorityMode;
   readonly truncated: boolean;
@@ -602,6 +607,9 @@ export class RoomReplayArchive {
         const players = playerOrder.map(
           (playerId) => record.base.players[playerId]?.displayName ?? ''
         );
+        const accounts = playerOrder.map(
+          (playerId) => filing.seats[playerId] ?? ''
+        );
         for (const [playerId, accountId] of Object.entries(filing.seats)) {
           if (!record.base.players[playerId]) continue;
           await this.dependencies.file(accountId, {
@@ -617,6 +625,7 @@ export class RoomReplayArchive {
               moves: record.entries.length,
               players,
               playerOrder,
+              accounts,
               viewer: playerId,
               mode: record.mode,
               truncated: record.truncated,

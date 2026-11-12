@@ -100,6 +100,10 @@
     ],
     "translation": "Đã chọn {0}"
   },
+  "eC0xf_": {
+    "message": "{0} wants to be friends",
+    "translation": "{0} muốn kết bạn"
+  },
   "THa0qf": {
     "message": "{0}, {count} in deck",
     "translation": "{0}, {count} lá trong bộ bài"
@@ -805,6 +809,20 @@
     ],
     "translation": "{label}, {badge} mới"
   },
+  "Jijcis": {
+    "message": "{label}, {online} online",
+    "comments": [
+      "The Friends button with how many friends are online"
+    ],
+    "translation": "{label}, {online} đang online"
+  },
+  "xi1vOj": {
+    "message": "{label}, {waiting} requests",
+    "comments": [
+      "The Friends button while friend requests wait"
+    ],
+    "translation": "{label}, {waiting} lời mời"
+  },
   "VOuY7n": {
     "message": "{label}: {spoken}. Change",
     "comments": [
@@ -913,12 +931,20 @@
     ],
     "translation": "Bench của {name}"
   },
+  "u3z-wx": {
+    "message": "{name} blocked",
+    "translation": "Đã chặn {name}"
+  },
   "Mk1A2U": {
     "message": "{name} board",
     "comments": [
       "A zone's name for screen readers; name is its player. The open play area."
     ],
     "translation": "Thảm chơi của {name}"
+  },
+  "xpUnH3": {
+    "message": "{name} can't take friend requests right now",
+    "translation": "{name} hiện không thể nhận lời mời kết bạn"
   },
   "IensRv": {
     "message": "{name} changed {card} into {category, select, energy {an energy} pokemon {a Pokémon} trainer {a tool} other {an unknown type}}",
@@ -1216,6 +1242,10 @@
     ],
     "translation": "{name} gỡ trạng thái đặc biệt khỏi {card}"
   },
+  "uVKANG": {
+    "message": "{name} unblocked",
+    "translation": "Đã bỏ chặn {name}"
+  },
   "cV1aTX": {
     "message": "{name} used",
     "comments": [
@@ -1308,6 +1338,10 @@
       "Shown across the table when a player starts their turn."
     ],
     "translation": "Lượt của {name}"
+  },
+  "S6v-69": {
+    "message": "{online} online",
+    "translation": "{online} đang online"
   },
   "cgJmF-": {
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
@@ -1520,6 +1554,10 @@
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
     "translation": "{viewer} đã ngừng xem một lá bài trong {source, select, hand {bài trên tay} prizes {Prize} discard {chồng bài bỏ} board {thảm chơi} stadium {Stadium} active {vị trí Active} bench {Bench} lostZone {Lost Zone} attachmentResolution {bài gắn kèm} inspection {khu xem bài} other {bộ bài}} của {owner}"
+  },
+  "VnR9fs": {
+    "message": "{waiting} requests",
+    "translation": "{waiting} lời mời"
   },
   "-AEMvi": {
     "message": "{zoneName}, {0} selected",
@@ -1741,6 +1779,11 @@
     "context": "sleeve",
     "translation": "Màu nhấn"
   },
+  "7Zf_4b": {
+    "message": "Accept",
+    "context": "a friend request",
+    "translation": "Chấp nhận"
+  },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
     "translation": "Truy cập kênh Discord riêng để được ưu tiên góp ý, đề xuất tính năng và hỗ trợ xử lý sự cố."
@@ -1807,6 +1850,15 @@
     "message": "Add",
     "translation": "Thêm"
   },
+  "H4GEd-": {
+    "message": "Add",
+    "context": "add as a friend",
+    "translation": "Thêm"
+  },
+  "BDfqMd": {
+    "message": "Add {0} as a friend",
+    "translation": "Thêm {0} làm bạn bè"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "Thêm {count} sát thương"
@@ -1814,6 +1866,10 @@
   "T-qRMv": {
     "message": "Add a card that isn't listed",
     "translation": "Thêm lá bài không có trong danh sách"
+  },
+  "fJzzbI": {
+    "message": "Add a friend",
+    "translation": "Thêm bạn bè"
   },
   "mOTci6": {
     "message": "Add a multi-piece card",
@@ -1853,6 +1909,10 @@
   "mOz7te": {
     "message": "Add damage…",
     "translation": "Thêm sát thương…"
+  },
+  "lICjHG": {
+    "message": "Add friend",
+    "translation": "Thêm bạn bè"
   },
   "Pn1N14": {
     "message": "Add one",
@@ -2026,6 +2086,11 @@
     "message": "Announce mulligan",
     "translation": "Thông báo mulligan"
   },
+  "nGkdoK": {
+    "message": "Answer",
+    "context": "a friend request",
+    "translation": "Trả lời"
+  },
   "Y_nxYt": {
     "message": "Any",
     "context": "filter",
@@ -2185,6 +2250,11 @@
     "context": "replay: one step back",
     "translation": "Quay lại"
   },
+  "ifZryV": {
+    "message": "Back",
+    "context": "to the friends page before",
+    "translation": "Quay lại"
+  },
   "_8WPEl": {
     "message": "Back",
     "context": "to the settings page before",
@@ -2292,6 +2362,18 @@
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
     "translation": "Hãy đưa cả <0>{0}</0> xuống Bench."
+  },
+  "CJkEfx": {
+    "message": "Block",
+    "translation": "Chặn"
+  },
+  "n_j1xf": {
+    "message": "Block {0}?",
+    "translation": "Chặn {0}?"
+  },
+  "32TndD": {
+    "message": "Blocked",
+    "translation": "Đã chặn"
   },
   "O2HdKg": {
     "message": "Board",
@@ -2417,6 +2499,23 @@
   "dEgA5A": {
     "message": "Cancel",
     "translation": "Hủy"
+  },
+  "NCLglM": {
+    "message": "Cancel",
+    "context": "a sent friend request",
+    "translation": "Hủy"
+  },
+  "HoYkSd": {
+    "message": "Cancel request",
+    "translation": "Hủy lời mời"
+  },
+  "BEZRSx": {
+    "message": "Cancel request to {0}",
+    "translation": "Hủy lời mời gửi tới {0}"
+  },
+  "e1e3Eb": {
+    "message": "Cancel your friend request to {0}?",
+    "translation": "Hủy lời mời kết bạn gửi tới {0}?"
   },
   "4GkLKV": {
     "message": "Caps",
@@ -2858,6 +2957,10 @@
     "message": "Couldn't copy the link",
     "translation": "Không thể sao chép liên kết"
   },
+  "HlJJR9": {
+    "message": "Couldn't copy. Try again.",
+    "translation": "Không sao chép được. Hãy thử lại."
+  },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "Không thể tạo phòng. Hãy thử lại."
@@ -2873,6 +2976,10 @@
   "vighKL": {
     "message": "Couldn't disconnect. Try again.",
     "translation": "Không ngắt kết nối được. Hãy thử lại."
+  },
+  "PZXB_f": {
+    "message": "Couldn't do that. Try again.",
+    "translation": "Không thực hiện được. Hãy thử lại."
   },
   "2TYlNr": {
     "message": "Couldn't get an image from that link.",
@@ -2894,9 +3001,17 @@
     "message": "Couldn't load this",
     "translation": "Không tải được nội dung này"
   },
+  "JeVfD4": {
+    "message": "Couldn't load your friends.",
+    "translation": "Không tải được danh sách bạn bè của bạn."
+  },
   "ZHwYJT": {
     "message": "Couldn't load your games. Try again.",
     "translation": "Không thể tải các ván đấu của bạn. Hãy thử lại."
+  },
+  "_ukJJq": {
+    "message": "Couldn't look that up. Try again.",
+    "translation": "Không tra cứu được. Hãy thử lại."
   },
   "w--GsN": {
     "message": "Couldn't open that file",
@@ -3211,6 +3326,15 @@
   "6soIXc": {
     "message": "Decks, replays, friends & more, on every device.",
     "translation": "Bộ bài, bản ghi, bạn bè và hơn thế nữa, trên mọi thiết bị."
+  },
+  "7Ky3Xn": {
+    "message": "Decline",
+    "context": "a friend request",
+    "translation": "Từ chối"
+  },
+  "KuA7Zt": {
+    "message": "Decline {0}",
+    "translation": "Từ chối {0}"
   },
   "cnGeoo": {
     "message": "Delete",
@@ -3929,6 +4053,33 @@
     "context": "deck format",
     "translation": "Thể thức"
   },
+  "OkDDjA": {
+    "message": "Friend request sent to {name}",
+    "translation": "Đã gửi lời mời kết bạn tới {name}"
+  },
+  "RjrvaO": {
+    "message": "Friend requests",
+    "translation": "Lời mời kết bạn"
+  },
+  "rztzRH": {
+    "message": "Friends",
+    "context": "already friends",
+    "translation": "Bạn bè"
+  },
+  "OVlhKw": {
+    "message": "Friends",
+    "context": "the friends sheet",
+    "translation": "Bạn bè"
+  },
+  "kqnCg6": {
+    "message": "Friends",
+    "context": "the list of friends",
+    "translation": "Bạn bè"
+  },
+  "N5Cyfw": {
+    "message": "Friends since {0}",
+    "translation": "Là bạn bè từ {0}"
+  },
   "hGDVDa": {
     "message": "From {0}",
     "comments": [
@@ -4361,6 +4512,10 @@
     "message": "Invitation link ready",
     "translation": "Liên kết mời đã sẵn sàng"
   },
+  "qsqt0w": {
+    "message": "Invite link",
+    "translation": "Liên kết mời"
+  },
   "KLJ4eD": {
     "message": "Invite link copied",
     "translation": "Đã sao chép liên kết mời"
@@ -4428,6 +4583,11 @@
   "N2lSEn": {
     "message": "Joins matching pieces",
     "translation": "Ghép các mảnh khớp nhau"
+  },
+  "QbFLpT": {
+    "message": "Keep",
+    "context": "a friend",
+    "translation": "Giữ"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -4629,6 +4789,10 @@
     "message": "Loading events…",
     "translation": "Đang tải sự kiện…"
   },
+  "_o0pHI": {
+    "message": "Loading friends…",
+    "translation": "Đang tải danh sách bạn bè…"
+  },
   "Pwqkdw": {
     "message": "Loading…",
     "translation": "Đang tải…"
@@ -4736,6 +4900,10 @@
   "pKU2VG": {
     "message": "Looking at cards",
     "translation": "Đang xem bài"
+  },
+  "7R-0aV": {
+    "message": "Looking…",
+    "translation": "Đang tìm…"
   },
   "cGgbAH": {
     "message": "Lost the room during the replay.",
@@ -5249,6 +5417,10 @@
     "message": "No foil",
     "translation": "Không ánh kim"
   },
+  "QY50Ed": {
+    "message": "No friends yet. Share your User ID or invite link to add one.",
+    "translation": "Chưa có bạn bè. Hãy chia sẻ User ID hoặc liên kết mời của bạn để thêm bạn bè."
+  },
   "nivaRq": {
     "message": "No list",
     "translation": "Không có danh sách"
@@ -5267,6 +5439,10 @@
   "mNXjQA": {
     "message": "No match",
     "translation": "Không có kết quả"
+  },
+  "jZr9la": {
+    "message": "No player has that ID.",
+    "translation": "Không có người chơi nào có ID đó."
   },
   "v5Ta3F": {
     "message": "No Pokémon by that name",
@@ -5706,6 +5882,10 @@
     "message": "Paste a link to an image.",
     "translation": "Dán liên kết đến một hình ảnh."
   },
+  "t95T01": {
+    "message": "Paste a User ID or invite link",
+    "translation": "Dán User ID hoặc liên kết mời"
+  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "Dán chi tiết vào báo cáo của bạn: chúng giúp tìm ra lỗi."
@@ -5815,6 +5995,10 @@
   "hrmat7": {
     "message": "Play these decks",
     "translation": "Chơi các bộ bài này"
+  },
+  "Vcesbu": {
+    "message": "Played {0}",
+    "translation": "Đã chơi {0}"
   },
   "2qhgQG": {
     "message": "Played last",
@@ -6156,6 +6340,10 @@
     ],
     "translation": "Gần đây"
   },
+  "4KDShY": {
+    "message": "Recent players",
+    "translation": "Người chơi gần đây"
+  },
   "gcoiFh": {
     "message": "Reconnect",
     "translation": "Kết nối lại"
@@ -6228,6 +6416,15 @@
     ],
     "translation": "Nhắc nhở"
   },
+  "AnDcX_": {
+    "message": "Remove",
+    "context": "a friend",
+    "translation": "Xóa"
+  },
+  "HfbMnA": {
+    "message": "Remove {0} as a friend?",
+    "translation": "Xóa {0} khỏi danh sách bạn bè?"
+  },
   "HLazKQ": {
     "message": "Remove {name}",
     "translation": "Xóa {name}"
@@ -6262,6 +6459,10 @@
   "sR6lTH": {
     "message": "Remove condition",
     "translation": "Gỡ trạng thái"
+  },
+  "LZlsoq": {
+    "message": "Remove friend",
+    "translation": "Xóa bạn bè"
   },
   "8IMRlK": {
     "message": "Remove from {seat}",
@@ -6357,6 +6558,10 @@
   "732i9s": {
     "message": "Report on Discord",
     "translation": "Báo cáo trên Discord"
+  },
+  "1RVBJe": {
+    "message": "Request sent",
+    "translation": "Đã gửi lời mời"
   },
   "OfhWJH": {
     "message": "Reset",
@@ -6894,6 +7099,10 @@
     "message": "Send message",
     "translation": "Gửi tin nhắn"
   },
+  "_VW54L": {
+    "message": "Sent requests",
+    "translation": "Lời mời đã gửi"
+  },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
     "translation": "Thực sự thì mình không nghĩ sẽ có ai đăng ký gói này, nhưng mình sẽ vô cùng biết ơn."
@@ -6978,6 +7187,10 @@
   "Z8lGw6": {
     "message": "Share",
     "translation": "Chia sẻ"
+  },
+  "LdSvsJ": {
+    "message": "Share it so friends can add you.",
+    "translation": "Chia sẻ để bạn bè có thể thêm bạn."
   },
   "2D-NYE": {
     "message": "Shift",
@@ -7233,6 +7446,10 @@
   "Se3Re8": {
     "message": "Sleeve sheen",
     "translation": "Độ bóng bọc bài"
+  },
+  "H2UIkh": {
+    "message": "Slow down! Try again in a moment.",
+    "translation": "Chậm lại nào! Hãy thử lại sau giây lát."
   },
   "P12gHj": {
     "message": "Smaller cards",
@@ -7743,17 +7960,34 @@
     "message": "That image is over 20 MB.",
     "translation": "Hình ảnh vượt quá 20 MB."
   },
+  "KB3gFS": {
+    "message": "That isn't a User ID.",
+    "translation": "Đó không phải là User ID."
+  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Thao tác vừa rồi đã bị bỏ qua."
+  },
+  "YRGPpX": {
+    "message": "That player",
+    "context": "friends",
+    "translation": "Người chơi đó"
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
     "translation": "Không thể mở tệp ghi lại ván đấu đó."
   },
+  "BfMjlP": {
+    "message": "That request was withdrawn",
+    "translation": "Lời mời đó đã bị thu hồi"
+  },
   "6Z1wXH": {
     "message": "That side starts over with the new deck",
     "translation": "Phía đó sẽ bắt đầu lại với bộ bài mới"
+  },
+  "drHrdz": {
+    "message": "That's your own User ID.",
+    "translation": "Đó là User ID của chính bạn."
   },
   "hPwR-j": {
     "message": "The card went back.",
@@ -8288,6 +8522,18 @@
     "context": "item",
     "translation": "Ultra Ball"
   },
+  "tuS5Jz": {
+    "message": "Unblock",
+    "translation": "Bỏ chặn"
+  },
+  "TQMvTB": {
+    "message": "Unblock {0}",
+    "translation": "Bỏ chặn {0}"
+  },
+  "mw1HnN": {
+    "message": "Unblock {name} to send a friend request",
+    "translation": "Bỏ chặn {name} để gửi lời mời kết bạn"
+  },
   "9uI_rE": {
     "message": "Undo",
     "translation": "Hoàn tác"
@@ -8417,6 +8663,14 @@
     "message": "User ID",
     "translation": "ID người dùng"
   },
+  "PNJdRU": {
+    "message": "User ID copied",
+    "translation": "Đã sao chép User ID"
+  },
+  "ELEf3-": {
+    "message": "User ID or invite link",
+    "translation": "User ID hoặc liên kết mời"
+  },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
     "translation": "Dùng cú pháp tìm kiếm của Limitless TCG."
@@ -8474,9 +8728,18 @@
     "message": "VSTAR marker",
     "translation": "Dấu VSTAR"
   },
+  "BjBy0G": {
+    "message": "Wait",
+    "context": "keep a request",
+    "translation": "Chờ"
+  },
   "LE8SQj": {
     "message": "Wallpaper {0}",
     "translation": "Hình nền {0}"
+  },
+  "6fsB0P": {
+    "message": "Wants to be friends",
+    "translation": "Muốn kết bạn"
   },
   "vbMHW0": {
     "message": "Watch",
@@ -8586,13 +8849,45 @@
     "context": "filter",
     "translation": "Có"
   },
+  "xi-TMk": {
+    "message": "You and {name} are now friends!",
+    "translation": "Bạn và {name} đã trở thành bạn bè!"
+  },
+  "7pucj_": {
+    "message": "You can ask {name} again tomorrow",
+    "translation": "Bạn có thể mời lại {name} vào ngày mai"
+  },
+  "qc_qoy": {
+    "message": "You can have up to 200 friends",
+    "translation": "Bạn có thể có tối đa 200 bạn bè"
+  },
+  "kFU-ep": {
+    "message": "You can send another one tomorrow.",
+    "translation": "Bạn có thể gửi thêm một lời mời vào ngày mai."
+  },
+  "Jlf4l7": {
+    "message": "You can send them a new friend request any time.",
+    "translation": "Bạn có thể gửi lời mời kết bạn mới cho họ bất cứ lúc nào."
+  },
   "aylG7j": {
     "message": "You can't move that card",
     "translation": "Bạn không thể di chuyển lá bài đó"
   },
+  "wRa3wc": {
+    "message": "You have {count} friend requests",
+    "translation": "Bạn có {count} lời mời kết bạn"
+  },
+  "gymL5v": {
+    "message": "You won't be friends, and they can't send you requests or invites. They won't be told.",
+    "translation": "Hai bên sẽ không là bạn bè, và họ không thể gửi lời mời hay lời mời chơi cho bạn. Họ sẽ không được thông báo."
+  },
   "VvkF_g": {
     "message": "You're watching",
     "translation": "Bạn đang xem"
+  },
+  "npW9N-": {
+    "message": "You've sent 50 requests. Wait for answers or cancel some.",
+    "translation": "Bạn đã gửi 50 lời mời. Hãy chờ phản hồi hoặc hủy bớt."
   },
   "vblI2b": {
     "message": "Your account already has a {name} sign-in",
@@ -8632,6 +8927,10 @@
     "message": "Your discard pile",
     "translation": "Chồng bài bỏ của bạn"
   },
+  "a4OOqX": {
+    "message": "Your friend can copy their User ID from Account, in Settings.",
+    "translation": "Bạn của bạn có thể sao chép User ID của họ từ Tài khoản, trong Cài đặt."
+  },
   "pa5Fda": {
     "message": "Your games",
     "translation": "Các ván đấu của bạn"
@@ -8663,6 +8962,10 @@
   "yuM-lV": {
     "message": "Your turn",
     "translation": "Lượt của bạn"
+  },
+  "yBT9fU": {
+    "message": "Your User ID",
+    "translation": "User ID của bạn"
   },
   "X0l3In": {
     "message": "Yours",

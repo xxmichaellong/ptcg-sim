@@ -100,6 +100,10 @@
     ],
     "translation": "Zaznaczono: {0}"
   },
+  "eC0xf_": {
+    "message": "{0} wants to be friends",
+    "translation": "{0} chce zostać twoim znajomym"
+  },
   "THa0qf": {
     "message": "{0}, {count} in deck",
     "translation": "{0}, {count} w talii"
@@ -805,6 +809,20 @@
     ],
     "translation": "{label}, nowe: {badge}"
   },
+  "Jijcis": {
+    "message": "{label}, {online} online",
+    "comments": [
+      "The Friends button with how many friends are online"
+    ],
+    "translation": "{label}, online: {online}"
+  },
+  "xi1vOj": {
+    "message": "{label}, {waiting} requests",
+    "comments": [
+      "The Friends button while friend requests wait"
+    ],
+    "translation": "{label}, zaproszenia: {waiting}"
+  },
   "VOuY7n": {
     "message": "{label}: {spoken}. Change",
     "comments": [
@@ -913,12 +931,20 @@
     ],
     "translation": "Ławka gracza {name}"
   },
+  "u3z-wx": {
+    "message": "{name} blocked",
+    "translation": "Zablokowano gracza {name}"
+  },
   "Mk1A2U": {
     "message": "{name} board",
     "comments": [
       "A zone's name for screen readers; name is its player. The open play area."
     ],
     "translation": "Plansza gracza {name}"
+  },
+  "xpUnH3": {
+    "message": "{name} can't take friend requests right now",
+    "translation": "{name} nie może teraz przyjmować zaproszeń do znajomych"
   },
   "IensRv": {
     "message": "{name} changed {card} into {category, select, energy {an energy} pokemon {a Pokémon} trainer {a tool} other {an unknown type}}",
@@ -1216,6 +1242,10 @@
     ],
     "translation": "{name} zdejmuje stan specjalny z Pokémona {card}"
   },
+  "uVKANG": {
+    "message": "{name} unblocked",
+    "translation": "Odblokowano gracza {name}"
+  },
   "cV1aTX": {
     "message": "{name} used",
     "comments": [
@@ -1308,6 +1338,10 @@
       "Shown across the table when a player starts their turn."
     ],
     "translation": "Tura gracza {name}"
+  },
+  "S6v-69": {
+    "message": "{online} online",
+    "translation": "Online: {online}"
   },
   "cgJmF-": {
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
@@ -1520,6 +1554,10 @@
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
     "translation": "{viewer} przestaje oglądać kartę {source, select, hand {na ręce} prizes {w nagrodach} discard {na stosie odrzuconych} board {na planszy} stadium {na stadionie} active {na polu aktywnym} bench {na ławce} lostZone {w Lost Zone} attachmentResolution {wśród dołączonych kart} inspection {w podglądzie} other {w talii}} gracza {owner}"
+  },
+  "VnR9fs": {
+    "message": "{waiting} requests",
+    "translation": "Zaproszenia: {waiting}"
   },
   "-AEMvi": {
     "message": "{zoneName}, {0} selected",
@@ -1741,6 +1779,11 @@
     "context": "sleeve",
     "translation": "Akcent"
   },
+  "7Zf_4b": {
+    "message": "Accept",
+    "context": "a friend request",
+    "translation": "Przyjmij"
+  },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
     "translation": "Dostęp do ekskluzywnego kanału na Discordzie: priorytetowe sugestie, propozycje funkcji i pomoc w rozwiązywaniu problemów."
@@ -1807,6 +1850,15 @@
     "message": "Add",
     "translation": "Dodaj"
   },
+  "H4GEd-": {
+    "message": "Add",
+    "context": "add as a friend",
+    "translation": "Dodaj"
+  },
+  "BDfqMd": {
+    "message": "Add {0} as a friend",
+    "translation": "Dodaj gracza {0} do znajomych"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "Dodaj obrażenia: {count}"
@@ -1814,6 +1866,10 @@
   "T-qRMv": {
     "message": "Add a card that isn't listed",
     "translation": "Dodaj kartę, której nie ma na liście"
+  },
+  "fJzzbI": {
+    "message": "Add a friend",
+    "translation": "Dodaj znajomego"
   },
   "mOTci6": {
     "message": "Add a multi-piece card",
@@ -1853,6 +1909,10 @@
   "mOz7te": {
     "message": "Add damage…",
     "translation": "Dodaj obrażenia…"
+  },
+  "lICjHG": {
+    "message": "Add friend",
+    "translation": "Dodaj znajomego"
   },
   "Pn1N14": {
     "message": "Add one",
@@ -2026,6 +2086,11 @@
     "message": "Announce mulligan",
     "translation": "Ogłoś mulligan"
   },
+  "nGkdoK": {
+    "message": "Answer",
+    "context": "a friend request",
+    "translation": "Odpowiedz"
+  },
   "Y_nxYt": {
     "message": "Any",
     "context": "filter",
@@ -2185,6 +2250,11 @@
     "context": "replay: one step back",
     "translation": "Wstecz"
   },
+  "ifZryV": {
+    "message": "Back",
+    "context": "to the friends page before",
+    "translation": "Wstecz"
+  },
   "_8WPEl": {
     "message": "Back",
     "context": "to the settings page before",
@@ -2292,6 +2362,18 @@
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
     "translation": "Wystaw też <0>{0}</0> na ławkę."
+  },
+  "CJkEfx": {
+    "message": "Block",
+    "translation": "Zablokuj"
+  },
+  "n_j1xf": {
+    "message": "Block {0}?",
+    "translation": "Zablokować gracza {0}?"
+  },
+  "32TndD": {
+    "message": "Blocked",
+    "translation": "Zablokowani"
   },
   "O2HdKg": {
     "message": "Board",
@@ -2417,6 +2499,23 @@
   "dEgA5A": {
     "message": "Cancel",
     "translation": "Anuluj"
+  },
+  "NCLglM": {
+    "message": "Cancel",
+    "context": "a sent friend request",
+    "translation": "Anuluj"
+  },
+  "HoYkSd": {
+    "message": "Cancel request",
+    "translation": "Anuluj zaproszenie"
+  },
+  "BEZRSx": {
+    "message": "Cancel request to {0}",
+    "translation": "Anuluj zaproszenie dla gracza {0}"
+  },
+  "e1e3Eb": {
+    "message": "Cancel your friend request to {0}?",
+    "translation": "Anulować twoje zaproszenie do znajomych dla gracza {0}?"
   },
   "4GkLKV": {
     "message": "Caps",
@@ -2858,6 +2957,10 @@
     "message": "Couldn't copy the link",
     "translation": "Nie udało się skopiować linku"
   },
+  "HlJJR9": {
+    "message": "Couldn't copy. Try again.",
+    "translation": "Nie udało się skopiować. Spróbuj ponownie."
+  },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "Nie udało się utworzyć pokoju. Spróbuj ponownie."
@@ -2873,6 +2976,10 @@
   "vighKL": {
     "message": "Couldn't disconnect. Try again.",
     "translation": "Nie udało się rozłączyć. Spróbuj ponownie."
+  },
+  "PZXB_f": {
+    "message": "Couldn't do that. Try again.",
+    "translation": "Nie udało się tego zrobić. Spróbuj ponownie."
   },
   "2TYlNr": {
     "message": "Couldn't get an image from that link.",
@@ -2894,9 +3001,17 @@
     "message": "Couldn't load this",
     "translation": "Nie udało się tego wczytać"
   },
+  "JeVfD4": {
+    "message": "Couldn't load your friends.",
+    "translation": "Nie udało się wczytać twoich znajomych."
+  },
   "ZHwYJT": {
     "message": "Couldn't load your games. Try again.",
     "translation": "Nie udało się wczytać twoich gier. Spróbuj ponownie."
+  },
+  "_ukJJq": {
+    "message": "Couldn't look that up. Try again.",
+    "translation": "Nie udało się tego wyszukać. Spróbuj ponownie."
   },
   "w--GsN": {
     "message": "Couldn't open that file",
@@ -3211,6 +3326,15 @@
   "6soIXc": {
     "message": "Decks, replays, friends & more, on every device.",
     "translation": "Talie, powtórki, znajomi i więcej, na każdym urządzeniu."
+  },
+  "7Ky3Xn": {
+    "message": "Decline",
+    "context": "a friend request",
+    "translation": "Odrzuć"
+  },
+  "KuA7Zt": {
+    "message": "Decline {0}",
+    "translation": "Odrzuć zaproszenie od {0}"
   },
   "cnGeoo": {
     "message": "Delete",
@@ -3929,6 +4053,33 @@
     "context": "deck format",
     "translation": "Format"
   },
+  "OkDDjA": {
+    "message": "Friend request sent to {name}",
+    "translation": "Wysłano zaproszenie do znajomych dla gracza {name}"
+  },
+  "RjrvaO": {
+    "message": "Friend requests",
+    "translation": "Zaproszenia do znajomych"
+  },
+  "rztzRH": {
+    "message": "Friends",
+    "context": "already friends",
+    "translation": "Znajomi"
+  },
+  "OVlhKw": {
+    "message": "Friends",
+    "context": "the friends sheet",
+    "translation": "Znajomi"
+  },
+  "kqnCg6": {
+    "message": "Friends",
+    "context": "the list of friends",
+    "translation": "Znajomi"
+  },
+  "N5Cyfw": {
+    "message": "Friends since {0}",
+    "translation": "Znajomi od {0}"
+  },
   "hGDVDa": {
     "message": "From {0}",
     "comments": [
@@ -4361,6 +4512,10 @@
     "message": "Invitation link ready",
     "translation": "Link z zaproszeniem gotowy"
   },
+  "qsqt0w": {
+    "message": "Invite link",
+    "translation": "Link z zaproszeniem"
+  },
   "KLJ4eD": {
     "message": "Invite link copied",
     "translation": "Skopiowano link z zaproszeniem"
@@ -4428,6 +4583,11 @@
   "N2lSEn": {
     "message": "Joins matching pieces",
     "translation": "Łączy pasujące elementy"
+  },
+  "QbFLpT": {
+    "message": "Keep",
+    "context": "a friend",
+    "translation": "Zostaw"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -4629,6 +4789,10 @@
     "message": "Loading events…",
     "translation": "Wczytywanie wydarzeń…"
   },
+  "_o0pHI": {
+    "message": "Loading friends…",
+    "translation": "Wczytywanie znajomych…"
+  },
   "Pwqkdw": {
     "message": "Loading…",
     "translation": "Wczytywanie…"
@@ -4736,6 +4900,10 @@
   "pKU2VG": {
     "message": "Looking at cards",
     "translation": "Podglądanie kart"
+  },
+  "7R-0aV": {
+    "message": "Looking…",
+    "translation": "Szukanie…"
   },
   "cGgbAH": {
     "message": "Lost the room during the replay.",
@@ -5249,6 +5417,10 @@
     "message": "No foil",
     "translation": "Bez folii"
   },
+  "QY50Ed": {
+    "message": "No friends yet. Share your User ID or invite link to add one.",
+    "translation": "Nie masz jeszcze znajomych. Udostępnij swoje ID użytkownika lub link z zaproszeniem, aby kogoś dodać."
+  },
   "nivaRq": {
     "message": "No list",
     "translation": "Brak listy"
@@ -5267,6 +5439,10 @@
   "mNXjQA": {
     "message": "No match",
     "translation": "Brak wyników"
+  },
+  "jZr9la": {
+    "message": "No player has that ID.",
+    "translation": "Żaden gracz nie ma takiego ID."
   },
   "v5Ta3F": {
     "message": "No Pokémon by that name",
@@ -5706,6 +5882,10 @@
     "message": "Paste a link to an image.",
     "translation": "Wklej link do obrazu."
   },
+  "t95T01": {
+    "message": "Paste a User ID or invite link",
+    "translation": "Wklej ID użytkownika lub link z zaproszeniem"
+  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "Wklej szczegóły do zgłoszenia: pomogą znaleźć problem."
@@ -5815,6 +5995,10 @@
   "hrmat7": {
     "message": "Play these decks",
     "translation": "Zagraj tymi taliami"
+  },
+  "Vcesbu": {
+    "message": "Played {0}",
+    "translation": "Grano {0}"
   },
   "2qhgQG": {
     "message": "Played last",
@@ -6156,6 +6340,10 @@
     ],
     "translation": "Ostatnie"
   },
+  "4KDShY": {
+    "message": "Recent players",
+    "translation": "Ostatni gracze"
+  },
   "gcoiFh": {
     "message": "Reconnect",
     "translation": "Połącz ponownie"
@@ -6228,6 +6416,15 @@
     ],
     "translation": "Przypomnienia"
   },
+  "AnDcX_": {
+    "message": "Remove",
+    "context": "a friend",
+    "translation": "Usuń"
+  },
+  "HfbMnA": {
+    "message": "Remove {0} as a friend?",
+    "translation": "Usunąć {0} ze znajomych?"
+  },
   "HLazKQ": {
     "message": "Remove {name}",
     "translation": "Usuń: {name}"
@@ -6262,6 +6459,10 @@
   "sR6lTH": {
     "message": "Remove condition",
     "translation": "Usuń stan"
+  },
+  "LZlsoq": {
+    "message": "Remove friend",
+    "translation": "Usuń znajomego"
   },
   "8IMRlK": {
     "message": "Remove from {seat}",
@@ -6357,6 +6558,10 @@
   "732i9s": {
     "message": "Report on Discord",
     "translation": "Zgłoś na Discordzie"
+  },
+  "1RVBJe": {
+    "message": "Request sent",
+    "translation": "Zaproszenie wysłane"
   },
   "OfhWJH": {
     "message": "Reset",
@@ -6894,6 +7099,10 @@
     "message": "Send message",
     "translation": "Wyślij wiadomość"
   },
+  "_VW54L": {
+    "message": "Sent requests",
+    "translation": "Wysłane zaproszenia"
+  },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
     "translation": "Serio nie sądzę, żeby ktoś to subskrybował, ale byłbym ogromnie wdzięczny."
@@ -6978,6 +7187,10 @@
   "Z8lGw6": {
     "message": "Share",
     "translation": "Udostępnij"
+  },
+  "LdSvsJ": {
+    "message": "Share it so friends can add you.",
+    "translation": "Udostępnij go, aby znajomi mogli cię dodać."
   },
   "2D-NYE": {
     "message": "Shift",
@@ -7233,6 +7446,10 @@
   "Se3Re8": {
     "message": "Sleeve sheen",
     "translation": "Połysk koszulki"
+  },
+  "H2UIkh": {
+    "message": "Slow down! Try again in a moment.",
+    "translation": "Zwolnij! Spróbuj ponownie za chwilę."
   },
   "P12gHj": {
     "message": "Smaller cards",
@@ -7743,17 +7960,34 @@
     "message": "That image is over 20 MB.",
     "translation": "Ten obraz ma ponad 20 MB."
   },
+  "KB3gFS": {
+    "message": "That isn't a User ID.",
+    "translation": "To nie jest ID użytkownika."
+  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Tę pominięto."
+  },
+  "YRGPpX": {
+    "message": "That player",
+    "context": "friends",
+    "translation": "Ten gracz"
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
     "translation": "Nie udało się otworzyć tego pliku powtórki."
   },
+  "BfMjlP": {
+    "message": "That request was withdrawn",
+    "translation": "To zaproszenie zostało wycofane"
+  },
   "6Z1wXH": {
     "message": "That side starts over with the new deck",
     "translation": "Ta strona zaczyna od nowa z nową talią"
+  },
+  "drHrdz": {
+    "message": "That's your own User ID.",
+    "translation": "To twoje własne ID użytkownika."
   },
   "hPwR-j": {
     "message": "The card went back.",
@@ -8288,6 +8522,18 @@
     "context": "item",
     "translation": "Ultra Ball"
   },
+  "tuS5Jz": {
+    "message": "Unblock",
+    "translation": "Odblokuj"
+  },
+  "TQMvTB": {
+    "message": "Unblock {0}",
+    "translation": "Odblokuj {0}"
+  },
+  "mw1HnN": {
+    "message": "Unblock {name} to send a friend request",
+    "translation": "Odblokuj {name}, aby wysłać zaproszenie do znajomych"
+  },
   "9uI_rE": {
     "message": "Undo",
     "translation": "Cofnij"
@@ -8417,6 +8663,14 @@
     "message": "User ID",
     "translation": "ID użytkownika"
   },
+  "PNJdRU": {
+    "message": "User ID copied",
+    "translation": "Skopiowano ID użytkownika"
+  },
+  "ELEf3-": {
+    "message": "User ID or invite link",
+    "translation": "ID użytkownika lub link z zaproszeniem"
+  },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
     "translation": "Używa składni wyszukiwania Limitless TCG."
@@ -8474,9 +8728,18 @@
     "message": "VSTAR marker",
     "translation": "Znacznik VSTAR"
   },
+  "BjBy0G": {
+    "message": "Wait",
+    "context": "keep a request",
+    "translation": "Poczekaj"
+  },
   "LE8SQj": {
     "message": "Wallpaper {0}",
     "translation": "Tapeta {0}"
+  },
+  "6fsB0P": {
+    "message": "Wants to be friends",
+    "translation": "Chce być twoim znajomym"
   },
   "vbMHW0": {
     "message": "Watch",
@@ -8586,13 +8849,45 @@
     "context": "filter",
     "translation": "Tak"
   },
+  "xi-TMk": {
+    "message": "You and {name} are now friends!",
+    "translation": "Ty i {name} jesteście teraz znajomymi!"
+  },
+  "7pucj_": {
+    "message": "You can ask {name} again tomorrow",
+    "translation": "Możesz ponownie zaprosić {name} jutro"
+  },
+  "qc_qoy": {
+    "message": "You can have up to 200 friends",
+    "translation": "Możesz mieć maksymalnie 200 znajomych"
+  },
+  "kFU-ep": {
+    "message": "You can send another one tomorrow.",
+    "translation": "Kolejne możesz wysłać jutro."
+  },
+  "Jlf4l7": {
+    "message": "You can send them a new friend request any time.",
+    "translation": "Nowe zaproszenie do znajomych możesz wysłać w dowolnej chwili."
+  },
   "aylG7j": {
     "message": "You can't move that card",
     "translation": "Nie możesz przenieść tej karty"
   },
+  "wRa3wc": {
+    "message": "You have {count} friend requests",
+    "translation": "Zaproszenia do znajomych: {count}"
+  },
+  "gymL5v": {
+    "message": "You won't be friends, and they can't send you requests or invites. They won't be told.",
+    "translation": "Nie zostaniecie znajomymi, a ten gracz nie będzie mógł wysyłać ci zaproszeń do znajomych ani do gry. Nie zostanie o tym powiadomiony."
+  },
   "VvkF_g": {
     "message": "You're watching",
     "translation": "Oglądasz"
+  },
+  "npW9N-": {
+    "message": "You've sent 50 requests. Wait for answers or cancel some.",
+    "translation": "Wysłano 50 zaproszeń. Poczekaj na odpowiedzi albo anuluj część z nich."
   },
   "vblI2b": {
     "message": "Your account already has a {name} sign-in",
@@ -8632,6 +8927,10 @@
     "message": "Your discard pile",
     "translation": "Twój stos odrzuconych"
   },
+  "a4OOqX": {
+    "message": "Your friend can copy their User ID from Account, in Settings.",
+    "translation": "Twój znajomy może skopiować swoje ID użytkownika z sekcji Konto w Ustawieniach."
+  },
   "pa5Fda": {
     "message": "Your games",
     "translation": "Twoje gry"
@@ -8663,6 +8962,10 @@
   "yuM-lV": {
     "message": "Your turn",
     "translation": "Twoja tura"
+  },
+  "yBT9fU": {
+    "message": "Your User ID",
+    "translation": "Twoje ID użytkownika"
   },
   "X0l3In": {
     "message": "Yours",

@@ -100,6 +100,10 @@
     ],
     "translation": "{0}枚選択中"
   },
+  "eC0xf_": {
+    "message": "{0} wants to be friends",
+    "translation": "{0}さんがフレンドになりたいそうです"
+  },
   "THa0qf": {
     "message": "{0}, {count} in deck",
     "translation": "{0}、デッキに{count}枚"
@@ -805,6 +809,20 @@
     ],
     "translation": "{label}、新着{badge}件"
   },
+  "Jijcis": {
+    "message": "{label}, {online} online",
+    "comments": [
+      "The Friends button with how many friends are online"
+    ],
+    "translation": "{label}、{online}人オンライン"
+  },
+  "xi1vOj": {
+    "message": "{label}, {waiting} requests",
+    "comments": [
+      "The Friends button while friend requests wait"
+    ],
+    "translation": "{label}、リクエスト{waiting}件"
+  },
   "VOuY7n": {
     "message": "{label}: {spoken}. Change",
     "comments": [
@@ -913,12 +931,20 @@
     ],
     "translation": "{name}のベンチ"
   },
+  "u3z-wx": {
+    "message": "{name} blocked",
+    "translation": "{name}をブロックしました"
+  },
   "Mk1A2U": {
     "message": "{name} board",
     "comments": [
       "A zone's name for screen readers; name is its player. The open play area."
     ],
     "translation": "{name}の盤面"
+  },
+  "xpUnH3": {
+    "message": "{name} can't take friend requests right now",
+    "translation": "{name}は現在フレンドリクエストを受け付けていません"
   },
   "IensRv": {
     "message": "{name} changed {card} into {category, select, energy {an energy} pokemon {a Pokémon} trainer {a tool} other {an unknown type}}",
@@ -1216,6 +1242,10 @@
     ],
     "translation": "{name}が {card}の特殊状態を取り除きました"
   },
+  "uVKANG": {
+    "message": "{name} unblocked",
+    "translation": "{name}のブロックを解除しました"
+  },
   "cV1aTX": {
     "message": "{name} used",
     "comments": [
@@ -1308,6 +1338,10 @@
       "Shown across the table when a player starts their turn."
     ],
     "translation": "{name}の番"
+  },
+  "S6v-69": {
+    "message": "{online} online",
+    "translation": "{online}人オンライン"
   },
   "cgJmF-": {
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
@@ -1520,6 +1554,10 @@
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
     "translation": "{viewer}が{owner}の{source, select, hand {手札} prizes {サイド} discard {トラッシュ} board {盤面} stadium {スタジアム} active {バトル場} bench {ベンチ} lostZone {ロストゾーン} attachmentResolution {ついているカード} inspection {確認中のカード} other {山札}}のカードを見るのをやめました"
+  },
+  "VnR9fs": {
+    "message": "{waiting} requests",
+    "translation": "リクエスト{waiting}件"
   },
   "-AEMvi": {
     "message": "{zoneName}, {0} selected",
@@ -1741,6 +1779,11 @@
     "context": "sleeve",
     "translation": "アクセント"
   },
+  "7Zf_4b": {
+    "message": "Accept",
+    "context": "a friend request",
+    "translation": "承認"
+  },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
     "translation": "優先的な提案・機能のリクエスト・トラブル対応が受けられる限定Discordチャンネルへの参加権。"
@@ -1807,6 +1850,15 @@
     "message": "Add",
     "translation": "追加"
   },
+  "H4GEd-": {
+    "message": "Add",
+    "context": "add as a friend",
+    "translation": "追加"
+  },
+  "BDfqMd": {
+    "message": "Add {0} as a friend",
+    "translation": "{0}をフレンドに追加"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "ダメージを{count}追加"
@@ -1814,6 +1866,10 @@
   "T-qRMv": {
     "message": "Add a card that isn't listed",
     "translation": "一覧にないカードを追加"
+  },
+  "fJzzbI": {
+    "message": "Add a friend",
+    "translation": "フレンドを追加"
   },
   "mOTci6": {
     "message": "Add a multi-piece card",
@@ -1853,6 +1909,10 @@
   "mOz7te": {
     "message": "Add damage…",
     "translation": "ダメージを追加…"
+  },
+  "lICjHG": {
+    "message": "Add friend",
+    "translation": "フレンド追加"
   },
   "Pn1N14": {
     "message": "Add one",
@@ -2026,6 +2086,11 @@
     "message": "Announce mulligan",
     "translation": "マリガンを通知"
   },
+  "nGkdoK": {
+    "message": "Answer",
+    "context": "a friend request",
+    "translation": "返答"
+  },
   "Y_nxYt": {
     "message": "Any",
     "context": "filter",
@@ -2185,6 +2250,11 @@
     "context": "replay: one step back",
     "translation": "戻る"
   },
+  "ifZryV": {
+    "message": "Back",
+    "context": "to the friends page before",
+    "translation": "戻る"
+  },
   "_8WPEl": {
     "message": "Back",
     "context": "to the settings page before",
@@ -2292,6 +2362,18 @@
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
     "translation": "<0>{0}</0>もベンチに出しましょう。"
+  },
+  "CJkEfx": {
+    "message": "Block",
+    "translation": "ブロック"
+  },
+  "n_j1xf": {
+    "message": "Block {0}?",
+    "translation": "{0}をブロックしますか?"
+  },
+  "32TndD": {
+    "message": "Blocked",
+    "translation": "ブロック中"
   },
   "O2HdKg": {
     "message": "Board",
@@ -2417,6 +2499,23 @@
   "dEgA5A": {
     "message": "Cancel",
     "translation": "キャンセル"
+  },
+  "NCLglM": {
+    "message": "Cancel",
+    "context": "a sent friend request",
+    "translation": "取り消す"
+  },
+  "HoYkSd": {
+    "message": "Cancel request",
+    "translation": "リクエストを取り消す"
+  },
+  "BEZRSx": {
+    "message": "Cancel request to {0}",
+    "translation": "{0}へのリクエストを取り消す"
+  },
+  "e1e3Eb": {
+    "message": "Cancel your friend request to {0}?",
+    "translation": "{0}へのフレンドリクエストを取り消しますか?"
   },
   "4GkLKV": {
     "message": "Caps",
@@ -2858,6 +2957,10 @@
     "message": "Couldn't copy the link",
     "translation": "リンクをコピーできませんでした"
   },
+  "HlJJR9": {
+    "message": "Couldn't copy. Try again.",
+    "translation": "コピーできませんでした。もう一度お試しください。"
+  },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "ルームを作成できませんでした。もう一度お試しください。"
@@ -2873,6 +2976,10 @@
   "vighKL": {
     "message": "Couldn't disconnect. Try again.",
     "translation": "連携を解除できませんでした。もう一度お試しください。"
+  },
+  "PZXB_f": {
+    "message": "Couldn't do that. Try again.",
+    "translation": "実行できませんでした。もう一度お試しください。"
   },
   "2TYlNr": {
     "message": "Couldn't get an image from that link.",
@@ -2894,9 +3001,17 @@
     "message": "Couldn't load this",
     "translation": "読み込めませんでした"
   },
+  "JeVfD4": {
+    "message": "Couldn't load your friends.",
+    "translation": "フレンドを読み込めませんでした。"
+  },
   "ZHwYJT": {
     "message": "Couldn't load your games. Try again.",
     "translation": "ゲームを読み込めませんでした。もう一度お試しください。"
+  },
+  "_ukJJq": {
+    "message": "Couldn't look that up. Try again.",
+    "translation": "検索できませんでした。もう一度お試しください。"
   },
   "w--GsN": {
     "message": "Couldn't open that file",
@@ -3211,6 +3326,15 @@
   "6soIXc": {
     "message": "Decks, replays, friends & more, on every device.",
     "translation": "デッキ、リプレイ、フレンドなどを、どのデバイスでも。"
+  },
+  "7Ky3Xn": {
+    "message": "Decline",
+    "context": "a friend request",
+    "translation": "辞退"
+  },
+  "KuA7Zt": {
+    "message": "Decline {0}",
+    "translation": "{0}を辞退"
   },
   "cnGeoo": {
     "message": "Delete",
@@ -3929,6 +4053,33 @@
     "context": "deck format",
     "translation": "フォーマット"
   },
+  "OkDDjA": {
+    "message": "Friend request sent to {name}",
+    "translation": "{name}にフレンドリクエストを送りました"
+  },
+  "RjrvaO": {
+    "message": "Friend requests",
+    "translation": "フレンドリクエスト"
+  },
+  "rztzRH": {
+    "message": "Friends",
+    "context": "already friends",
+    "translation": "フレンド"
+  },
+  "OVlhKw": {
+    "message": "Friends",
+    "context": "the friends sheet",
+    "translation": "フレンド"
+  },
+  "kqnCg6": {
+    "message": "Friends",
+    "context": "the list of friends",
+    "translation": "フレンド"
+  },
+  "N5Cyfw": {
+    "message": "Friends since {0}",
+    "translation": "{0}からフレンド"
+  },
   "hGDVDa": {
     "message": "From {0}",
     "comments": [
@@ -4361,6 +4512,10 @@
     "message": "Invitation link ready",
     "translation": "招待リンクを作成しました"
   },
+  "qsqt0w": {
+    "message": "Invite link",
+    "translation": "招待リンク"
+  },
   "KLJ4eD": {
     "message": "Invite link copied",
     "translation": "招待リンクをコピーしました"
@@ -4428,6 +4583,11 @@
   "N2lSEn": {
     "message": "Joins matching pieces",
     "translation": "同じ種類のピースを結合します"
+  },
+  "QbFLpT": {
+    "message": "Keep",
+    "context": "a friend",
+    "translation": "残す"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -4629,6 +4789,10 @@
     "message": "Loading events…",
     "translation": "イベントを読み込み中…"
   },
+  "_o0pHI": {
+    "message": "Loading friends…",
+    "translation": "フレンドを読み込み中…"
+  },
   "Pwqkdw": {
     "message": "Loading…",
     "translation": "読み込み中…"
@@ -4736,6 +4900,10 @@
   "pKU2VG": {
     "message": "Looking at cards",
     "translation": "カードを見ています"
+  },
+  "7R-0aV": {
+    "message": "Looking…",
+    "translation": "検索中…"
   },
   "cGgbAH": {
     "message": "Lost the room during the replay.",
@@ -5249,6 +5417,10 @@
     "message": "No foil",
     "translation": "ホイルなし"
   },
+  "QY50Ed": {
+    "message": "No friends yet. Share your User ID or invite link to add one.",
+    "translation": "まだフレンドがいません。ユーザーIDか招待リンクを共有して追加しましょう。"
+  },
   "nivaRq": {
     "message": "No list",
     "translation": "リストなし"
@@ -5267,6 +5439,10 @@
   "mNXjQA": {
     "message": "No match",
     "translation": "一致なし"
+  },
+  "jZr9la": {
+    "message": "No player has that ID.",
+    "translation": "そのIDのプレイヤーはいません。"
   },
   "v5Ta3F": {
     "message": "No Pokémon by that name",
@@ -5706,6 +5882,10 @@
     "message": "Paste a link to an image.",
     "translation": "画像のリンクを貼り付けてください。"
   },
+  "t95T01": {
+    "message": "Paste a User ID or invite link",
+    "translation": "ユーザーIDまたは招待リンクを貼り付け"
+  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "詳細を報告に貼り付けてください。問題の特定に役立ちます。"
@@ -5815,6 +5995,10 @@
   "hrmat7": {
     "message": "Play these decks",
     "translation": "これらのデッキで遊ぶ"
+  },
+  "Vcesbu": {
+    "message": "Played {0}",
+    "translation": "{0}で対戦"
   },
   "2qhgQG": {
     "message": "Played last",
@@ -6156,6 +6340,10 @@
     ],
     "translation": "最近使用"
   },
+  "4KDShY": {
+    "message": "Recent players",
+    "translation": "最近の対戦相手"
+  },
   "gcoiFh": {
     "message": "Reconnect",
     "translation": "再接続"
@@ -6228,6 +6416,15 @@
     ],
     "translation": "リマインダー"
   },
+  "AnDcX_": {
+    "message": "Remove",
+    "context": "a friend",
+    "translation": "削除"
+  },
+  "HfbMnA": {
+    "message": "Remove {0} as a friend?",
+    "translation": "{0}をフレンドから削除しますか?"
+  },
   "HLazKQ": {
     "message": "Remove {name}",
     "translation": "{name}を外す"
@@ -6262,6 +6459,10 @@
   "sR6lTH": {
     "message": "Remove condition",
     "translation": "状態を解除"
+  },
+  "LZlsoq": {
+    "message": "Remove friend",
+    "translation": "フレンドを削除"
   },
   "8IMRlK": {
     "message": "Remove from {seat}",
@@ -6357,6 +6558,10 @@
   "732i9s": {
     "message": "Report on Discord",
     "translation": "Discordで報告"
+  },
+  "1RVBJe": {
+    "message": "Request sent",
+    "translation": "リクエストを送信しました"
   },
   "OfhWJH": {
     "message": "Reset",
@@ -6894,6 +7099,10 @@
     "message": "Send message",
     "translation": "メッセージを送信"
   },
+  "_VW54L": {
+    "message": "Sent requests",
+    "translation": "送信済みのリクエスト"
+  },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
     "translation": "本当に誰も登録しないと思いますが、もし登録していただけたら心から感謝します。"
@@ -6978,6 +7187,10 @@
   "Z8lGw6": {
     "message": "Share",
     "translation": "共有"
+  },
+  "LdSvsJ": {
+    "message": "Share it so friends can add you.",
+    "translation": "共有すると、フレンドがあなたを追加できます。"
   },
   "2D-NYE": {
     "message": "Shift",
@@ -7233,6 +7446,10 @@
   "Se3Re8": {
     "message": "Sleeve sheen",
     "translation": "スリーブの光沢"
+  },
+  "H2UIkh": {
+    "message": "Slow down! Try again in a moment.",
+    "translation": "操作が多すぎます。しばらくしてからもう一度お試しください。"
   },
   "P12gHj": {
     "message": "Smaller cards",
@@ -7743,17 +7960,34 @@
     "message": "That image is over 20 MB.",
     "translation": "この画像は20 MBを超えています。"
   },
+  "KB3gFS": {
+    "message": "That isn't a User ID.",
+    "translation": "ユーザーIDではありません。"
+  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "スキップされました。"
+  },
+  "YRGPpX": {
+    "message": "That player",
+    "context": "friends",
+    "translation": "このプレイヤー"
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
     "translation": "リプレイファイルを開けませんでした。"
   },
+  "BfMjlP": {
+    "message": "That request was withdrawn",
+    "translation": "そのリクエストは取り消されました"
+  },
   "6Z1wXH": {
     "message": "That side starts over with the new deck",
     "translation": "その側は新しいデッキで最初からになります"
+  },
+  "drHrdz": {
+    "message": "That's your own User ID.",
+    "translation": "これはあなた自身のユーザーIDです。"
   },
   "hPwR-j": {
     "message": "The card went back.",
@@ -8288,6 +8522,18 @@
     "context": "item",
     "translation": "ハイパーボール"
   },
+  "tuS5Jz": {
+    "message": "Unblock",
+    "translation": "ブロック解除"
+  },
+  "TQMvTB": {
+    "message": "Unblock {0}",
+    "translation": "{0}のブロックを解除"
+  },
+  "mw1HnN": {
+    "message": "Unblock {name} to send a friend request",
+    "translation": "フレンドリクエストを送るには{name}のブロックを解除してください"
+  },
   "9uI_rE": {
     "message": "Undo",
     "translation": "元に戻す"
@@ -8417,6 +8663,14 @@
     "message": "User ID",
     "translation": "ユーザーID"
   },
+  "PNJdRU": {
+    "message": "User ID copied",
+    "translation": "ユーザーIDをコピーしました"
+  },
+  "ELEf3-": {
+    "message": "User ID or invite link",
+    "translation": "ユーザーIDまたは招待リンク"
+  },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
     "translation": "Limitless TCGの検索構文を使用します。"
@@ -8474,9 +8728,18 @@
     "message": "VSTAR marker",
     "translation": "VSTARマーカー"
   },
+  "BjBy0G": {
+    "message": "Wait",
+    "context": "keep a request",
+    "translation": "保留"
+  },
   "LE8SQj": {
     "message": "Wallpaper {0}",
     "translation": "壁紙 {0}"
+  },
+  "6fsB0P": {
+    "message": "Wants to be friends",
+    "translation": "フレンドになりたがっています"
   },
   "vbMHW0": {
     "message": "Watch",
@@ -8586,13 +8849,45 @@
     "context": "filter",
     "translation": "はい"
   },
+  "xi-TMk": {
+    "message": "You and {name} are now friends!",
+    "translation": "あなたと{name}はフレンドになりました"
+  },
+  "7pucj_": {
+    "message": "You can ask {name} again tomorrow",
+    "translation": "{name}には明日もう一度リクエストできます"
+  },
+  "qc_qoy": {
+    "message": "You can have up to 200 friends",
+    "translation": "フレンドは最大200人までです"
+  },
+  "kFU-ep": {
+    "message": "You can send another one tomorrow.",
+    "translation": "明日もう一度送信できます。"
+  },
+  "Jlf4l7": {
+    "message": "You can send them a new friend request any time.",
+    "translation": "いつでも新しいフレンドリクエストを送れます。"
+  },
   "aylG7j": {
     "message": "You can't move that card",
     "translation": "そのカードは動かせません"
   },
+  "wRa3wc": {
+    "message": "You have {count} friend requests",
+    "translation": "フレンドリクエストが{count}件あります"
+  },
+  "gymL5v": {
+    "message": "You won't be friends, and they can't send you requests or invites. They won't be told.",
+    "translation": "フレンドにはならず、相手からのリクエストや招待も届きません。相手には通知されません。"
+  },
   "VvkF_g": {
     "message": "You're watching",
     "translation": "観戦中"
+  },
+  "npW9N-": {
+    "message": "You've sent 50 requests. Wait for answers or cancel some.",
+    "translation": "リクエストを50件送信しました。返事を待つか、いくつか取り消してください。"
   },
   "vblI2b": {
     "message": "Your account already has a {name} sign-in",
@@ -8632,6 +8927,10 @@
     "message": "Your discard pile",
     "translation": "自分のトラッシュ"
   },
+  "a4OOqX": {
+    "message": "Your friend can copy their User ID from Account, in Settings.",
+    "translation": "フレンドは設定の「アカウント」からユーザーIDをコピーできます。"
+  },
   "pa5Fda": {
     "message": "Your games",
     "translation": "自分のゲーム"
@@ -8663,6 +8962,10 @@
   "yuM-lV": {
     "message": "Your turn",
     "translation": "あなたの番"
+  },
+  "yBT9fU": {
+    "message": "Your User ID",
+    "translation": "あなたのユーザーID"
   },
   "X0l3In": {
     "message": "Yours",

@@ -100,6 +100,10 @@
     ],
     "translation": "{0} dipilih"
   },
+  "eC0xf_": {
+    "message": "{0} wants to be friends",
+    "translation": "{0} ingin berteman"
+  },
   "THa0qf": {
     "message": "{0}, {count} in deck",
     "translation": "{0}, {count} dalam dek"
@@ -805,6 +809,20 @@
     ],
     "translation": "{label}, {badge} baru"
   },
+  "Jijcis": {
+    "message": "{label}, {online} online",
+    "comments": [
+      "The Friends button with how many friends are online"
+    ],
+    "translation": "{label}, {online} online"
+  },
+  "xi1vOj": {
+    "message": "{label}, {waiting} requests",
+    "comments": [
+      "The Friends button while friend requests wait"
+    ],
+    "translation": "{label}, {waiting} permintaan"
+  },
   "VOuY7n": {
     "message": "{label}: {spoken}. Change",
     "comments": [
@@ -913,12 +931,20 @@
     ],
     "translation": "Cadangan {name}"
   },
+  "u3z-wx": {
+    "message": "{name} blocked",
+    "translation": "{name} diblokir"
+  },
   "Mk1A2U": {
     "message": "{name} board",
     "comments": [
       "A zone's name for screen readers; name is its player. The open play area."
     ],
     "translation": "Papan {name}"
+  },
+  "xpUnH3": {
+    "message": "{name} can't take friend requests right now",
+    "translation": "{name} tidak bisa menerima permintaan pertemanan saat ini"
   },
   "IensRv": {
     "message": "{name} changed {card} into {category, select, energy {an energy} pokemon {a Pokémon} trainer {a tool} other {an unknown type}}",
@@ -1216,6 +1242,10 @@
     ],
     "translation": "{name} menghapus Kondisi Khusus dari {card}"
   },
+  "uVKANG": {
+    "message": "{name} unblocked",
+    "translation": "Blokir {name} dibuka"
+  },
   "cV1aTX": {
     "message": "{name} used",
     "comments": [
@@ -1308,6 +1338,10 @@
       "Shown across the table when a player starts their turn."
     ],
     "translation": "Giliran {name}"
+  },
+  "S6v-69": {
+    "message": "{online} online",
+    "translation": "{online} online"
   },
   "cgJmF-": {
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
@@ -1520,6 +1554,10 @@
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
     "translation": "{viewer} berhenti melihat kartu di {source, select, hand {Kartu Pegangan} prizes {Kartu Point} discard {Trash} board {papan} stadium {Stadium} active {Arena Bertarung} bench {Cadangan} lostZone {Lost Zone} attachmentResolution {kartu terpasang} inspection {pemeriksaan} other {deck}} milik {owner}"
+  },
+  "VnR9fs": {
+    "message": "{waiting} requests",
+    "translation": "{waiting} permintaan"
   },
   "-AEMvi": {
     "message": "{zoneName}, {0} selected",
@@ -1741,6 +1779,11 @@
     "context": "sleeve",
     "translation": "Aksen"
   },
+  "7Zf_4b": {
+    "message": "Accept",
+    "context": "a friend request",
+    "translation": "Terima"
+  },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
     "translation": "Akses ke channel Discord eksklusif untuk saran prioritas, usulan fitur, dan bantuan pemecahan masalah."
@@ -1807,6 +1850,15 @@
     "message": "Add",
     "translation": "Tambah"
   },
+  "H4GEd-": {
+    "message": "Add",
+    "context": "add as a friend",
+    "translation": "Tambah"
+  },
+  "BDfqMd": {
+    "message": "Add {0} as a friend",
+    "translation": "Tambahkan {0} sebagai teman"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "Tambah {count} kerusakan"
@@ -1814,6 +1866,10 @@
   "T-qRMv": {
     "message": "Add a card that isn't listed",
     "translation": "Tambahkan kartu yang tidak ada di daftar"
+  },
+  "fJzzbI": {
+    "message": "Add a friend",
+    "translation": "Tambah teman"
   },
   "mOTci6": {
     "message": "Add a multi-piece card",
@@ -1853,6 +1909,10 @@
   "mOz7te": {
     "message": "Add damage…",
     "translation": "Tambah kerusakan…"
+  },
+  "lICjHG": {
+    "message": "Add friend",
+    "translation": "Tambah teman"
   },
   "Pn1N14": {
     "message": "Add one",
@@ -2026,6 +2086,11 @@
     "message": "Announce mulligan",
     "translation": "Umumkan mulligan"
   },
+  "nGkdoK": {
+    "message": "Answer",
+    "context": "a friend request",
+    "translation": "Jawab"
+  },
   "Y_nxYt": {
     "message": "Any",
     "context": "filter",
@@ -2185,6 +2250,11 @@
     "context": "replay: one step back",
     "translation": "Kembali"
   },
+  "ifZryV": {
+    "message": "Back",
+    "context": "to the friends page before",
+    "translation": "Kembali"
+  },
   "_8WPEl": {
     "message": "Back",
     "context": "to the settings page before",
@@ -2292,6 +2362,18 @@
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
     "translation": "Masukkan <0>{0}</0> ke Cadangan juga."
+  },
+  "CJkEfx": {
+    "message": "Block",
+    "translation": "Blokir"
+  },
+  "n_j1xf": {
+    "message": "Block {0}?",
+    "translation": "Blokir {0}?"
+  },
+  "32TndD": {
+    "message": "Blocked",
+    "translation": "Diblokir"
   },
   "O2HdKg": {
     "message": "Board",
@@ -2417,6 +2499,23 @@
   "dEgA5A": {
     "message": "Cancel",
     "translation": "Batal"
+  },
+  "NCLglM": {
+    "message": "Cancel",
+    "context": "a sent friend request",
+    "translation": "Batalkan"
+  },
+  "HoYkSd": {
+    "message": "Cancel request",
+    "translation": "Batalkan permintaan"
+  },
+  "BEZRSx": {
+    "message": "Cancel request to {0}",
+    "translation": "Batalkan permintaan ke {0}"
+  },
+  "e1e3Eb": {
+    "message": "Cancel your friend request to {0}?",
+    "translation": "Batalkan permintaan pertemananmu ke {0}?"
   },
   "4GkLKV": {
     "message": "Caps",
@@ -2858,6 +2957,10 @@
     "message": "Couldn't copy the link",
     "translation": "Tidak bisa menyalin tautan"
   },
+  "HlJJR9": {
+    "message": "Couldn't copy. Try again.",
+    "translation": "Tidak bisa menyalin. Coba lagi."
+  },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "Tidak bisa membuat ruang. Coba lagi."
@@ -2873,6 +2976,10 @@
   "vighKL": {
     "message": "Couldn't disconnect. Try again.",
     "translation": "Tidak bisa memutuskan koneksi. Coba lagi."
+  },
+  "PZXB_f": {
+    "message": "Couldn't do that. Try again.",
+    "translation": "Tidak bisa melakukannya. Coba lagi."
   },
   "2TYlNr": {
     "message": "Couldn't get an image from that link.",
@@ -2894,9 +3001,17 @@
     "message": "Couldn't load this",
     "translation": "Tidak dapat memuat ini"
   },
+  "JeVfD4": {
+    "message": "Couldn't load your friends.",
+    "translation": "Tidak bisa memuat temanmu."
+  },
   "ZHwYJT": {
     "message": "Couldn't load your games. Try again.",
     "translation": "Tidak bisa memuat game-mu. Coba lagi."
+  },
+  "_ukJJq": {
+    "message": "Couldn't look that up. Try again.",
+    "translation": "Tidak bisa mencarinya. Coba lagi."
   },
   "w--GsN": {
     "message": "Couldn't open that file",
@@ -3211,6 +3326,15 @@
   "6soIXc": {
     "message": "Decks, replays, friends & more, on every device.",
     "translation": "Deck, replay, teman & lainnya, di semua perangkat."
+  },
+  "7Ky3Xn": {
+    "message": "Decline",
+    "context": "a friend request",
+    "translation": "Tolak"
+  },
+  "KuA7Zt": {
+    "message": "Decline {0}",
+    "translation": "Tolak {0}"
   },
   "cnGeoo": {
     "message": "Delete",
@@ -3929,6 +4053,33 @@
     "context": "deck format",
     "translation": "Format"
   },
+  "OkDDjA": {
+    "message": "Friend request sent to {name}",
+    "translation": "Permintaan pertemanan dikirim ke {name}"
+  },
+  "RjrvaO": {
+    "message": "Friend requests",
+    "translation": "Permintaan pertemanan"
+  },
+  "rztzRH": {
+    "message": "Friends",
+    "context": "already friends",
+    "translation": "Berteman"
+  },
+  "OVlhKw": {
+    "message": "Friends",
+    "context": "the friends sheet",
+    "translation": "Teman"
+  },
+  "kqnCg6": {
+    "message": "Friends",
+    "context": "the list of friends",
+    "translation": "Teman"
+  },
+  "N5Cyfw": {
+    "message": "Friends since {0}",
+    "translation": "Berteman sejak {0}"
+  },
   "hGDVDa": {
     "message": "From {0}",
     "comments": [
@@ -4361,6 +4512,10 @@
     "message": "Invitation link ready",
     "translation": "Tautan undangan siap"
   },
+  "qsqt0w": {
+    "message": "Invite link",
+    "translation": "Tautan undangan"
+  },
   "KLJ4eD": {
     "message": "Invite link copied",
     "translation": "Tautan undangan disalin"
@@ -4428,6 +4583,11 @@
   "N2lSEn": {
     "message": "Joins matching pieces",
     "translation": "Menggabungkan bidak yang cocok"
+  },
+  "QbFLpT": {
+    "message": "Keep",
+    "context": "a friend",
+    "translation": "Pertahankan"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -4629,6 +4789,10 @@
     "message": "Loading events…",
     "translation": "Memuat event…"
   },
+  "_o0pHI": {
+    "message": "Loading friends…",
+    "translation": "Memuat teman…"
+  },
   "Pwqkdw": {
     "message": "Loading…",
     "translation": "Memuat…"
@@ -4736,6 +4900,10 @@
   "pKU2VG": {
     "message": "Looking at cards",
     "translation": "Melihat kartu"
+  },
+  "7R-0aV": {
+    "message": "Looking…",
+    "translation": "Mencari…"
   },
   "cGgbAH": {
     "message": "Lost the room during the replay.",
@@ -5249,6 +5417,10 @@
     "message": "No foil",
     "translation": "Tanpa foil"
   },
+  "QY50Ed": {
+    "message": "No friends yet. Share your User ID or invite link to add one.",
+    "translation": "Belum ada teman. Bagikan User ID atau tautan undanganmu untuk menambahkan teman."
+  },
   "nivaRq": {
     "message": "No list",
     "translation": "Tidak ada daftar"
@@ -5267,6 +5439,10 @@
   "mNXjQA": {
     "message": "No match",
     "translation": "Tidak ada yang cocok"
+  },
+  "jZr9la": {
+    "message": "No player has that ID.",
+    "translation": "Tidak ada pemain dengan ID itu."
   },
   "v5Ta3F": {
     "message": "No Pokémon by that name",
@@ -5706,6 +5882,10 @@
     "message": "Paste a link to an image.",
     "translation": "Tempel tautan ke gambar."
   },
+  "t95T01": {
+    "message": "Paste a User ID or invite link",
+    "translation": "Tempel User ID atau tautan undangan"
+  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "Tempel detail ke laporanmu: ini membantu menemukan masalahnya."
@@ -5815,6 +5995,10 @@
   "hrmat7": {
     "message": "Play these decks",
     "translation": "Mainkan deck ini"
+  },
+  "Vcesbu": {
+    "message": "Played {0}",
+    "translation": "Bermain {0}"
   },
   "2qhgQG": {
     "message": "Played last",
@@ -6156,6 +6340,10 @@
     ],
     "translation": "Terbaru"
   },
+  "4KDShY": {
+    "message": "Recent players",
+    "translation": "Pemain terbaru"
+  },
   "gcoiFh": {
     "message": "Reconnect",
     "translation": "Sambungkan ulang"
@@ -6228,6 +6416,15 @@
     ],
     "translation": "Pengingat"
   },
+  "AnDcX_": {
+    "message": "Remove",
+    "context": "a friend",
+    "translation": "Hapus"
+  },
+  "HfbMnA": {
+    "message": "Remove {0} as a friend?",
+    "translation": "Hapus {0} dari daftar teman?"
+  },
   "HLazKQ": {
     "message": "Remove {name}",
     "translation": "Hapus {name}"
@@ -6262,6 +6459,10 @@
   "sR6lTH": {
     "message": "Remove condition",
     "translation": "Hapus kondisi"
+  },
+  "LZlsoq": {
+    "message": "Remove friend",
+    "translation": "Hapus teman"
   },
   "8IMRlK": {
     "message": "Remove from {seat}",
@@ -6357,6 +6558,10 @@
   "732i9s": {
     "message": "Report on Discord",
     "translation": "Laporkan di Discord"
+  },
+  "1RVBJe": {
+    "message": "Request sent",
+    "translation": "Permintaan terkirim"
   },
   "OfhWJH": {
     "message": "Reset",
@@ -6894,6 +7099,10 @@
     "message": "Send message",
     "translation": "Kirim pesan"
   },
+  "_VW54L": {
+    "message": "Sent requests",
+    "translation": "Permintaan terkirim"
+  },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
     "translation": "Jujur, saya rasa tidak akan ada yang berlangganan, tapi saya akan sangat berterima kasih."
@@ -6978,6 +7187,10 @@
   "Z8lGw6": {
     "message": "Share",
     "translation": "Bagikan"
+  },
+  "LdSvsJ": {
+    "message": "Share it so friends can add you.",
+    "translation": "Bagikan agar teman bisa menambahkanmu."
   },
   "2D-NYE": {
     "message": "Shift",
@@ -7233,6 +7446,10 @@
   "Se3Re8": {
     "message": "Sleeve sheen",
     "translation": "Kilau sleeve"
+  },
+  "H2UIkh": {
+    "message": "Slow down! Try again in a moment.",
+    "translation": "Pelan-pelan! Coba lagi sebentar lagi."
   },
   "P12gHj": {
     "message": "Smaller cards",
@@ -7743,17 +7960,34 @@
     "message": "That image is over 20 MB.",
     "translation": "Gambar itu lebih dari 20 MB."
   },
+  "KB3gFS": {
+    "message": "That isn't a User ID.",
+    "translation": "Itu bukan User ID."
+  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Yang itu dilewati."
+  },
+  "YRGPpX": {
+    "message": "That player",
+    "context": "friends",
+    "translation": "Pemain itu"
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
     "translation": "File replay itu tidak bisa dibuka."
   },
+  "BfMjlP": {
+    "message": "That request was withdrawn",
+    "translation": "Permintaan itu telah dibatalkan"
+  },
   "6Z1wXH": {
     "message": "That side starts over with the new deck",
     "translation": "Sisi itu dimulai ulang dengan deck baru"
+  },
+  "drHrdz": {
+    "message": "That's your own User ID.",
+    "translation": "Itu User ID-mu sendiri."
   },
   "hPwR-j": {
     "message": "The card went back.",
@@ -8288,6 +8522,18 @@
     "context": "item",
     "translation": "Ultra Ball"
   },
+  "tuS5Jz": {
+    "message": "Unblock",
+    "translation": "Buka blokir"
+  },
+  "TQMvTB": {
+    "message": "Unblock {0}",
+    "translation": "Buka blokir {0}"
+  },
+  "mw1HnN": {
+    "message": "Unblock {name} to send a friend request",
+    "translation": "Buka blokir {name} untuk mengirim permintaan pertemanan"
+  },
   "9uI_rE": {
     "message": "Undo",
     "translation": "Urungkan"
@@ -8417,6 +8663,14 @@
     "message": "User ID",
     "translation": "ID pengguna"
   },
+  "PNJdRU": {
+    "message": "User ID copied",
+    "translation": "User ID disalin"
+  },
+  "ELEf3-": {
+    "message": "User ID or invite link",
+    "translation": "User ID atau tautan undangan"
+  },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
     "translation": "Menggunakan sintaks pencarian Limitless TCG."
@@ -8474,9 +8728,18 @@
     "message": "VSTAR marker",
     "translation": "Penanda VSTAR"
   },
+  "BjBy0G": {
+    "message": "Wait",
+    "context": "keep a request",
+    "translation": "Tunda"
+  },
   "LE8SQj": {
     "message": "Wallpaper {0}",
     "translation": "Wallpaper {0}"
+  },
+  "6fsB0P": {
+    "message": "Wants to be friends",
+    "translation": "Ingin berteman"
   },
   "vbMHW0": {
     "message": "Watch",
@@ -8586,13 +8849,45 @@
     "context": "filter",
     "translation": "Ya"
   },
+  "xi-TMk": {
+    "message": "You and {name} are now friends!",
+    "translation": "Kamu dan {name} sekarang berteman"
+  },
+  "7pucj_": {
+    "message": "You can ask {name} again tomorrow",
+    "translation": "Kamu bisa meminta {name} lagi besok"
+  },
+  "qc_qoy": {
+    "message": "You can have up to 200 friends",
+    "translation": "Kamu bisa memiliki hingga 200 teman"
+  },
+  "kFU-ep": {
+    "message": "You can send another one tomorrow.",
+    "translation": "Kamu bisa mengirim satu lagi besok."
+  },
+  "Jlf4l7": {
+    "message": "You can send them a new friend request any time.",
+    "translation": "Kamu bisa mengirim permintaan pertemanan baru kapan saja."
+  },
   "aylG7j": {
     "message": "You can't move that card",
     "translation": "Kamu tidak bisa memindahkan kartu itu"
   },
+  "wRa3wc": {
+    "message": "You have {count} friend requests",
+    "translation": "Kamu punya {count} permintaan pertemanan"
+  },
+  "gymL5v": {
+    "message": "You won't be friends, and they can't send you requests or invites. They won't be told.",
+    "translation": "Kalian tidak akan berteman, dan mereka tidak bisa mengirimmu permintaan atau undangan. Mereka tidak akan diberi tahu."
+  },
   "VvkF_g": {
     "message": "You're watching",
     "translation": "Kamu sedang menonton"
+  },
+  "npW9N-": {
+    "message": "You've sent 50 requests. Wait for answers or cancel some.",
+    "translation": "Kamu sudah mengirim 50 permintaan. Tunggu jawaban atau batalkan beberapa."
   },
   "vblI2b": {
     "message": "Your account already has a {name} sign-in",
@@ -8632,6 +8927,10 @@
     "message": "Your discard pile",
     "translation": "Trash kamu"
   },
+  "a4OOqX": {
+    "message": "Your friend can copy their User ID from Account, in Settings.",
+    "translation": "Temanmu bisa menyalin User ID-nya dari Akun, di Pengaturan."
+  },
   "pa5Fda": {
     "message": "Your games",
     "translation": "Game-mu"
@@ -8663,6 +8962,10 @@
   "yuM-lV": {
     "message": "Your turn",
     "translation": "Giliranmu"
+  },
+  "yBT9fU": {
+    "message": "Your User ID",
+    "translation": "User ID-mu"
   },
   "X0l3In": {
     "message": "Yours",

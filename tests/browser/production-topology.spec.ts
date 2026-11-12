@@ -48,6 +48,9 @@ const NOT_AUTHORITY = [
   '/v2/decks/',
   '/v2/tournaments',
   '/v2/account',
+  // Friends (ADR-055): the signed-in player's list and live status.
+  '/v2/friends',
+  '/v2/players/',
 ];
 
 const authorityPath = (request: Request): string | undefined => {

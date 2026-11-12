@@ -100,6 +100,10 @@
     ],
     "translation": "เลือกแล้ว {0}"
   },
+  "eC0xf_": {
+    "message": "{0} wants to be friends",
+    "translation": "{0} อยากเป็นเพื่อน"
+  },
   "THa0qf": {
     "message": "{0}, {count} in deck",
     "translation": "{0}, ในเด็ค {count} ใบ"
@@ -805,6 +809,20 @@
     ],
     "translation": "{label} ใหม่ {badge}"
   },
+  "Jijcis": {
+    "message": "{label}, {online} online",
+    "comments": [
+      "The Friends button with how many friends are online"
+    ],
+    "translation": "{label} ออนไลน์ {online} คน"
+  },
+  "xi1vOj": {
+    "message": "{label}, {waiting} requests",
+    "comments": [
+      "The Friends button while friend requests wait"
+    ],
+    "translation": "{label} คำขอ {waiting} รายการ"
+  },
   "VOuY7n": {
     "message": "{label}: {spoken}. Change",
     "comments": [
@@ -913,12 +931,20 @@
     ],
     "translation": "เบนช์ของ {name}"
   },
+  "u3z-wx": {
+    "message": "{name} blocked",
+    "translation": "บล็อก {name} แล้ว"
+  },
   "Mk1A2U": {
     "message": "{name} board",
     "comments": [
       "A zone's name for screen readers; name is its player. The open play area."
     ],
     "translation": "บอร์ดของ {name}"
+  },
+  "xpUnH3": {
+    "message": "{name} can't take friend requests right now",
+    "translation": "ตอนนี้ {name} ไม่รับคำขอเป็นเพื่อน"
   },
   "IensRv": {
     "message": "{name} changed {card} into {category, select, energy {an energy} pokemon {a Pokémon} trainer {a tool} other {an unknown type}}",
@@ -1216,6 +1242,10 @@
     ],
     "translation": "{name} เอาสภาวะผิดปกติออกจาก {card}"
   },
+  "uVKANG": {
+    "message": "{name} unblocked",
+    "translation": "เลิกบล็อก {name} แล้ว"
+  },
   "cV1aTX": {
     "message": "{name} used",
     "comments": [
@@ -1308,6 +1338,10 @@
       "Shown across the table when a player starts their turn."
     ],
     "translation": "เทิร์นของ {name}"
+  },
+  "S6v-69": {
+    "message": "{online} online",
+    "translation": "ออนไลน์ {online} คน"
   },
   "cgJmF-": {
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
@@ -1520,6 +1554,10 @@
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
     "translation": "{viewer} เลิกดูการ์ดใน{source, select, hand {มือ} prizes {การ์ดรางวัล} discard {ตำแหน่งทิ้งการ์ด} board {บอร์ด} stadium {สเตเดียม} active {ตำแหน่งต่อสู้} bench {เบนช์} lostZone {ลอสต์โซน} attachmentResolution {การ์ดที่ติดอยู่} inspection {การตรวจดู} other {สำรับการ์ด}}ของ {owner}"
+  },
+  "VnR9fs": {
+    "message": "{waiting} requests",
+    "translation": "คำขอ {waiting} รายการ"
   },
   "-AEMvi": {
     "message": "{zoneName}, {0} selected",
@@ -1741,6 +1779,11 @@
     "context": "sleeve",
     "translation": "สีเสริม"
   },
+  "7Zf_4b": {
+    "message": "Accept",
+    "context": "a friend request",
+    "translation": "ยอมรับ"
+  },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
     "translation": "เข้าถึงช่อง Discord พิเศษเพื่อเสนอข้อเสนอแนะ/ฟีเจอร์ใหม่ก่อนใคร และรับความช่วยเหลือด้านการแก้ปัญหา"
@@ -1807,6 +1850,15 @@
     "message": "Add",
     "translation": "เพิ่ม"
   },
+  "H4GEd-": {
+    "message": "Add",
+    "context": "add as a friend",
+    "translation": "เพิ่ม"
+  },
+  "BDfqMd": {
+    "message": "Add {0} as a friend",
+    "translation": "เพิ่ม {0} เป็นเพื่อน"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "เพิ่มแดเมจ {count}"
@@ -1814,6 +1866,10 @@
   "T-qRMv": {
     "message": "Add a card that isn't listed",
     "translation": "เพิ่มการ์ดที่ไม่อยู่ในรายการ"
+  },
+  "fJzzbI": {
+    "message": "Add a friend",
+    "translation": "เพิ่มเพื่อน"
   },
   "mOTci6": {
     "message": "Add a multi-piece card",
@@ -1853,6 +1909,10 @@
   "mOz7te": {
     "message": "Add damage…",
     "translation": "เพิ่มแดเมจ…"
+  },
+  "lICjHG": {
+    "message": "Add friend",
+    "translation": "เพิ่มเพื่อน"
   },
   "Pn1N14": {
     "message": "Add one",
@@ -2026,6 +2086,11 @@
     "message": "Announce mulligan",
     "translation": "ประกาศมัลลิแกน"
   },
+  "nGkdoK": {
+    "message": "Answer",
+    "context": "a friend request",
+    "translation": "ตอบรับ"
+  },
   "Y_nxYt": {
     "message": "Any",
     "context": "filter",
@@ -2185,6 +2250,11 @@
     "context": "replay: one step back",
     "translation": "ย้อนกลับ"
   },
+  "ifZryV": {
+    "message": "Back",
+    "context": "to the friends page before",
+    "translation": "กลับ"
+  },
   "_8WPEl": {
     "message": "Back",
     "context": "to the settings page before",
@@ -2292,6 +2362,18 @@
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
     "translation": "วาง <0>{0}</0> บนเบนช์ด้วย"
+  },
+  "CJkEfx": {
+    "message": "Block",
+    "translation": "บล็อก"
+  },
+  "n_j1xf": {
+    "message": "Block {0}?",
+    "translation": "บล็อก {0} หรือไม่"
+  },
+  "32TndD": {
+    "message": "Blocked",
+    "translation": "บล็อกแล้ว"
   },
   "O2HdKg": {
     "message": "Board",
@@ -2417,6 +2499,23 @@
   "dEgA5A": {
     "message": "Cancel",
     "translation": "ยกเลิก"
+  },
+  "NCLglM": {
+    "message": "Cancel",
+    "context": "a sent friend request",
+    "translation": "ยกเลิก"
+  },
+  "HoYkSd": {
+    "message": "Cancel request",
+    "translation": "ยกเลิกคำขอ"
+  },
+  "BEZRSx": {
+    "message": "Cancel request to {0}",
+    "translation": "ยกเลิกคำขอถึง {0}"
+  },
+  "e1e3Eb": {
+    "message": "Cancel your friend request to {0}?",
+    "translation": "ยกเลิกคำขอเป็นเพื่อนถึง {0} หรือไม่"
   },
   "4GkLKV": {
     "message": "Caps",
@@ -2858,6 +2957,10 @@
     "message": "Couldn't copy the link",
     "translation": "คัดลอกลิงก์ไม่สำเร็จ"
   },
+  "HlJJR9": {
+    "message": "Couldn't copy. Try again.",
+    "translation": "คัดลอกไม่ได้ ลองอีกครั้ง"
+  },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "สร้างห้องไม่สำเร็จ ลองอีกครั้ง"
@@ -2873,6 +2976,10 @@
   "vighKL": {
     "message": "Couldn't disconnect. Try again.",
     "translation": "ยกเลิกการเชื่อมต่อไม่ได้ ลองอีกครั้ง"
+  },
+  "PZXB_f": {
+    "message": "Couldn't do that. Try again.",
+    "translation": "ทำรายการไม่ได้ ลองอีกครั้ง"
   },
   "2TYlNr": {
     "message": "Couldn't get an image from that link.",
@@ -2894,9 +3001,17 @@
     "message": "Couldn't load this",
     "translation": "โหลดส่วนนี้ไม่ได้"
   },
+  "JeVfD4": {
+    "message": "Couldn't load your friends.",
+    "translation": "โหลดรายชื่อเพื่อนของคุณไม่ได้"
+  },
   "ZHwYJT": {
     "message": "Couldn't load your games. Try again.",
     "translation": "โหลดเกมของคุณไม่สำเร็จ ลองอีกครั้ง"
+  },
+  "_ukJJq": {
+    "message": "Couldn't look that up. Try again.",
+    "translation": "ค้นหาไม่ได้ ลองอีกครั้ง"
   },
   "w--GsN": {
     "message": "Couldn't open that file",
@@ -3211,6 +3326,15 @@
   "6soIXc": {
     "message": "Decks, replays, friends & more, on every device.",
     "translation": "เด็ค รีเพลย์ เพื่อน และอื่น ๆ ใช้ได้บนทุกอุปกรณ์"
+  },
+  "7Ky3Xn": {
+    "message": "Decline",
+    "context": "a friend request",
+    "translation": "ปฏิเสธ"
+  },
+  "KuA7Zt": {
+    "message": "Decline {0}",
+    "translation": "ปฏิเสธ {0}"
   },
   "cnGeoo": {
     "message": "Delete",
@@ -3929,6 +4053,33 @@
     "context": "deck format",
     "translation": "ฟอร์แมต"
   },
+  "OkDDjA": {
+    "message": "Friend request sent to {name}",
+    "translation": "ส่งคำขอเป็นเพื่อนถึง {name} แล้ว"
+  },
+  "RjrvaO": {
+    "message": "Friend requests",
+    "translation": "คำขอเป็นเพื่อน"
+  },
+  "rztzRH": {
+    "message": "Friends",
+    "context": "already friends",
+    "translation": "เพื่อน"
+  },
+  "OVlhKw": {
+    "message": "Friends",
+    "context": "the friends sheet",
+    "translation": "เพื่อน"
+  },
+  "kqnCg6": {
+    "message": "Friends",
+    "context": "the list of friends",
+    "translation": "เพื่อน"
+  },
+  "N5Cyfw": {
+    "message": "Friends since {0}",
+    "translation": "เป็นเพื่อนกันตั้งแต่ {0}"
+  },
   "hGDVDa": {
     "message": "From {0}",
     "comments": [
@@ -4361,6 +4512,10 @@
     "message": "Invitation link ready",
     "translation": "ลิงก์เชิญพร้อมแล้ว"
   },
+  "qsqt0w": {
+    "message": "Invite link",
+    "translation": "ลิงก์เชิญ"
+  },
   "KLJ4eD": {
     "message": "Invite link copied",
     "translation": "คัดลอกลิงก์เชิญแล้ว"
@@ -4428,6 +4583,11 @@
   "N2lSEn": {
     "message": "Joins matching pieces",
     "translation": "รวมชิ้นส่วนที่ตรงกัน"
+  },
+  "QbFLpT": {
+    "message": "Keep",
+    "context": "a friend",
+    "translation": "เก็บไว้"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -4629,6 +4789,10 @@
     "message": "Loading events…",
     "translation": "กำลังโหลดกิจกรรม…"
   },
+  "_o0pHI": {
+    "message": "Loading friends…",
+    "translation": "กำลังโหลดเพื่อน…"
+  },
   "Pwqkdw": {
     "message": "Loading…",
     "translation": "กำลังโหลด…"
@@ -4736,6 +4900,10 @@
   "pKU2VG": {
     "message": "Looking at cards",
     "translation": "กำลังดูการ์ด"
+  },
+  "7R-0aV": {
+    "message": "Looking…",
+    "translation": "กำลังค้นหา…"
   },
   "cGgbAH": {
     "message": "Lost the room during the replay.",
@@ -5249,6 +5417,10 @@
     "message": "No foil",
     "translation": "ไม่มีฟอยล์"
   },
+  "QY50Ed": {
+    "message": "No friends yet. Share your User ID or invite link to add one.",
+    "translation": "ยังไม่มีเพื่อน แชร์ User ID หรือลิงก์เชิญของคุณเพื่อเพิ่มเพื่อน"
+  },
   "nivaRq": {
     "message": "No list",
     "translation": "ไม่มีรายการเด็ค"
@@ -5267,6 +5439,10 @@
   "mNXjQA": {
     "message": "No match",
     "translation": "ไม่พบที่ตรงกัน"
+  },
+  "jZr9la": {
+    "message": "No player has that ID.",
+    "translation": "ไม่มีผู้เล่นที่ใช้ ID นี้"
   },
   "v5Ta3F": {
     "message": "No Pokémon by that name",
@@ -5706,6 +5882,10 @@
     "message": "Paste a link to an image.",
     "translation": "วางลิงก์รูปภาพ"
   },
+  "t95T01": {
+    "message": "Paste a User ID or invite link",
+    "translation": "วาง User ID หรือลิงก์เชิญ"
+  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "วางรายละเอียดลงในรายงานของคุณ เพื่อช่วยค้นหาปัญหา"
@@ -5815,6 +5995,10 @@
   "hrmat7": {
     "message": "Play these decks",
     "translation": "เล่นเด็คเหล่านี้"
+  },
+  "Vcesbu": {
+    "message": "Played {0}",
+    "translation": "เล่นเมื่อ {0}"
   },
   "2qhgQG": {
     "message": "Played last",
@@ -6156,6 +6340,10 @@
     ],
     "translation": "ล่าสุด"
   },
+  "4KDShY": {
+    "message": "Recent players",
+    "translation": "ผู้เล่นล่าสุด"
+  },
   "gcoiFh": {
     "message": "Reconnect",
     "translation": "เชื่อมต่อใหม่"
@@ -6228,6 +6416,15 @@
     ],
     "translation": "ตัวช่วยจำ"
   },
+  "AnDcX_": {
+    "message": "Remove",
+    "context": "a friend",
+    "translation": "ลบ"
+  },
+  "HfbMnA": {
+    "message": "Remove {0} as a friend?",
+    "translation": "ลบ {0} ออกจากเพื่อนไหม"
+  },
   "HLazKQ": {
     "message": "Remove {name}",
     "translation": "นำ {name} ออก"
@@ -6262,6 +6459,10 @@
   "sR6lTH": {
     "message": "Remove condition",
     "translation": "ลบสภาวะผิดปกติ"
+  },
+  "LZlsoq": {
+    "message": "Remove friend",
+    "translation": "ลบเพื่อน"
   },
   "8IMRlK": {
     "message": "Remove from {seat}",
@@ -6357,6 +6558,10 @@
   "732i9s": {
     "message": "Report on Discord",
     "translation": "รายงานบน Discord"
+  },
+  "1RVBJe": {
+    "message": "Request sent",
+    "translation": "ส่งคำขอแล้ว"
   },
   "OfhWJH": {
     "message": "Reset",
@@ -6894,6 +7099,10 @@
     "message": "Send message",
     "translation": "ส่งข้อความ"
   },
+  "_VW54L": {
+    "message": "Sent requests",
+    "translation": "คำขอที่ส่งแล้ว"
+  },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
     "translation": "ไม่คิดว่าจะมีใครสมัครสนับสนุนหรอกนะ แต่ถ้ามีก็จะขอบคุณมากจริง ๆ"
@@ -6978,6 +7187,10 @@
   "Z8lGw6": {
     "message": "Share",
     "translation": "แชร์"
+  },
+  "LdSvsJ": {
+    "message": "Share it so friends can add you.",
+    "translation": "แชร์ให้เพื่อนเพื่อให้เพิ่มคุณได้"
   },
   "2D-NYE": {
     "message": "Shift",
@@ -7233,6 +7446,10 @@
   "Se3Re8": {
     "message": "Sleeve sheen",
     "translation": "ความเงาของซองการ์ด"
+  },
+  "H2UIkh": {
+    "message": "Slow down! Try again in a moment.",
+    "translation": "เร็วเกินไป ลองอีกครั้งในอีกสักครู่"
   },
   "P12gHj": {
     "message": "Smaller cards",
@@ -7743,17 +7960,34 @@
     "message": "That image is over 20 MB.",
     "translation": "รูปภาพนี้มีขนาดเกิน 20 MB"
   },
+  "KB3gFS": {
+    "message": "That isn't a User ID.",
+    "translation": "นี่ไม่ใช่ User ID"
+  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "ข้ามรายการนั้นแล้ว"
+  },
+  "YRGPpX": {
+    "message": "That player",
+    "context": "friends",
+    "translation": "ผู้เล่นคนนั้น"
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
     "translation": "เปิดไฟล์รีเพลย์นั้นไม่ได้"
   },
+  "BfMjlP": {
+    "message": "That request was withdrawn",
+    "translation": "คำขอนั้นถูกยกเลิกแล้ว"
+  },
   "6Z1wXH": {
     "message": "That side starts over with the new deck",
     "translation": "ฝั่งนั้นจะเริ่มใหม่พร้อมเด็คใหม่"
+  },
+  "drHrdz": {
+    "message": "That's your own User ID.",
+    "translation": "นี่คือ User ID ของคุณเอง"
   },
   "hPwR-j": {
     "message": "The card went back.",
@@ -8288,6 +8522,18 @@
     "context": "item",
     "translation": "ไฮเปอร์บอล"
   },
+  "tuS5Jz": {
+    "message": "Unblock",
+    "translation": "เลิกบล็อก"
+  },
+  "TQMvTB": {
+    "message": "Unblock {0}",
+    "translation": "เลิกบล็อก {0}"
+  },
+  "mw1HnN": {
+    "message": "Unblock {name} to send a friend request",
+    "translation": "เลิกบล็อก {name} เพื่อส่งคำขอเป็นเพื่อน"
+  },
   "9uI_rE": {
     "message": "Undo",
     "translation": "เลิกทำ"
@@ -8417,6 +8663,14 @@
     "message": "User ID",
     "translation": "ID ผู้ใช้"
   },
+  "PNJdRU": {
+    "message": "User ID copied",
+    "translation": "คัดลอก User ID แล้ว"
+  },
+  "ELEf3-": {
+    "message": "User ID or invite link",
+    "translation": "User ID หรือลิงก์เชิญ"
+  },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
     "translation": "ใช้ไวยากรณ์การค้นหาของ Limitless TCG"
@@ -8474,9 +8728,18 @@
     "message": "VSTAR marker",
     "translation": "มาร์กเกอร์ VSTAR"
   },
+  "BjBy0G": {
+    "message": "Wait",
+    "context": "keep a request",
+    "translation": "รอ"
+  },
   "LE8SQj": {
     "message": "Wallpaper {0}",
     "translation": "วอลเปเปอร์ {0}"
+  },
+  "6fsB0P": {
+    "message": "Wants to be friends",
+    "translation": "ต้องการเป็นเพื่อน"
   },
   "vbMHW0": {
     "message": "Watch",
@@ -8586,13 +8849,45 @@
     "context": "filter",
     "translation": "ใช่"
   },
+  "xi-TMk": {
+    "message": "You and {name} are now friends!",
+    "translation": "คุณและ {name} เป็นเพื่อนกันแล้ว!"
+  },
+  "7pucj_": {
+    "message": "You can ask {name} again tomorrow",
+    "translation": "คุณขอ {name} ได้อีกครั้งพรุ่งนี้"
+  },
+  "qc_qoy": {
+    "message": "You can have up to 200 friends",
+    "translation": "คุณมีเพื่อนได้สูงสุด 200 คน"
+  },
+  "kFU-ep": {
+    "message": "You can send another one tomorrow.",
+    "translation": "คุณส่งได้อีกครั้งพรุ่งนี้"
+  },
+  "Jlf4l7": {
+    "message": "You can send them a new friend request any time.",
+    "translation": "คุณส่งคำขอเป็นเพื่อนใหม่ให้เขาได้ทุกเมื่อ"
+  },
   "aylG7j": {
     "message": "You can't move that card",
     "translation": "คุณย้ายการ์ดใบนั้นไม่ได้"
   },
+  "wRa3wc": {
+    "message": "You have {count} friend requests",
+    "translation": "คุณมีคำขอเป็นเพื่อน {count} รายการ"
+  },
+  "gymL5v": {
+    "message": "You won't be friends, and they can't send you requests or invites. They won't be told.",
+    "translation": "คุณจะไม่เป็นเพื่อนกัน และเขาจะส่งคำขอหรือคำเชิญให้คุณไม่ได้ เขาจะไม่ได้รับแจ้ง"
+  },
   "VvkF_g": {
     "message": "You're watching",
     "translation": "คุณกำลังรับชม"
+  },
+  "npW9N-": {
+    "message": "You've sent 50 requests. Wait for answers or cancel some.",
+    "translation": "คุณส่งคำขอครบ 50 รายการแล้ว รอคำตอบหรือยกเลิกบางรายการ"
   },
   "vblI2b": {
     "message": "Your account already has a {name} sign-in",
@@ -8632,6 +8927,10 @@
     "message": "Your discard pile",
     "translation": "ตำแหน่งทิ้งการ์ดของคุณ"
   },
+  "a4OOqX": {
+    "message": "Your friend can copy their User ID from Account, in Settings.",
+    "translation": "เพื่อนของคุณคัดลอก User ID ของตนเองได้จากบัญชีในการตั้งค่า"
+  },
   "pa5Fda": {
     "message": "Your games",
     "translation": "เกมของคุณ"
@@ -8663,6 +8962,10 @@
   "yuM-lV": {
     "message": "Your turn",
     "translation": "เทิร์นของคุณ"
+  },
+  "yBT9fU": {
+    "message": "Your User ID",
+    "translation": "User ID ของคุณ"
   },
   "X0l3In": {
     "message": "Yours",

@@ -78,6 +78,10 @@ With continuation on (ADR-012), a signed-in player's Save game goes to the accou
 
 Full-game replays kept in the account, 100 recent and 50 starred: ADR-053.
 
+## Friends
+
+Friends, presence and playing together: ADR-055.
+
 ## Verification
 
 - **Unit tests.**

@@ -100,6 +100,10 @@
     ],
     "translation": "{0} изабрано"
   },
+  "eC0xf_": {
+    "message": "{0} wants to be friends",
+    "translation": "{0} жели да буде пријатељ"
+  },
   "THa0qf": {
     "message": "{0}, {count} in deck",
     "translation": "{0}, {count} у шпилу"
@@ -805,6 +809,20 @@
     ],
     "translation": "{label}, нових: {badge}"
   },
+  "Jijcis": {
+    "message": "{label}, {online} online",
+    "comments": [
+      "The Friends button with how many friends are online"
+    ],
+    "translation": "{label}, {online} на мрежи"
+  },
+  "xi1vOj": {
+    "message": "{label}, {waiting} requests",
+    "comments": [
+      "The Friends button while friend requests wait"
+    ],
+    "translation": "{label}, захтева: {waiting}"
+  },
   "VOuY7n": {
     "message": "{label}: {spoken}. Change",
     "comments": [
@@ -913,12 +931,20 @@
     ],
     "translation": "Клупа играча {name}"
   },
+  "u3z-wx": {
+    "message": "{name} blocked",
+    "translation": "{name} је блокиран"
+  },
   "Mk1A2U": {
     "message": "{name} board",
     "comments": [
       "A zone's name for screen readers; name is its player. The open play area."
     ],
     "translation": "Табла играча {name}"
+  },
+  "xpUnH3": {
+    "message": "{name} can't take friend requests right now",
+    "translation": "{name} тренутно не може да прима захтеве за пријатељство"
   },
   "IensRv": {
     "message": "{name} changed {card} into {category, select, energy {an energy} pokemon {a Pokémon} trainer {a tool} other {an unknown type}}",
@@ -1216,6 +1242,10 @@
     ],
     "translation": "{name} уклања посебно стање са Pokémon-а {card}"
   },
+  "uVKANG": {
+    "message": "{name} unblocked",
+    "translation": "{name} је одблокиран"
+  },
   "cV1aTX": {
     "message": "{name} used",
     "comments": [
@@ -1308,6 +1338,10 @@
       "Shown across the table when a player starts their turn."
     ],
     "translation": "{name} је на потезу"
+  },
+  "S6v-69": {
+    "message": "{online} online",
+    "translation": "{online} на мрежи"
   },
   "cgJmF-": {
     "message": "{over, plural, one {# card too many ({count}/{required}).} other {# cards too many ({count}/{required}).}}",
@@ -1520,6 +1554,10 @@
       "Log line. {viewer} is who stopped looking, {owner} whose card it is; {source} is the zone it is in."
     ],
     "translation": "{viewer} више не гледа карту {source, select, hand {у руци} prizes {у наградама} discard {у одбаченим картама} board {на табли} stadium {на стадиону} active {на активном месту} bench {на клупи} lostZone {у Lost Zone} attachmentResolution {у прикаченим картама} inspection {у прегледу} other {у шпилу}} играча {owner}"
+  },
+  "VnR9fs": {
+    "message": "{waiting} requests",
+    "translation": "Захтева: {waiting}"
   },
   "-AEMvi": {
     "message": "{zoneName}, {0} selected",
@@ -1741,6 +1779,11 @@
     "context": "sleeve",
     "translation": "Акценат"
   },
+  "7Zf_4b": {
+    "message": "Accept",
+    "context": "a friend request",
+    "translation": "Прихвати"
+  },
   "BZkiHi": {
     "message": "Access to an exclusive Discord channel for priority suggestions/feature proposals/troubleshooting support.",
     "translation": "Приступ ексклузивном Discord каналу за приоритетне предлоге, предлоге функција и помоћ при отклањању проблема."
@@ -1807,6 +1850,15 @@
     "message": "Add",
     "translation": "Додај"
   },
+  "H4GEd-": {
+    "message": "Add",
+    "context": "add as a friend",
+    "translation": "Додај"
+  },
+  "BDfqMd": {
+    "message": "Add {0} as a friend",
+    "translation": "Додај {0} као пријатеља"
+  },
   "ZQALG9": {
     "message": "Add {count} damage",
     "translation": "Додај {count} штете"
@@ -1814,6 +1866,10 @@
   "T-qRMv": {
     "message": "Add a card that isn't listed",
     "translation": "Додај карту која није на листи"
+  },
+  "fJzzbI": {
+    "message": "Add a friend",
+    "translation": "Додај пријатеља"
   },
   "mOTci6": {
     "message": "Add a multi-piece card",
@@ -1853,6 +1909,10 @@
   "mOz7te": {
     "message": "Add damage…",
     "translation": "Додај штету…"
+  },
+  "lICjHG": {
+    "message": "Add friend",
+    "translation": "Додај пријатеља"
   },
   "Pn1N14": {
     "message": "Add one",
@@ -2026,6 +2086,11 @@
     "message": "Announce mulligan",
     "translation": "Објави мулиган"
   },
+  "nGkdoK": {
+    "message": "Answer",
+    "context": "a friend request",
+    "translation": "Одговори"
+  },
   "Y_nxYt": {
     "message": "Any",
     "context": "filter",
@@ -2185,6 +2250,11 @@
     "context": "replay: one step back",
     "translation": "Назад"
   },
+  "ifZryV": {
+    "message": "Back",
+    "context": "to the friends page before",
+    "translation": "Назад"
+  },
   "_8WPEl": {
     "message": "Back",
     "context": "to the settings page before",
@@ -2292,6 +2362,18 @@
   "T1zt_m": {
     "message": "Bench <0>{0}</0> too.",
     "translation": "Постави и <0>{0}</0> на клупу."
+  },
+  "CJkEfx": {
+    "message": "Block",
+    "translation": "Блокирај"
+  },
+  "n_j1xf": {
+    "message": "Block {0}?",
+    "translation": "Блокирати {0}?"
+  },
+  "32TndD": {
+    "message": "Blocked",
+    "translation": "Блокирани"
   },
   "O2HdKg": {
     "message": "Board",
@@ -2417,6 +2499,23 @@
   "dEgA5A": {
     "message": "Cancel",
     "translation": "Откажи"
+  },
+  "NCLglM": {
+    "message": "Cancel",
+    "context": "a sent friend request",
+    "translation": "Откажи"
+  },
+  "HoYkSd": {
+    "message": "Cancel request",
+    "translation": "Откажи захтев"
+  },
+  "BEZRSx": {
+    "message": "Cancel request to {0}",
+    "translation": "Откажи захтев за {0}"
+  },
+  "e1e3Eb": {
+    "message": "Cancel your friend request to {0}?",
+    "translation": "Отказати твој захтев за пријатељство за {0}?"
   },
   "4GkLKV": {
     "message": "Caps",
@@ -2858,6 +2957,10 @@
     "message": "Couldn't copy the link",
     "translation": "Није могуће копирати везу"
   },
+  "HlJJR9": {
+    "message": "Couldn't copy. Try again.",
+    "translation": "Копирање није успело. Покушај поново."
+  },
   "8T-Jx-": {
     "message": "Couldn't create a room. Try again.",
     "translation": "Соба није направљена. Покушај поново."
@@ -2873,6 +2976,10 @@
   "vighKL": {
     "message": "Couldn't disconnect. Try again.",
     "translation": "Прекид везе није успео. Покушај поново."
+  },
+  "PZXB_f": {
+    "message": "Couldn't do that. Try again.",
+    "translation": "То није успело. Покушај поново."
   },
   "2TYlNr": {
     "message": "Couldn't get an image from that link.",
@@ -2894,9 +3001,17 @@
     "message": "Couldn't load this",
     "translation": "Није могуће учитати ово"
   },
+  "JeVfD4": {
+    "message": "Couldn't load your friends.",
+    "translation": "Учитавање твојих пријатеља није успело."
+  },
   "ZHwYJT": {
     "message": "Couldn't load your games. Try again.",
     "translation": "Није могуће учитати твоје партије. Покушај поново."
+  },
+  "_ukJJq": {
+    "message": "Couldn't look that up. Try again.",
+    "translation": "Претрага није успела. Покушај поново."
   },
   "w--GsN": {
     "message": "Couldn't open that file",
@@ -3211,6 +3326,15 @@
   "6soIXc": {
     "message": "Decks, replays, friends & more, on every device.",
     "translation": "Шпилови, снимци, пријатељи и више, на сваком уређају."
+  },
+  "7Ky3Xn": {
+    "message": "Decline",
+    "context": "a friend request",
+    "translation": "Одбиј"
+  },
+  "KuA7Zt": {
+    "message": "Decline {0}",
+    "translation": "Одбиј {0}"
   },
   "cnGeoo": {
     "message": "Delete",
@@ -3929,6 +4053,33 @@
     "context": "deck format",
     "translation": "Формат"
   },
+  "OkDDjA": {
+    "message": "Friend request sent to {name}",
+    "translation": "Захтев за пријатељство послат: {name}"
+  },
+  "RjrvaO": {
+    "message": "Friend requests",
+    "translation": "Захтеви за пријатељство"
+  },
+  "rztzRH": {
+    "message": "Friends",
+    "context": "already friends",
+    "translation": "Пријатељи"
+  },
+  "OVlhKw": {
+    "message": "Friends",
+    "context": "the friends sheet",
+    "translation": "Пријатељи"
+  },
+  "kqnCg6": {
+    "message": "Friends",
+    "context": "the list of friends",
+    "translation": "Пријатељи"
+  },
+  "N5Cyfw": {
+    "message": "Friends since {0}",
+    "translation": "Пријатељи од {0}"
+  },
   "hGDVDa": {
     "message": "From {0}",
     "comments": [
@@ -4361,6 +4512,10 @@
     "message": "Invitation link ready",
     "translation": "Линк позивнице је спреман"
   },
+  "qsqt0w": {
+    "message": "Invite link",
+    "translation": "Линк позивнице"
+  },
   "KLJ4eD": {
     "message": "Invite link copied",
     "translation": "Веза позивнице је копирана"
@@ -4428,6 +4583,11 @@
   "N2lSEn": {
     "message": "Joins matching pieces",
     "translation": "Спаја одговарајуће делове"
+  },
+  "QbFLpT": {
+    "message": "Keep",
+    "context": "a friend",
+    "translation": "Задржи"
   },
   "80Qsxy": {
     "message": "Keep",
@@ -4629,6 +4789,10 @@
     "message": "Loading events…",
     "translation": "Учитавање догађаја…"
   },
+  "_o0pHI": {
+    "message": "Loading friends…",
+    "translation": "Учитавање пријатеља…"
+  },
   "Pwqkdw": {
     "message": "Loading…",
     "translation": "Учитавање…"
@@ -4736,6 +4900,10 @@
   "pKU2VG": {
     "message": "Looking at cards",
     "translation": "Гледање карата"
+  },
+  "7R-0aV": {
+    "message": "Looking…",
+    "translation": "Тражим…"
   },
   "cGgbAH": {
     "message": "Lost the room during the replay.",
@@ -5249,6 +5417,10 @@
     "message": "No foil",
     "translation": "Без фолије"
   },
+  "QY50Ed": {
+    "message": "No friends yet. Share your User ID or invite link to add one.",
+    "translation": "Још нема пријатеља. Подели свој кориснички ID или линк позивнице да додаш пријатеља."
+  },
   "nivaRq": {
     "message": "No list",
     "translation": "Нема листе"
@@ -5267,6 +5439,10 @@
   "mNXjQA": {
     "message": "No match",
     "translation": "Нема резултата"
+  },
+  "jZr9la": {
+    "message": "No player has that ID.",
+    "translation": "Ниједан играч нема тај ID."
   },
   "v5Ta3F": {
     "message": "No Pokémon by that name",
@@ -5706,6 +5882,10 @@
     "message": "Paste a link to an image.",
     "translation": "Налепи везу до слике."
   },
+  "t95T01": {
+    "message": "Paste a User ID or invite link",
+    "translation": "Налепи ID корисника или везу позивнице"
+  },
   "5L0PsY": {
     "message": "Paste the details into your report: they help find the problem.",
     "translation": "Налепи детаље у свој извештај: помажу при проналажењу проблема."
@@ -5815,6 +5995,10 @@
   "hrmat7": {
     "message": "Play these decks",
     "translation": "Играј ове шпилове"
+  },
+  "Vcesbu": {
+    "message": "Played {0}",
+    "translation": "Играно {0}"
   },
   "2qhgQG": {
     "message": "Played last",
@@ -6156,6 +6340,10 @@
     ],
     "translation": "Недавно"
   },
+  "4KDShY": {
+    "message": "Recent players",
+    "translation": "Недавни играчи"
+  },
   "gcoiFh": {
     "message": "Reconnect",
     "translation": "Поново се повежи"
@@ -6228,6 +6416,15 @@
     ],
     "translation": "Подсетници"
   },
+  "AnDcX_": {
+    "message": "Remove",
+    "context": "a friend",
+    "translation": "Уклони"
+  },
+  "HfbMnA": {
+    "message": "Remove {0} as a friend?",
+    "translation": "Уклонити {0} из пријатеља?"
+  },
   "HLazKQ": {
     "message": "Remove {name}",
     "translation": "Уклони {name}"
@@ -6262,6 +6459,10 @@
   "sR6lTH": {
     "message": "Remove condition",
     "translation": "Уклони стање"
+  },
+  "LZlsoq": {
+    "message": "Remove friend",
+    "translation": "Уклони пријатеља"
   },
   "8IMRlK": {
     "message": "Remove from {seat}",
@@ -6357,6 +6558,10 @@
   "732i9s": {
     "message": "Report on Discord",
     "translation": "Пријави на Discord-у"
+  },
+  "1RVBJe": {
+    "message": "Request sent",
+    "translation": "Захтев је послат"
   },
   "OfhWJH": {
     "message": "Reset",
@@ -6894,6 +7099,10 @@
     "message": "Send message",
     "translation": "Пошаљи поруку"
   },
+  "_VW54L": {
+    "message": "Sent requests",
+    "translation": "Послати захтеви"
+  },
   "Of0ksK": {
     "message": "Seriously do not think anyone will subscribe to this, but I would be immensely grateful.",
     "translation": "Озбиљно, не мислим да ће се неко претплатити, али био бих изузетно захвалан."
@@ -6978,6 +7187,10 @@
   "Z8lGw6": {
     "message": "Share",
     "translation": "Подели"
+  },
+  "LdSvsJ": {
+    "message": "Share it so friends can add you.",
+    "translation": "Подели га да би те пријатељи могли додати."
   },
   "2D-NYE": {
     "message": "Shift",
@@ -7233,6 +7446,10 @@
   "Se3Re8": {
     "message": "Sleeve sheen",
     "translation": "Сјај кошуљице"
+  },
+  "H2UIkh": {
+    "message": "Slow down! Try again in a moment.",
+    "translation": "Полако! Покушај поново за тренутак."
   },
   "P12gHj": {
     "message": "Smaller cards",
@@ -7743,17 +7960,34 @@
     "message": "That image is over 20 MB.",
     "translation": "Та слика је већа од 20 MB."
   },
+  "KB3gFS": {
+    "message": "That isn't a User ID.",
+    "translation": "То није ID корисника."
+  },
   "B4ZAXF": {
     "message": "That one was skipped.",
     "translation": "Та је прескочена."
+  },
+  "YRGPpX": {
+    "message": "That player",
+    "context": "friends",
+    "translation": "Тај играч"
   },
   "nWbyfh": {
     "message": "That replay file couldn't be opened.",
     "translation": "Та датотека снимка није могла да се отвори."
   },
+  "BfMjlP": {
+    "message": "That request was withdrawn",
+    "translation": "Тај захтев је повучен"
+  },
   "6Z1wXH": {
     "message": "That side starts over with the new deck",
     "translation": "Та страна почиње испочетка са новим шпилом"
+  },
+  "drHrdz": {
+    "message": "That's your own User ID.",
+    "translation": "То је твој ID корисника."
   },
   "hPwR-j": {
     "message": "The card went back.",
@@ -8288,6 +8522,18 @@
     "context": "item",
     "translation": "Ultra Ball"
   },
+  "tuS5Jz": {
+    "message": "Unblock",
+    "translation": "Одблокирај"
+  },
+  "TQMvTB": {
+    "message": "Unblock {0}",
+    "translation": "Одблокирај {0}"
+  },
+  "mw1HnN": {
+    "message": "Unblock {name} to send a friend request",
+    "translation": "Одблокирај {name} да пошаљеш захтев за пријатељство"
+  },
   "9uI_rE": {
     "message": "Undo",
     "translation": "Опозови"
@@ -8417,6 +8663,14 @@
     "message": "User ID",
     "translation": "ID корисника"
   },
+  "PNJdRU": {
+    "message": "User ID copied",
+    "translation": "ID корисника је копиран"
+  },
+  "ELEf3-": {
+    "message": "User ID or invite link",
+    "translation": "ID корисника или веза позивнице"
+  },
   "ZpWtmQ": {
     "message": "Uses Limitless TCG's search syntax.",
     "translation": "Користи синтаксу за претрагу Limitless TCG-а."
@@ -8474,9 +8728,18 @@
     "message": "VSTAR marker",
     "translation": "VSTAR маркер"
   },
+  "BjBy0G": {
+    "message": "Wait",
+    "context": "keep a request",
+    "translation": "Сачекај"
+  },
   "LE8SQj": {
     "message": "Wallpaper {0}",
     "translation": "Позадина {0}"
+  },
+  "6fsB0P": {
+    "message": "Wants to be friends",
+    "translation": "Жели да буде пријатељ"
   },
   "vbMHW0": {
     "message": "Watch",
@@ -8586,13 +8849,45 @@
     "context": "filter",
     "translation": "Да"
   },
+  "xi-TMk": {
+    "message": "You and {name} are now friends!",
+    "translation": "Ти и {name} сте сада пријатељи!"
+  },
+  "7pucj_": {
+    "message": "You can ask {name} again tomorrow",
+    "translation": "Можеш поново питати {name} сутра"
+  },
+  "qc_qoy": {
+    "message": "You can have up to 200 friends",
+    "translation": "Можеш имати до 200 пријатеља"
+  },
+  "kFU-ep": {
+    "message": "You can send another one tomorrow.",
+    "translation": "Сутра можеш послати још један."
+  },
+  "Jlf4l7": {
+    "message": "You can send them a new friend request any time.",
+    "translation": "Нови захтев за пријатељство му можеш послати у било ком тренутку."
+  },
   "aylG7j": {
     "message": "You can't move that card",
     "translation": "Ту карту не можеш преместити"
   },
+  "wRa3wc": {
+    "message": "You have {count} friend requests",
+    "translation": "Имаш {count} захтева за пријатељство"
+  },
+  "gymL5v": {
+    "message": "You won't be friends, and they can't send you requests or invites. They won't be told.",
+    "translation": "Нећете бити пријатељи, а он ти не може слати захтеве ни позивнице. Неће бити обавештен."
+  },
   "VvkF_g": {
     "message": "You're watching",
     "translation": "Гледаш"
+  },
+  "npW9N-": {
+    "message": "You've sent 50 requests. Wait for answers or cancel some.",
+    "translation": "Послао си 50 захтева. Сачекај одговоре или откажи неке."
   },
   "vblI2b": {
     "message": "Your account already has a {name} sign-in",
@@ -8632,6 +8927,10 @@
     "message": "Your discard pile",
     "translation": "Твоје одбачене карте"
   },
+  "a4OOqX": {
+    "message": "Your friend can copy their User ID from Account, in Settings.",
+    "translation": "Твој пријатељ може копирати свој ID корисника из Налога, у Подешавањима."
+  },
   "pa5Fda": {
     "message": "Your games",
     "translation": "Твоје партије"
@@ -8663,6 +8962,10 @@
   "yuM-lV": {
     "message": "Your turn",
     "translation": "Твој потез"
+  },
+  "yBT9fU": {
+    "message": "Your User ID",
+    "translation": "Твој ID корисника"
   },
   "X0l3In": {
     "message": "Yours",
