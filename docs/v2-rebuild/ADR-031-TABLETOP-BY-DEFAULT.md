@@ -114,6 +114,18 @@ a raised mat at about 40°, and the CABT viewer a gentle 8° CSS tilt.
     collection and 900ms riffle, with staggered departures. Empty decks retain
     their resolved sleeve for the sequence. Reduced motion settles directly;
     discontinuities cancel the sequence, and a new action can interrupt it.
+    The cards to be dealt wait on the deck from the moment the room answers
+    (their flights fill backwards), so they are the top of the pile being
+    riffled (2026-11-12): the plan names them as the shuffle's `riders`
+    (`withRiders` in motion-plan.ts, for any card that sets off from a
+    shuffled pile once its riffle has begun, whatever made the shuffle), and
+    both renderers hide each from the riffle's start until it sets off.
+    Before, the 13 cards of a setup (7 for a hand shuffled in and drawn
+    again) sat still on the deck while the stand-ins riffled under them, so
+    only the bottom of the deck seemed to be shuffled. A tilted riffle that
+    starts late, waiting for cards still landing on the pile, holds its
+    riders back as long, so they leave a squared pile.
+    `tests/browser/riffle-motion.spec.ts` samples every frame of each path.
 12. **Markers lie on their cards**: damage counters, conditions and the
     other tokens are the projection of their own box a hair above the card,
     so they foreshorten with the table and travel with the card. In the

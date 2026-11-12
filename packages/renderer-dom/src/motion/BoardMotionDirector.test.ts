@@ -2,10 +2,11 @@
 import {
   createBoardSceneForViewport,
   createRendererSpikeView,
+  planBoardMotion,
   type BoardScene,
   type CardSceneNode,
 } from '@ptcgsim/renderer-contract';
-import type { MatchViewState } from '@ptcgsim/game-core';
+import type { MatchViewState, ViewCard } from '@ptcgsim/game-core';
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -13,7 +14,7 @@ import {
   BoardMotionDirector,
   type PaintedCard,
 } from './BoardMotionDirector.js';
-import { riffleOrder } from './riffle.js';
+import { RIFFLE_MS, riffleOrder } from './riffle.js';
 
 interface RecordedAnimation {
   readonly element: Element;
@@ -669,6 +670,77 @@ describe('BoardMotionDirector', () => {
         ).toHaveBeenCalled();
       test.director.cancelAll();
     }
+  });
+
+  it('hides the cards waiting on a riffled deck to be dealt, from its start until each sets off', () => {
+    const deckId = 'zone:spike-blue:deck';
+    const deck = base.zones[deckId]!.cards;
+    const hand = base.zones[handId]!.cards;
+    // The hand shuffled into the deck and as many drawn again.
+    const pile = [...deck, ...hand].map((card, index): ViewCard => ({
+      kind: 'concealed',
+      id: `redrawn-${index}` as CardSceneNode['id'],
+      ownerId: card.ownerId,
+      cardBackUrl: base.players[card.ownerId]!.cardBackUrl,
+      publiclyRevealed: false,
+    }));
+    const redrawn: MatchViewState = {
+      ...base,
+      revision: base.revision + 1,
+      zones: {
+        ...base.zones,
+        [handId]: { ...base.zones[handId]!, cards: pile.slice(0, hand.length) },
+        [deckId]: { ...base.zones[deckId]!, cards: pile.slice(hand.length) },
+      },
+    };
+    const before = sceneOf(base);
+    const after = sceneOf(redrawn);
+    recorded = [];
+    const test = setup();
+    test.register(before);
+    test.register(after);
+    test.director.commit(null, before, undefined, paintedOf(before), new Set());
+    const motion = {
+      cause: 'advance' as const,
+      redeals: [{ playerId: hand[0]!.ownerId, kind: 'shuffleHand' as const }],
+    };
+    test.director.commit(before, after, motion, paintedOf(after), new Set());
+    const plan = planBoardMotion(before, after, 'advance', motion.redeals);
+    const shuffle = plan.shuffles.find((item) => item.zoneId === deckId)!;
+    expect(shuffle.riders?.length).toBe(hand.length);
+    for (const rider of shuffle.riders!) {
+      const element = test.elements.get(rider.renderKey)!;
+      const hiding = recorded.filter(
+        (entry) =>
+          entry.element === element &&
+          entry.keyframes.length > 0 &&
+          entry.keyframes.every((frame) => frame.opacity === 0)
+      );
+      // Out of sight from the riffle's start until it sets off, or until
+      // the riffle is over and the pile squared, whichever is first.
+      expect(hiding).toHaveLength(1);
+      expect(hiding[0]!.options.delay).toBeCloseTo(shuffle.delay * 1000);
+      expect(hiding[0]!.options.duration).toBeCloseTo(
+        Math.min(rider.delay - shuffle.delay, RIFFLE_MS / 1000) * 1000
+      );
+      expect(hiding[0]!.options.fill).toBe('none');
+    }
+    // Picking one up shows it at once.
+    const first = shuffle.riders![0]!.renderKey;
+    const held = recorded.find(
+      (entry) =>
+        entry.element === test.elements.get(first) &&
+        entry.keyframes.every((frame) => frame.opacity === 0)
+    )!;
+    test.director.commit(
+      after,
+      after,
+      undefined,
+      paintedOf(after),
+      new Set([first])
+    );
+    expect(held.cancel).toHaveBeenCalled();
+    test.director.cancelAll();
   });
 
   it('riffles a deck of only a few cards without a keyframe going back', () => {

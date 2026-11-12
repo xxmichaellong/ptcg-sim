@@ -101,6 +101,17 @@ export interface PileShuffle {
     readonly renderKey: string;
     readonly rect: Rect;
   }[];
+  /**
+   * Cards dealt off the pile once it is shuffled (the hand and the prizes
+   * at setup, a hand drawn again), each waiting on the pile until it sets
+   * off `delay` seconds in. They are the top of the pile the riffle stands
+   * in for: a renderer shows none of them on the pile while it riffles, or
+   * the pile's top would sit still while only the cards under it moved.
+   */
+  readonly riders?: readonly {
+    readonly renderKey: string;
+    readonly delay: number;
+  }[];
 }
 
 /**
@@ -680,19 +691,59 @@ export const planBoardMotion = (
     });
   }
 
-  return withRedeals(
-    previous,
+  return withRiders(
     next,
-    {
-      cause,
-      flights,
-      ghosts,
-      pulses,
-      shuffles: detectShuffles(previous, next, flights, ghosts),
-      joins: detectJoins(previous, next),
-    },
-    redeals
+    withRedeals(
+      previous,
+      next,
+      {
+        cause,
+        flights,
+        ghosts,
+        pulses,
+        shuffles: detectShuffles(previous, next, flights, ghosts),
+        joins: detectJoins(previous, next),
+      },
+      redeals
+    )
   );
+};
+
+/**
+ * Names, for each pile riffled, the cards that wait on it to be dealt off
+ * once it is shuffled: every card that sets off from the pile no sooner
+ * than the riffle starts and lands somewhere else. Whatever path made the
+ * shuffle (a setup, a hand shuffled in and drawn again, a group's steps),
+ * the riffle then moves the whole pile, its top too.
+ */
+const withRiders = (next: BoardScene, plan: MotionPlan): MotionPlan => {
+  if (plan.shuffles.length === 0 || plan.flights.length === 0) return plan;
+  const parents = new Map(
+    next.cards.flatMap((card) =>
+      card.renderKey === null ? [] : [[card.renderKey, card.parentId] as const]
+    )
+  );
+  return {
+    ...plan,
+    shuffles: plan.shuffles.map((shuffle) => {
+      if (shuffle.spread) return shuffle;
+      const zone = next.zones.find((each) => each.id === shuffle.zoneId);
+      const riders = plan.flights
+        .filter(
+          (flight) =>
+            flight.kind !== 'appear' &&
+            flight.delay >= shuffle.delay &&
+            parents.get(flight.renderKey) !== shuffle.zoneId &&
+            (sameRect(flight.from, shuffle.rect) ||
+              (zone !== undefined && centreInside(flight.from, zone.bounds)))
+        )
+        .map((flight) => ({
+          renderKey: flight.renderKey,
+          delay: flight.delay,
+        }));
+      return riders.length === 0 ? shuffle : { ...shuffle, riders };
+    }),
+  };
 };
 
 /**

@@ -1265,6 +1265,23 @@ export class BoardMotionDirector {
       ? this.elements.get(cover.renderKey)
       : undefined;
     if (pile) play(pile, [{ opacity: 0 }, { opacity: 0 }]);
+    // The cards dealt off the pile once it is shuffled wait on it (their
+    // flights fill backwards): they are its top, which the copies riffle,
+    // so each is hidden from the riffle's start until it sets off. Picking
+    // one up ends that at once (stopCardExtras).
+    for (const rider of shuffle.riders ?? []) {
+      const element = this.elements.get(rider.renderKey);
+      const waits = Math.min(rider.delay - shuffle.delay, RIFFLE_MS / 1000);
+      if (!element || !canAnimate(element) || waits <= 0) continue;
+      this.track(
+        element.animate([{ opacity: 0 }, { opacity: 0 }], {
+          duration: waits * 1000 * scale,
+          delay: shuffle.delay * 1000 * scale,
+          fill: 'none',
+        }),
+        rider.renderKey
+      );
+    }
     const across =
       shuffle.rotationQuarterTurns % 2 === 0 ? rect.width : rect.height;
     const spread = across * RIFFLE_SPREAD;

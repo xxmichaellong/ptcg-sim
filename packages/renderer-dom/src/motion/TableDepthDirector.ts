@@ -200,6 +200,12 @@ interface Riffle {
   /** How far along the table it is drawn from the pile (riffleShift). */
   readonly shift: number;
   readonly pile: string | null;
+  /**
+   * Cards dealt off the pile once it is shuffled (PileShuffle.riders),
+   * waiting on it: hidden while it riffles, as the stand-ins are the whole
+   * pile, until each sets off.
+   */
+  readonly riders: readonly string[];
   readonly base: TableCardPose;
   readonly start: number;
   readonly duration: number;
@@ -926,7 +932,8 @@ export class TableDepthDirector {
             shuffle.rotationQuarterTurns,
             shuffle.imageUrl,
             at + shuffle.delay * 1000 * this.durationScale,
-            projection
+            projection,
+            shuffle.riders?.map((rider) => rider.renderKey) ?? []
           );
         }
       }
@@ -1003,7 +1010,8 @@ export class TableDepthDirector {
     turns: number,
     image: string,
     requestedStart: number,
-    projection: BoardDepthProjection
+    projection: BoardDepthProjection,
+    riders: readonly string[] = []
   ) {
     let start = requestedStart;
     const cover = projection.scene.cards.find(
@@ -1031,6 +1039,18 @@ export class TableDepthDirector {
       )
         start = Math.max(start, end);
     }
+    // Started late for them, it keeps the cards to be dealt off it waiting
+    // as long, so they leave a squared pile, not one still being riffled.
+    const late = start - requestedStart;
+    if (late > 0)
+      for (const key of riders) {
+        const departs = this.motion.departsAt(key);
+        if (departs === null || departs < requestedStart) continue;
+        this.motion.postponeOne(key, late);
+        const flip = this.flips.get(key);
+        if (flip && Number.isFinite(flip.start) && flip.start >= requestedStart)
+          flip.start += late;
+      }
     const duration = RIFFLE_MS * this.durationScale;
     const lasts = start - timestamp() + duration;
     const order = riffleOrder(
@@ -1058,6 +1078,8 @@ export class TableDepthDirector {
       const { element } = this.ghosts.get(key!)!;
       element.style.opacity = '0';
       element.style.zIndex = String(index + 1);
+      // Named as the flat table's riffle copies are, so either is found.
+      element.classList.add('ptcgsim-card-ghost--riffle');
     });
     this.riffles.set(gathered, {
       stands: new Map<RiffleHalf | 'pile' | number, string>([
@@ -1069,10 +1091,31 @@ export class TableDepthDirector {
       order,
       shift,
       pile: cover?.renderKey ?? null,
+      riders,
       base,
       start,
       duration,
     });
+  }
+
+  /**
+   * The cards waiting on a riffled pile to be dealt: hidden from its first
+   * frame until each sets off (or, picked up, at once); all shown again
+   * once it is over.
+   */
+  private hideRiders(riffle: Riffle, at: number, over: boolean) {
+    for (const key of riffle.riders) {
+      const element = this.elements.get(key);
+      if (!element) continue;
+      const departs = this.motion.departsAt(key);
+      const waiting =
+        !over &&
+        element.dataset.held === undefined &&
+        departs !== null &&
+        departs > at;
+      if (waiting) element.style.opacity = '0';
+      else element.style.removeProperty('opacity');
+    }
   }
 
   /**
@@ -1111,10 +1154,12 @@ export class TableDepthDirector {
     const pile = riffle.pile ? this.elements.get(riffle.pile) : undefined;
     if (t >= 1) {
       if (pile) pile.style.removeProperty('opacity');
+      this.hideRiders(riffle, at, true);
       for (const key of riffle.stands.values()) this.removeGhost(key);
       return true;
     }
     if (pile) pile.style.opacity = '0';
+    this.hideRiders(riffle, at, false);
     for (const [part, piece] of riffleFrame(
       riffle.base,
       riffle.order,
@@ -1641,9 +1686,11 @@ export class TableDepthDirector {
     }
     for (const [key, flip] of this.flips)
       if (!keepHolds || flip.duration > 0) this.clearFlip(key);
-    for (const riffle of this.riffles.values())
+    for (const riffle of this.riffles.values()) {
       if (riffle.pile)
         this.elements.get(riffle.pile)?.style.removeProperty('opacity');
+      this.hideRiders(riffle, Infinity, true);
+    }
     this.riffles.clear();
     for (const key of this.ghosts.keys()) this.removeGhost(key);
     this.shuffles.clear();

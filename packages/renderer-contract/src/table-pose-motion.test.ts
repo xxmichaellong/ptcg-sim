@@ -123,4 +123,20 @@ describe('TablePoseMotion', () => {
     motion.finish();
     expect(motion.poses.get('cover')).toEqual(grown);
   });
+
+  it('says when a card sets off, and holds one card back alone', () => {
+    const motion = new TablePoseMotion();
+    motion.set('card', pose(0, 1), 0);
+    motion.set('other', pose(0, 1), 0);
+    motion.set('card', pose(300, 1), 100, 400, undefined, 250);
+    motion.set('other', pose(300, 1), 100, 400, undefined, 250);
+    expect(motion.departsAt('card')).toBe(350);
+    expect(motion.departsAt('nothing')).toBeNull();
+    motion.postponeOne('card', 200);
+    expect(motion.departsAt('card')).toBe(550);
+    expect(motion.departsAt('other')).toBe(350);
+    // Still waiting where it was, then on its way.
+    expect(motion.sample('card', 540)!.bounds.x).toBe(0);
+    expect(motion.sample('card', 700)!.bounds.x).toBeGreaterThan(0);
+  });
 });

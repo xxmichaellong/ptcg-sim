@@ -96,6 +96,11 @@ export class TablePoseMotion {
     const travel = this.travel.get(key);
     return travel ? travel.start + travel.delay + travel.duration : null;
   }
+  /** When the card sets off on its current move, after its delay; or null. */
+  departsAt(key: string): number | null {
+    const travel = this.travel.get(key);
+    return travel ? travel.start + travel.delay : null;
+  }
   /**
    * Moves a card to `target` over `duration`, from wherever it is now (or
    * from `from`, if it is nowhere yet). `restart` sets it off from `from`
@@ -202,6 +207,12 @@ export class TablePoseMotion {
     for (const [key, travel] of this.travel)
       if (travel.start >= since)
         this.travel.set(key, { ...travel, start: travel.start + by });
+  }
+  /** Holds back one card's move by `by`, before it has set off. */
+  postponeOne(key: string, by: number) {
+    const travel = this.travel.get(key);
+    if (by > 0 && travel)
+      this.travel.set(key, { ...travel, start: travel.start + by });
   }
   /**
    * Hands a card's move on to the key it is painted under now (the room

@@ -1215,6 +1215,113 @@ it('lets a card flying into a deck land before the deck is riffled', () => {
   director.destroy();
 });
 
+it('riffles the whole deck when a hand is dealt off it: the cards to be dealt are its top, out of sight until each sets off', () => {
+  const { advance } = stubClock();
+  const { view, zone, cardsIn, withZones, concealed, project, elementsFor } =
+    tableOf();
+  const hand = cardsIn(view, 'hand');
+  const deck = cardsIn(view, 'deck');
+  // The hand shuffled into the deck and as many drawn again: every card of
+  // both has a new alias, the new hand waiting on the deck to be dealt.
+  const pile = [...deck, ...hand].map((_, index) =>
+    concealed(`redrawn-${index}`)
+  );
+  const redrawn = withZones(view, {
+    hand: pile.slice(0, hand.length),
+    deck: pile.slice(hand.length),
+  });
+  const first = project(view);
+  const next = project(redrawn);
+  const elements = elementsFor(first, next);
+  const layer = document.createElement('div');
+  const director = new TableDepthDirector(elements);
+  director.attach(document.createElement('div'), layer);
+  director.commit(null, first, DEFAULT_BOARD_PRESENTATION, undefined, false, 1);
+  director.commit(
+    first.scene,
+    next,
+    DEFAULT_BOARD_PRESENTATION,
+    {
+      cause: 'advance',
+      redeals: [{ playerId: view.playerOrder[0]!, kind: 'shuffleHand' }],
+    },
+    false,
+    1
+  );
+  const riders = next.scene.cards
+    .filter((card) => card.parentId === zone('hand') && card.renderKey)
+    .map((card) => elements.get(card.renderKey!)!);
+  expect(riders.length).toBe(hand.length);
+  const cover = elements.get(`cover:${zone('deck')}`)!;
+  const riffling = () => cover.style.opacity === '0';
+  // Sampled every frame: while the deck riffles, no card waiting on it
+  // shows, so its top is never seen to sit still over the halves.
+  let riffled = 0;
+  let shownWhileRiffling = 0;
+  for (let at = 16; at <= 4000; at += 16) {
+    advance(at);
+    if (!riffling()) continue;
+    riffled += 1;
+    shownWhileRiffling += riders.filter(
+      (rider) => rider.style.opacity !== '0'
+    ).length;
+  }
+  expect(riffled).toBeGreaterThan(20);
+  expect(shownWhileRiffling).toBe(0);
+  // Squared, it gives them all back; dealt, nothing is left hidden.
+  expect(riders.map((rider) => rider.style.opacity)).toEqual(
+    riders.map(() => '')
+  );
+  expect(cover.style.opacity).toBe('');
+  expect(layer.childElementCount).toBe(0);
+  expect(director.active).toBe(false);
+  director.destroy();
+});
+
+it('gives back the cards waiting on a riffled deck when the motion is cancelled', () => {
+  const { advance } = stubClock();
+  const { view, zone, cardsIn, withZones, concealed, project, elementsFor } =
+    tableOf();
+  const hand = cardsIn(view, 'hand');
+  const deck = cardsIn(view, 'deck');
+  const pile = [...deck, ...hand].map((_, index) =>
+    concealed(`again-${index}`)
+  );
+  const redrawn = withZones(view, {
+    hand: pile.slice(0, hand.length),
+    deck: pile.slice(hand.length),
+  });
+  const first = project(view);
+  const next = project(redrawn);
+  const elements = elementsFor(first, next);
+  const layer = document.createElement('div');
+  const director = new TableDepthDirector(elements);
+  director.attach(document.createElement('div'), layer);
+  director.commit(null, first, DEFAULT_BOARD_PRESENTATION, undefined, false, 1);
+  director.commit(
+    first.scene,
+    next,
+    DEFAULT_BOARD_PRESENTATION,
+    {
+      cause: 'advance',
+      redeals: [{ playerId: view.playerOrder[0]!, kind: 'shuffleHand' }],
+    },
+    false,
+    1
+  );
+  const riders = next.scene.cards
+    .filter((card) => card.parentId === zone('hand') && card.renderKey)
+    .map((card) => elements.get(card.renderKey!)!);
+  // Into the riffle: the dealt cards are hidden on the deck.
+  for (let at = 16; at <= 1500; at += 16) advance(at);
+  expect(riders.some((rider) => rider.style.opacity === '0')).toBe(true);
+  director.cancel();
+  expect(riders.map((rider) => rider.style.opacity)).toEqual(
+    riders.map(() => '')
+  );
+  director.destroy();
+});
+
 /** Gives an element a place on screen, as a browser's layout would. */
 const placeAt = (element: Element, x: number, y: number, w = 0, h = 0) => {
   element.getBoundingClientRect = () =>

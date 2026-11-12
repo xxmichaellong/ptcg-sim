@@ -305,6 +305,8 @@ describe('planBoardMotion', () => {
     expect(plan.shuffles).toEqual([
       expect.objectContaining({ zoneId: zoneId(blue, 'deck'), delay: 0 }),
     ]);
+    // Nothing waits on it to be dealt: the riffle is the whole pile.
+    expect(plan.shuffles[0]!.riders).toBeUndefined();
     // The re-keyed cover sits where it was: nothing travels.
     expect(plan.flights.filter((flight) => flight.kind !== 'enter')).toEqual(
       []
@@ -366,6 +368,42 @@ describe('planBoardMotion', () => {
     expect(shuffle!.delay).toBeGreaterThan(
       Math.max(...arriving.map((ghost) => ghost.delay))
     );
+    // Cards flying in land on the pile; none waits on it to leave.
+    expect(shuffle!.riders).toBeUndefined();
+  });
+
+  it('names the cards dealt off a deck shuffled with the hand, and drawn again', () => {
+    const deck = cardsOf(base, zoneId(blue, 'deck'));
+    const hand = cardsOf(base, zoneId(blue, 'hand'));
+    const before = sceneOf(base);
+    // Iono's way: the hand goes in, the deck is shuffled, as many come out.
+    const pile = [...deck, ...hand].map((_, index) =>
+      freshConcealed(blue, `redrawn-${index}`)
+    );
+    const after = sceneOf(
+      withZones(base, {
+        [zoneId(blue, 'hand')]: pile.slice(0, hand.length),
+        [zoneId(blue, 'deck')]: pile.slice(hand.length),
+      })
+    );
+    const plan = planBoardMotion(before, after, 'advance', [
+      { playerId: blue, kind: 'shuffleHand' },
+    ]);
+    const shuffle = plan.shuffles.find(
+      (item) => item.zoneId === zoneId(blue, 'deck')
+    )!;
+    const dealt = after.cards
+      .filter(
+        (card) => card.parentId === zoneId(blue, 'hand') && card.renderKey
+      )
+      .map((card) => card.renderKey);
+    expect(dealt.length).toBeGreaterThan(0);
+    expect(shuffle.riders?.map((rider) => rider.renderKey).sort()).toEqual(
+      [...dealt].sort()
+    );
+    // Each sets off once the riffle has had its time.
+    for (const rider of shuffle.riders!)
+      expect(rider.delay).toBeGreaterThanOrEqual(shuffle.delay + 1);
   });
 
   it('gathers shuffled face-down prizes without pairing concealed identities', () => {
@@ -767,6 +805,22 @@ describe('collection before redistribution', () => {
       expect(flight.fromImageUrl).toBe(deck.cardBackImageUrl);
       expect(flight.delay).toBeGreaterThanOrEqual(shuffle.delay + 1);
     }
+    // Every card dealt off the deck waits on it until then: the top of the
+    // pile the riffle stands in for, which a renderer hides while it plays.
+    expect(
+      [...(shuffle.riders ?? [])].sort((left, right) =>
+        left.renderKey.localeCompare(right.renderKey)
+      )
+    ).toEqual(
+      arrivals
+        .map((card) => ({
+          renderKey: card.renderKey!,
+          delay: plan.flights.find(
+            (flight) => flight.renderKey === card.renderKey
+          )!.delay,
+        }))
+        .sort((left, right) => left.renderKey.localeCompare(right.renderKey))
+    );
     expect(
       planBoardMotion(before, after, 'replace', [
         { playerId: blue, kind: 'setup' },
