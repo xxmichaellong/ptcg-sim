@@ -153,12 +153,20 @@ export class PtcgAccount
       hidden: this.friendRows.setting(APPEAR_OFFLINE_SETTING) === 'on',
     });
     if (!report) return;
-    const friends = await this.hub().update(
-      me.id,
-      report,
-      this.friendIds(),
-      Date.now()
-    );
+    // Best effort: a hub out of reach (or a tab's socket closing as the
+    // object goes) must not throw from a socket's handler. Friends hear
+    // the next change, and the hub's stale-row check covers the gap.
+    let friends: Record<string, PresenceView>;
+    try {
+      friends = await this.hub().update(
+        me.id,
+        report,
+        this.friendIds(),
+        Date.now()
+      );
+    } catch {
+      return;
+    }
     this.broadcast({ type: 'presence', friends });
   }
 
