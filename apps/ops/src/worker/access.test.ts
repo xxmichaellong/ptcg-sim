@@ -4,9 +4,9 @@ import {
   checkAccess,
   forgetAccessKeys,
   protectionOf,
-  sameSecret,
   verifyAccessJwt,
 } from './access.js';
+import { signValue } from './google.js';
 
 const TEAM = 'ptcgsim.cloudflareaccess.com';
 const AUD = 'aud-tag-0123456789';
@@ -173,9 +173,16 @@ describe('checkAccess', () => {
     expect(
       protectionOf({ OPS_LOCAL: 'on' }, new URL('http://localhost:5180/'))
     ).toBe('local');
-    // A short password doesn't count.
+    // Google sign-in counts only with all four of its secrets.
     expect(
-      protectionOf({ OPS_PASSWORD: 'short' }, new URL('https://x.example/'))
+      protectionOf(
+        {
+          GOOGLE_CLIENT_ID: 'client',
+          GOOGLE_CLIENT_SECRET: 'secret',
+          OPS_EMAILS: 'dev@example.com',
+        },
+        new URL('https://x.example/')
+      )
     ).toBe('none');
     // A malformed team doesn't count.
     expect(
@@ -186,45 +193,29 @@ describe('checkAccess', () => {
     ).toBe('none');
   });
 
-  it('asks the browser for the password, and lets the right one in', async () => {
-    const env = { OPS_PASSWORD: 'correct horse battery' };
-    const url = 'https://ptcgsim-ops.example.workers.dev/api/status';
-    const missing = await checkAccess(request(url), env, fetch, NOW);
-    expect(missing?.status).toBe(401);
-    expect(missing?.headers.get('WWW-Authenticate')).toMatch(/^Basic realm=/u);
-    const wrong = await checkAccess(
-      request(url, { Authorization: `Basic ${btoa('ops:wrong password!')}` }),
-      env,
-      fetch,
-      NOW
-    );
-    expect(wrong?.status).toBe(401);
-    const right = await checkAccess(
-      request(url, {
-        Authorization: `Basic ${btoa('anyone:correct horse battery')}`,
-      }),
-      env,
-      fetch,
-      NOW
-    );
-    expect(right).toBeUndefined();
-  });
-
-  it('takes Access over the password once Access is set', async () => {
+  it('takes Access over Google sign-in once Access is set', async () => {
     const { privateKey, publicKey } = await keyPair();
     const fetcher = await certs(publicKey, 'k');
+    const sessionKey = 'a-session-key-for-tests-only-0123456789';
     const env = {
       ACCESS_TEAM_DOMAIN: TEAM,
       ACCESS_AUD: AUD,
-      OPS_PASSWORD: 'correct horse battery',
+      GOOGLE_CLIENT_ID: 'client',
+      GOOGLE_CLIENT_SECRET: 'secret',
+      OPS_EMAILS: 'owner@example.com',
+      OPS_SESSION_KEY: sessionKey,
     };
     const url = 'https://ptcgsim-ops.example.workers.dev/';
+    expect(protectionOf(env, new URL(url))).toBe('access');
+    // A good Google session doesn't stand in for Access.
+    const session = await signValue(sessionKey, 'session', {
+      email: 'owner@example.com',
+      exp: NOW + 60_000,
+    });
     expect(
       (
         await checkAccess(
-          request(url, {
-            Authorization: `Basic ${btoa('x:correct horse battery')}`,
-          }),
+          request(url, { Cookie: `__Host-ops-session=${session}` }),
           env,
           fetcher,
           NOW
@@ -248,11 +239,5 @@ describe('checkAccess', () => {
         NOW
       )
     ).toBeUndefined();
-  });
-
-  it('compares secrets whole', async () => {
-    expect(await sameSecret('abc', 'abc')).toBe(true);
-    expect(await sameSecret('abc', 'abd')).toBe(false);
-    expect(await sameSecret('abc', 'abcd')).toBe(false);
   });
 });

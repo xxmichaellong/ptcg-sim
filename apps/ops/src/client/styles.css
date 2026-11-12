@@ -271,6 +271,24 @@ a {
   border-color: var(--border-strong);
 }
 
+/* Who is signed in (Google sign-in), and Sign out. */
+.viewer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+}
+
+.viewer__email {
+  color: var(--muted);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+
 .subhead {
   display: flex;
   align-items: center;

@@ -25,8 +25,8 @@ export const SetupView = ({ status }: { readonly status: StatusResponse | undefi
             <td>
               {status?.protection === 'access' ? (
                 <Status rating="good" text="Cloudflare Access" />
-              ) : status?.protection === 'password' ? (
-                <Status rating="good" text="Password" />
+              ) : status?.protection === 'google' ? (
+                <Status rating="good" text="Google sign-in" />
               ) : (
                 <Status rating="fair" text="This machine only" />
               )}
@@ -68,14 +68,18 @@ export const SetupView = ({ status }: { readonly status: StatusResponse | undefi
       <p className="card__sub">The deployed dashboard serves nothing until one of these is set.</p>
       <ol>
         <li>
-          <b>A password</b> (quickest): <code>pnpm --filter @ptcgsim/ops exec wrangler secret put OPS_PASSWORD</code>, 12
-          characters or more. The browser asks for it; any user name works.
+          <b>Sign in with Google</b>, for the addresses on a list. Set four secrets with{' '}
+          <code>pnpm --filter @ptcgsim/ops exec wrangler secret put NAME</code>: <code>GOOGLE_CLIENT_ID</code> and{' '}
+          <code>GOOGLE_CLIENT_SECRET</code> (the sim’s Google OAuth client), <code>OPS_EMAILS</code> (the addresses, commas or
+          spaces between them) and <code>OPS_SESSION_KEY</code> (32 random characters or more). Add{' '}
+          <code>https://ptcgsim-ops.xx-michael-long.workers.dev/auth/callback</code> to the client’s authorized redirect URIs.
+          Changing <code>OPS_EMAILS</code> takes effect at once.
         </li>
         <li>
-          <b>Cloudflare Access</b> (sign in with your email): Workers &amp; Pages → ptcgsim-ops → Settings → Domains &amp;
-          Routes → workers.dev → enable Cloudflare Access. Then set <code>ACCESS_TEAM_DOMAIN</code> (your{' '}
-          <code>&lt;team&gt;.cloudflareaccess.com</code>) and <code>ACCESS_AUD</code> (the application’s audience tag) in{' '}
-          <code>apps/ops/wrangler.jsonc</code> and deploy. Access then takes the place of the password.
+          <b>Cloudflare Access</b>: Workers &amp; Pages → ptcgsim-ops → Settings → Domains &amp; Routes → workers.dev → enable
+          Cloudflare Access. Then set <code>ACCESS_TEAM_DOMAIN</code> (your <code>&lt;team&gt;.cloudflareaccess.com</code>) and{' '}
+          <code>ACCESS_AUD</code> (the application’s audience tag) in <code>apps/ops/wrangler.jsonc</code> and deploy. Access then
+          takes the place of Google sign-in.
         </li>
       </ol>
     </section>

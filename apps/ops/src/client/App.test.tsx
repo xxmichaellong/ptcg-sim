@@ -72,6 +72,8 @@ describe('App', () => {
     expect(headings()).toEqual(['Players', 'Games', 'Speed', 'Reliability', 'Traffic', 'Releases']);
     expect(host.querySelectorAll('.tile')).toHaveLength(6);
     expect(document.title).toBe('Overview · PTCG Sim Ops');
+    // No one is signed in on this machine.
+    expect(host.querySelector('form.viewer')).toBeNull();
     expect(api).toHaveBeenCalledWith(expect.stringContaining('/api/view?view=overview&env=beta&days=30'), expect.anything());
   });
 
@@ -107,10 +109,24 @@ describe('App', () => {
     expect(api.mock.calls.every(([input]) => !String(input).includes('/api/view'))).toBe(true);
   });
 
-  it('says so when the view cannot load', async () => {
-    api.mockImplementationOnce(async () => Response.json({ demo: false, token: true, protection: 'password', accountId: 'a' }));
-    api.mockImplementationOnce(async () => Response.json({ error: 'password_required' }, { status: 401 }));
+  it('says so when the view cannot load, with a way to sign in again', async () => {
+    api.mockImplementationOnce(async () => Response.json({ demo: false, token: true, protection: 'google', accountId: 'a' }));
+    api.mockImplementationOnce(async () => Response.json({ error: 'sign_in_required' }, { status: 401 }));
+    await open('?view=live');
+    const alert = host.querySelector('[role="alert"]');
+    expect(alert?.textContent).toContain('sign in again');
+    expect(alert?.querySelector('a')?.getAttribute('href')).toBe('/auth/sign-in?return=%2F%3Fview%3Dlive');
+  });
+
+  it('shows who is signed in, and Sign out', async () => {
+    api.mockImplementationOnce(async () =>
+      Response.json({ demo: true, token: false, protection: 'google', email: 'dev@example.com', accountId: 'a' })
+    );
     await open('');
-    expect(host.querySelector('[role="alert"]')?.textContent).toContain('sign in again');
+    const form = host.querySelector('form.viewer');
+    expect(form?.textContent).toContain('dev@example.com');
+    expect(form?.getAttribute('method')).toBe('post');
+    expect(form?.getAttribute('action')).toBe('/auth/sign-out');
+    expect(form?.querySelector('button[type="submit"]')?.textContent).toBe('Sign out');
   });
 });

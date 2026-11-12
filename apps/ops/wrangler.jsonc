@@ -20,14 +20,19 @@
     "CLOUDFLARE_ZONE_ID": "6b24c117debe2da91e7e3ebf59dd56c1",
     // Cloudflare Access, once the Worker is behind it: the team's domain
     // (<team>.cloudflareaccess.com) and the application's AUD tag. Empty
-    // until then; a password (secret OPS_PASSWORD) protects it meanwhile.
+    // until then; Sign in with Google (the secrets below) protects it
+    // meanwhile. Access, once set, takes its place.
     "ACCESS_TEAM_DOMAIN": "",
     "ACCESS_AUD": "",
   },
   // Secrets, set by a person (never in this file):
   //   CLOUDFLARE_API_TOKEN: read-only; Account Analytics Read, Workers
   //     Scripts Read, Zone Analytics Read.
-  //   OPS_PASSWORD: at least 12 characters, unless Access is set.
+  //   Sign in with Google, unless Access is set (all four):
+  //   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET: the sim's Google OAuth
+  //     client, with /auth/callback of this Worker among its redirect URIs.
+  //   OPS_EMAILS: who may sign in, commas or spaces between addresses.
+  //   OPS_SESSION_KEY: at least 32 random characters; signs the cookies.
   // The preview's health is asked through its Worker directly: a Worker
   // can't fetch another workers.dev Worker of its own account.
   "services": [{ "binding": "PREVIEW", "service": "ptcgsim-v2-preview" }],

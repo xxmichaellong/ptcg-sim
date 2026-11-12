@@ -2,6 +2,7 @@
 
 - Status: **ACCEPTED**
 - Decision date: 2026-11-11
+- Amended 2026-11-12: Sign in with Google, for listed developer addresses, in place of the password.
 - Request: an internal tool to follow how the website is doing, with the high-level details that matter most, in the spirit of Magic Circle's mcconfig.
 - Builds on: ADR-051 (the beta on Workers Free), the server telemetry (`server-telemetry.ts`).
 
@@ -81,11 +82,20 @@ Sources:
 
 One read-only API token reads all of it: Account Analytics Read, Workers Scripts Read and Zone Analytics Read (secret `CLOUDFLARE_API_TOKEN`).
 
-Protection fails closed. With nothing set, it serves only a page saying it is not set up. Any one of these lets people in:
+Protection fails closed. With nothing set, or Google sign-in half set, it serves only a page saying it is not set up. The first of these that is set decides who gets in:
 
-- **Cloudflare Access:** the JWT is checked against the team's keys, issuer, audience and time;
-- **a password** (secret `OPS_PASSWORD`, HTTP Basic, compared in constant time);
+- **Cloudflare Access:** the JWT is checked against the team's keys, issuer, audience and time. mcconfig sits behind Access.
+- **Sign in with Google**, for the developers' addresses (`worker/google.ts`). It is the same idea as mcconfig's, without Access.
+  - Four secrets: `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (the sim's Google OAuth client), `OPS_EMAILS` (the addresses) and `OPS_SESSION_KEY` (at least 32 characters). The addresses are a secret so they never land in the repository.
+  - `/auth/sign-in` sends the browser to Google by the code flow, with PKCE (S256) and a random state. The state, the verifier and the page to return to wait in a ten-minute signed cookie on `/auth`.
+  - `/auth/callback` checks the state and trades the code at Google's token endpoint. It reads the ID token that endpoint returns over TLS, checking its issuer, audience and expiry and that the address is verified.
+  - An address on the list, compared without case, gets a session: a cookie holding the address and its expiry, seven days on. It is signed with HMAC-SHA256 under `OPS_SESSION_KEY`, and is HttpOnly, Secure, SameSite=Lax and `__Host-`. Nothing is stored.
+  - Every request checks the session's signature and time and the list again, so an address taken off the list is out at once.
+  - Signed out, a page gets a "Sign in with Google" page and the API a 401. Another address gets "That Google account can't open this dashboard." The page to return to must be a path on the dashboard's own origin.
+  - The header shows the address, with Sign out.
 - **local development:** localhost only.
+
+The first version's password (HTTP Basic) is gone.
 
 `pnpm --filter @ptcgsim/ops dev` runs the page and the Worker's handler under Vite with this machine's wrangler login. `dev:demo` serves generated data with no login.
 
@@ -108,7 +118,8 @@ Protection fails closed. With nothing set, it serves only a page saying it is no
   - the page reporter: visits, timings once, counters per report, no report for a page hidden from load, at most twelve;
   - the session observer;
   - the dashboard's queries (one dataset each, columns that exist, time-bounded, GraphQL windows within 31 days);
-  - Access JWTs (forged, expired, wrong audience or issuer, key rotation) and the password;
+  - Access JWTs (forged, expired, wrong audience or issuer, key rotation);
+  - Google sign-in: the modes' order, the list, signed cookies (tampered, expired, the wrong kind), the state, the token's claims (another client, unverified, off the list) and return paths that leave the origin;
   - the API (per-source failures, caching, demo, validation);
   - every view's shaping, and a render of every view.
 - **On the real account:** the GraphQL queries ran against it before shipping.

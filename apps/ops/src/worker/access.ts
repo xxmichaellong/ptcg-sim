@@ -1,26 +1,34 @@
+import {
+  readGoogleSignIn,
+  sessionEmail,
+  signInPage,
+  type GoogleSignInEnv,
+} from './google.js';
+
 /**
  * Who may see the dashboard (ADR-054). It shows the site's traffic and its
- * Worker holds a Cloudflare API token, so nothing is served without one of:
+ * Worker holds a Cloudflare API token, so nothing is served without one of,
+ * in this order:
  *
  * - **Cloudflare Access** (`ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`): the edge
  *   signs a JWT for each signed-in visitor; it is checked here too, by its
  *   team's keys, issuer, audience and time.
- * - **A password** (secret `OPS_PASSWORD`): the browser's own sign-in
- *   prompt (HTTP Basic), compared in constant time.
+ * - **Sign in with Google** (secrets `GOOGLE_CLIENT_ID`,
+ *   `GOOGLE_CLIENT_SECRET`, `OPS_EMAILS`, `OPS_SESSION_KEY`): a verified
+ *   address on the list, by a signed session cookie (google.ts).
  * - **This machine** (`OPS_LOCAL=on`, set only by the dev server): only
  *   requests to localhost.
  *
  * With none set it refuses everything: a fresh deploy shows nothing.
  */
 
-export interface ProtectionEnv {
+export interface ProtectionEnv extends GoogleSignInEnv {
   readonly ACCESS_TEAM_DOMAIN?: string;
   readonly ACCESS_AUD?: string;
-  readonly OPS_PASSWORD?: string;
   readonly OPS_LOCAL?: string;
 }
 
-export type Protection = 'access' | 'password' | 'local' | 'none';
+export type Protection = 'access' | 'google' | 'local' | 'none';
 
 const TEAM_DOMAIN = /^[a-z0-9-]+\.cloudflareaccess\.com$/u;
 
@@ -31,7 +39,7 @@ export const protectionOf = (env: ProtectionEnv, url: URL): Protection => {
     TEAM_DOMAIN.test(env.ACCESS_TEAM_DOMAIN)
   )
     return 'access';
-  if (env.OPS_PASSWORD && env.OPS_PASSWORD.length >= 12) return 'password';
+  if (readGoogleSignIn(env)) return 'google';
   if (
     env.OPS_LOCAL === 'on' &&
     (url.hostname === 'localhost' ||
@@ -152,36 +160,6 @@ export const verifyAccessJwt = async (
   );
 };
 
-const digest = async (text: string): Promise<Uint8Array> =>
-  new Uint8Array(
-    await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
-  );
-
-/** Whether two strings are equal, in time that doesn't depend on where they differ. */
-export const sameSecret = async (
-  left: string,
-  right: string
-): Promise<boolean> => {
-  const [a, b] = await Promise.all([digest(left), digest(right)]);
-  let difference = 0;
-  for (let index = 0; index < a.length; index += 1)
-    difference |= (a[index] ?? 0) ^ (b[index] ?? 0);
-  return difference === 0;
-};
-
-const basicPassword = (request: Request): string | undefined => {
-  const header = request.headers.get('Authorization') ?? '';
-  const match = /^Basic ([A-Za-z0-9+/=]+)$/u.exec(header);
-  if (!match?.[1]) return undefined;
-  try {
-    const decoded = atob(match[1]);
-    const colon = decoded.indexOf(':');
-    return colon >= 0 ? decoded.slice(colon + 1) : undefined;
-  } catch {
-    return undefined;
-  }
-};
-
 const PRIVATE_HEADERS = {
   'Cache-Control': 'no-store',
   'X-Content-Type-Options': 'nosniff',
@@ -226,16 +204,13 @@ export const checkAccess = async (
         return undefined;
       return refusal(403, 'access_required');
     }
-    case 'password': {
-      const password = basicPassword(request);
-      if (
-        password !== undefined &&
-        (await sameSecret(password, env.OPS_PASSWORD ?? ''))
-      )
+    case 'google': {
+      const google = readGoogleSignIn(env);
+      if (google && (await sessionEmail(request, google, now)))
         return undefined;
-      return refusal(401, 'password_required', {
-        'WWW-Authenticate': 'Basic realm="PTCG Sim Ops", charset="UTF-8"',
-      });
+      return url.pathname.startsWith('/api/')
+        ? refusal(401, 'sign_in_required')
+        : signInPage(url);
     }
     case 'local':
       return undefined;

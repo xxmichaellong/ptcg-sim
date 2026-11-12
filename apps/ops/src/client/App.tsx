@@ -3,6 +3,7 @@ import { ChartLineUpIcon } from '@phosphor-icons/react/dist/csr/ChartLineUp';
 import { GaugeIcon } from '@phosphor-icons/react/dist/csr/Gauge';
 import { GearSixIcon } from '@phosphor-icons/react/dist/csr/GearSix';
 import { PulseIcon } from '@phosphor-icons/react/dist/csr/Pulse';
+import { SignOutIcon } from '@phosphor-icons/react/dist/csr/SignOut';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/csr/WarningCircle';
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
 
@@ -139,6 +140,9 @@ const useStatus = (): StatusResponse | undefined => {
   return status;
 };
 
+/** Google sign-in, back to this page after. */
+const signInHref = (): string => `/auth/sign-in?return=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`;
+
 const useNow = (): number => {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -250,6 +254,17 @@ export const App = () => {
               </button>
             )}
           </div>
+          {status?.email && (
+            <form className="viewer" method="post" action="/auth/sign-out">
+              <span className="viewer__email" title={status.email}>
+                {status.email}
+              </span>
+              <button type="submit" className="icon-button">
+                <SignOutIcon size={14} />
+                Sign out
+              </button>
+            </form>
+          )}
         </div>
       </header>
 
@@ -276,7 +291,8 @@ export const App = () => {
       {error && (
         <div className="notice notice--critical" role="alert">
           <span>
-            Couldn’t load this view: {error === 'password_required' || error === 'access_required' ? 'sign in again' : error}.{' '}
+            Couldn’t load this view:{' '}
+            {error === 'sign_in_required' ? <a href={signInHref()}>sign in again</a> : error === 'access_required' ? 'sign in again' : error}.{' '}
             <button type="button" className="table-toggle" onClick={refresh}>
               Try again
             </button>

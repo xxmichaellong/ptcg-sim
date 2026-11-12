@@ -61,16 +61,33 @@ A fresh deploy serves nothing but a "not set up" page until it is protected. A p
    ```
 
 2. **Protection**, one of:
-   - **A password** (quickest): `pnpm --filter @ptcgsim/ops exec wrangler secret put OPS_PASSWORD`, 12 characters or more. The browser asks for it; any user name works.
+   - **Sign in with Google**, for the developers' addresses only. It uses the sim's Google OAuth client.
+     1. Set four secrets, pasting each value at the prompt:
+
+        ```sh
+        corepack pnpm --filter @ptcgsim/ops exec wrangler secret put GOOGLE_CLIENT_ID
+        corepack pnpm --filter @ptcgsim/ops exec wrangler secret put GOOGLE_CLIENT_SECRET
+        corepack pnpm --filter @ptcgsim/ops exec wrangler secret put OPS_EMAILS
+        corepack pnpm --filter @ptcgsim/ops exec wrangler secret put OPS_SESSION_KEY
+        ```
+
+        - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: the sim's Google OAuth client.
+        - `OPS_EMAILS`: who may sign in, with commas or spaces between addresses, e.g. `dev@example.com, ops@example.com`. Case doesn't matter. It is a secret so the addresses never land in the repository.
+        - `OPS_SESSION_KEY`: 32 random characters or more (`openssl rand -base64 48`). It signs the cookies; changing it signs everyone out.
+
+     2. In Google Cloud → APIs & Services → Credentials → the sim's OAuth client, add this authorized redirect URI: `https://ptcgsim-ops.xx-michael-long.workers.dev/auth/callback`.
+
+     Signing in takes a verified Google address on the list. The session lasts seven days, and every request checks the list again: put `OPS_EMAILS` again without an address and that address is out at once, no deploy needed. Until all four secrets are set, the dashboard shows the "not set up" page, naming the ones still missing.
+
    - **Cloudflare Access**:
      1. Workers & Pages → ptcgsim-ops → Settings → Domains & Routes → workers.dev → enable Cloudflare Access.
      2. Put the team domain (`<team>.cloudflareaccess.com`) and the application's AUD tag in `wrangler.jsonc` (`ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`).
-     3. Deploy. Access then takes the place of the password.
+     3. Deploy. Access then takes the place of Google sign-in.
 
 ## How it works
 
 - `src/shared/queries.ts`: every query, by view. The browser names a view, an environment (beta or preview) and a range (7, 30 or 90 days). The Worker builds only these fixed queries from those three checked values.
-- `src/worker/`: protection (`access.ts`), the API client (`cloudflare.ts`) and the handler (`index.ts`). Each source answers on its own, so one failure never hides the rest. Answers are kept per isolate for 20 seconds to 5 minutes.
+- `src/worker/`: protection (`access.ts`, and Google sign-in's `/auth/*` in `google.ts`), the API client (`cloudflare.ts`) and the handler (`index.ts`). Each source answers on its own, so one failure never hides the rest. Answers are kept per isolate for 20 seconds to 5 minutes.
 - `src/client/shape/`: turns the rows into what each view shows. This runs in the browser, so the Worker stays inside Workers Free's 10 ms of CPU.
 - `src/client/charts/`: the charts, written for this page:
   - every chart has a table view;

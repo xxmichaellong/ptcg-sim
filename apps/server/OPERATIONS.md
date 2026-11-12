@@ -325,7 +325,9 @@ the dashboard); without it, a deploy with the binding fails with code 10089.
 
 The internal dashboard, `apps/ops` (Worker `ptcgsim-ops`), reads these
 rows, Cloudflare's own usage and traffic analytics, the deployments, and the
-sites' health. See its README for running, deploying and protecting it.
+sites' health. Only listed developer addresses get in, by Sign in with Google
+(or Cloudflare Access, once set). See its README for running, deploying and
+protecting it.
 
 ## Initial dashboard and alert specification
 

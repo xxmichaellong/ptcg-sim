@@ -39,8 +39,10 @@ export interface ViewResponse {
 export interface StatusResponse {
   readonly demo: boolean;
   readonly token: boolean;
-  /** How the dashboard is protected: Access, a password, or this machine. */
-  readonly protection: 'access' | 'password' | 'local';
+  /** How the dashboard is protected: Access, Google sign-in, or this machine. */
+  readonly protection: 'access' | 'google' | 'local';
+  /** Who is signed in, with Google sign-in. */
+  readonly email?: string;
   readonly accountId: string;
 }
 

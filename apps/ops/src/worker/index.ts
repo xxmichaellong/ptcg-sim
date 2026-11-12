@@ -14,12 +14,19 @@ import {
   type ProtectionEnv,
 } from './access.js';
 import { runSource } from './cloudflare.js';
+import {
+  handleAuthRequest,
+  missingGoogleSecrets,
+  readGoogleSignIn,
+  sessionEmail,
+} from './google.js';
 
 /**
  * The internal dashboard's Worker (ADR-054): its page and a small API over
  * Cloudflare's analytics for the site. Every path is checked (access.ts)
- * before anything is served; then `/api/*` answers here and everything
- * else is the page's built files.
+ * before anything is served, but for Google sign-in's own `/auth/*`
+ * (google.ts); then `/api/*` answers here and everything else is the
+ * page's built files.
  */
 
 export interface OpsEnv extends ProtectionEnv {
@@ -75,11 +82,14 @@ const API_HEADERS = {
   'Referrer-Policy': 'no-referrer',
 } as const;
 
-const NOT_SET_UP = `<!doctype html><meta charset="utf-8"><title>Ops: not set up</title>
+/** The page a deploy shows until it is protected; `missing`: secrets' names. */
+const notSetUp = (
+  missing: readonly string[]
+) => `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ops: not set up</title>
 <style>body{font:16px/1.5 system-ui,sans-serif;max-width:36rem;margin:15vh auto;padding:0 16px;color:#e8e6e1;background:#141413}code{background:#2a2a28;padding:1px 5px;border-radius:4px}</style>
 <h1>Not set up yet</h1>
-<p>This dashboard shows nothing until it is protected. Set a password with <code>wrangler secret put OPS_PASSWORD</code>, or put the Worker behind Cloudflare Access and set <code>ACCESS_TEAM_DOMAIN</code> and <code>ACCESS_AUD</code>.</p>
-<p>See <code>apps/ops/README.md</code>.</p>`;
+<p>This dashboard shows nothing until it is protected. For Sign in with Google, set the secrets <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code>, <code>OPS_EMAILS</code> and <code>OPS_SESSION_KEY</code> with <code>wrangler secret put</code>. Or put the Worker behind Cloudflare Access and set <code>ACCESS_TEAM_DOMAIN</code> and <code>ACCESS_AUD</code>.</p>
+${missing.length > 0 ? `<p>Still missing or too short: ${missing.map((name) => `<code>${name}</code>`).join(', ')}.</p>\n` : ''}<p>See <code>apps/ops/README.md</code>.</p>`;
 
 /** Analytics Engine queries one view keeps in flight at once. */
 export const AE_CONCURRENCY = 4;
@@ -191,7 +201,7 @@ export const handleOpsRequest = async (
   const url = new URL(request.url);
   const protection = protectionOf(env, url);
   if (protection === 'none' && !url.pathname.startsWith('/api/')) {
-    return new Response(NOT_SET_UP, {
+    return new Response(notSetUp(missingGoogleSecrets(env)), {
       status: 503,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
@@ -199,15 +209,21 @@ export const handleOpsRequest = async (
       },
     });
   }
+  const google = protection === 'google' ? readGoogleSignIn(env) : undefined;
+  // Signing in comes before being signed in.
+  if (google && url.pathname.startsWith('/auth/'))
+    return handleAuthRequest(request, google, fetcher, now);
   const refused = await checkAccess(request, env, fetcher, now);
   if (refused) return refused;
   if (url.pathname === '/api/status') {
     if (request.method !== 'GET') return refusal(405, 'method_not_allowed');
+    const email = google ? await sessionEmail(request, google, now) : undefined;
     return new Response(
       JSON.stringify({
         demo: env.OPS_DEMO === 'on',
         token: Boolean(env.CLOUDFLARE_API_TOKEN),
         protection: protection === 'none' ? 'local' : protection,
+        ...(email ? { email } : {}),
         accountId: env.CLOUDFLARE_ACCOUNT_ID,
       } satisfies StatusResponse),
       { headers: API_HEADERS }
@@ -217,7 +233,8 @@ export const handleOpsRequest = async (
     if (request.method !== 'GET') return refusal(405, 'method_not_allowed');
     return handleViewRequest(url, env, fetcher, now);
   }
-  if (url.pathname.startsWith('/api/')) return refusal(404, 'not_found');
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/auth/'))
+    return refusal(404, 'not_found');
   if (!env.ASSETS) return refusal(404, 'not_found');
   return env.ASSETS.fetch(request);
 };
