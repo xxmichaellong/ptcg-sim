@@ -65,6 +65,11 @@
 - **Presence** writes one hub row per change of state. A session that comes online, plays a game and leaves changes state about four times. At 1,000 sessions a day that is about 4,000 rows, and a few thousand requests for the pushes to online friends. Nothing is written per move or per heartbeat, and nothing is asked on a timer: a tab's ping is answered by the runtime without waking its object. A list read asks the hub once; a stale-looking row costs one more request, at most once in 5 minutes.
 - **WebSockets** hibernate, so an idle tab costs no duration.
 
+## As built (steps 2 and 3)
+
+- **Presence:** `accounts/presence-hub.ts` (`PtcgPresence`, one object by name `hub`), `account-live.ts` (a tab's place, kept on its socket), the live line `GET /v2/account/live` and `PUT /v2/friends/settings { appearOffline }`; client `friends-live.ts` (one socket a signed-in tab, pings every 50 s, retries 1 s to 30 s), `friends-presence.ts`. The room route tells the line where the tab is (`FriendsWhere`).
+- **Playing together:** `POST /v2/friends/<id>/invite { kind: 'invite' | 'ask', answering? }`. An invite's room is the one the inviter's own tabs say they play in. The friend's object sends it to its open tabs, or answers `offline`; nothing is kept. Client `friends-invites.ts`: the invite notice (Join), the ask notice (Let in, which invites back with `answering`, and the asker, having asked within 5 minutes, goes straight in), and `goToRoom`, which asks first when the tab would leave an online room ("Leave this room to join {name}?"). Joining goes through Play online's own join by code (`session/room-join-request.ts`, taken by the lobby when it is free). A friend's row offers one action, Invite (from a room this tab plays in), Ask to join (a friend in a game) or Watch; their page offers all that apply. An invite's notice goes when its sender is seen in another room.
+
 ## Steps
 
 1. **Friends** (no presence): the tables, requests, accept, decline, cancel, remove, block, Add by id or link, recent players (seat accounts in filings), the app bar button and sheet, the request toasts.

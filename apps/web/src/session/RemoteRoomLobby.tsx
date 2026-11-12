@@ -63,6 +63,10 @@ import {
 } from './invitation-link-capture.js';
 import { roomCodeFieldValue, roomCodeFromText } from './room-code.js';
 import { joinRoomByCode, RoomCodeJoinError } from './room-code-join.js';
+import {
+  takeRoomJoinRequest,
+  useRoomJoinRequest,
+} from './room-join-request.js';
 import { RemoteRoomRoute } from './RemoteRoomRoute.js';
 import { RemoteSessionBoard } from './RemoteSessionBoard.js';
 import { COARSE_POINTER_QUERY, useMediaQuery } from '../ui/breakpoints.js';
@@ -1066,6 +1070,17 @@ export const RemoteRoomLobby = ({
     void handleTutorial(tutorialRequest);
   });
 
+  // A friend's room to join or watch (ADR-055): by its code, as the
+  // field's would be, once the lobby is free.
+  const joinRequest = useRoomJoinRequest();
+  useEffect(() => {
+    if (!joinRequest) return;
+    const owner = ownerRef.current;
+    if (!owner || owner.disposed || owner.operation) return;
+    takeRoomJoinRequest(joinRequest);
+    void handleJoin(joinRequest.role === 'spectator', false, joinRequest.code);
+  });
+
   /**
    * Opens Play online over a Solo table, to say what went wrong there. Over
    * the tutorial, as its own Play online does: the player's table comes
@@ -1185,7 +1200,9 @@ export const RemoteRoomLobby = ({
     // A pasted or linked invitation (ADR-020) the custody holds; else the
     // field's room code (ADR-047). Said by a link's join, whose receipt
     // isn't in state yet.
-    viaInvitation: boolean = receipt !== undefined
+    viaInvitation: boolean = receipt !== undefined,
+    // A friend's room (ADR-055), not the field's.
+    code: string = roomCode
   ): Promise<void> => {
     const owner = ownerRef.current;
     if (!owner || owner.disposed || owner.operation) return;
@@ -1207,7 +1224,7 @@ export const RemoteRoomLobby = ({
           })
         : await (dependencies.joinByCode ?? joinRoomByCode)({
             buildId,
-            code: roomCode,
+            code,
             requestedRole: asSpectator ? 'spectator' : 'player',
             displayName,
             signal: active.abort.signal,

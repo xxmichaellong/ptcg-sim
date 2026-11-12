@@ -220,4 +220,53 @@ describe('friends, through the Worker', () => {
     await mayTab.next(presenceOf(dawnId, 'offline'));
     mayTab.socket.close(1000, 'bye');
   }, 30_000);
+
+  it('invites to the room its tab plays in, and asks, over live lines', async () => {
+    const dawn = browser();
+    const may = browser();
+    const dawnId = await dawn.signIn(someone('Dawn'));
+    const mayId = await may.signIn(someone('May'));
+    await dawn.act(mayId, 'request');
+    await may.act(dawnId, 'accept');
+    const invite = (from: ReturnType<typeof browser>, id: string, body: unknown) =>
+      from
+        .fetch(`/v2/friends/${id}/invite`, {
+          method: 'POST',
+          headers: { Origin: ORIGIN, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+        .then(async (response) => ((await response.json()) as { outcome: string }).outcome);
+
+    // No tab of May's open: she can't be invited.
+    const dawnTab = await dawn.live();
+    dawnTab.send({
+      type: 'hello',
+      where: { kind: 'room', role: 'player', room: 'K7PQ' },
+    });
+    await dawnTab.next(presenceOf(mayId, 'offline'));
+    expect(await invite(dawn, mayId, { kind: 'invite' })).toBe('offline');
+
+    const mayTab = await may.live();
+    mayTab.send({ type: 'hello', where: { kind: 'none' } });
+    await mayTab.next(presenceOf(dawnId, 'playing'));
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+    expect(await invite(dawn, mayId, { kind: 'invite' })).toBe('sent');
+    const received = (await mayTab.next(
+      (message) => (message as { type?: string }).type === 'invite'
+    )) as { from: { id: string }; room: string; expiresAt: number };
+    expect(received.from.id).toBe(dawnId);
+    // The room is Dawn's, as her tab said: never one the request names.
+    expect(received.room).toBe('K7PQ');
+
+    // May isn't in a room to invite to; she can ask to join instead.
+    expect(await invite(may, dawnId, { kind: 'invite' })).toBe('not_in_room');
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+    expect(await invite(may, dawnId, { kind: 'ask' })).toBe('sent');
+    const ask = (await dawnTab.next(
+      (message) => (message as { type?: string }).type === 'ask'
+    )) as { from: { id: string } };
+    expect(ask.from.id).toBe(mayId);
+    dawnTab.socket.close(1000, 'bye');
+    mayTab.socket.close(1000, 'bye');
+  }, 30_000);
 });

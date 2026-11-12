@@ -79,6 +79,14 @@
     "message": "{0} has left your hand.",
     "translation": "{0} 已离开你的手牌。"
   },
+  "3mbZq7": {
+    "message": "{0} invited you to play",
+    "translation": "{0} 邀请你一起玩"
+  },
+  "DgCaFP": {
+    "message": "{0} let you in",
+    "translation": "{0} 让你加入了"
+  },
   "FGOUAP": {
     "message": "{0} of {1}",
     "comments": [
@@ -103,6 +111,10 @@
   "eC0xf_": {
     "message": "{0} wants to be friends",
     "translation": "{0} 想加你为好友"
+  },
+  "zxm7Xg": {
+    "message": "{0} wants to join you",
+    "translation": "{0} 想加入你的房间"
   },
   "THa0qf": {
     "message": "{0}, {count} in deck",
@@ -1047,6 +1059,10 @@
   "Uzm69g": {
     "message": "{name} is on {seat}",
     "translation": "{name}在{seat}"
+  },
+  "eESDMH": {
+    "message": "{name} isn't online",
+    "translation": "{name} 不在线"
   },
   "gQ4n1o": {
     "message": "{name} joined",
@@ -2126,6 +2142,19 @@
     "message": "As one",
     "context": "play the selected pieces as one card",
     "translation": "合为一张"
+  },
+  "wd1_ha": {
+    "message": "Ask to join",
+    "translation": "请求加入"
+  },
+  "_WWAPl": {
+    "message": "Ask to join",
+    "context": "ask a friend to let me in",
+    "translation": "请求加入"
+  },
+  "AEHiGA": {
+    "message": "Asked {name} to let you in",
+    "translation": "已请 {name} 让你加入"
   },
   "eiQJaM": {
     "message": "Asleep",
@@ -4525,6 +4554,11 @@
     "message": "Invitation link ready",
     "translation": "邀请链接已就绪"
   },
+  "R_3_0a": {
+    "message": "Invite",
+    "context": "invite a friend to my room",
+    "translation": "邀请"
+  },
   "qsqt0w": {
     "message": "Invite link",
     "translation": "邀请链接"
@@ -4532,6 +4566,14 @@
   "KLJ4eD": {
     "message": "Invite link copied",
     "translation": "邀请链接已复制"
+  },
+  "kRn4dw": {
+    "message": "Invite sent to {name}",
+    "translation": "已向 {name} 发送邀请"
+  },
+  "Pu5aJu": {
+    "message": "Invite to my room",
+    "translation": "邀请到我的房间"
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
@@ -4567,6 +4609,11 @@
   "085CJe": {
     "message": "Join",
     "context": "a room",
+    "translation": "加入"
+  },
+  "Tb-yuK": {
+    "message": "Join",
+    "context": "join a friend’s room",
     "translation": "加入"
   },
   "Fz2DU1": {
@@ -4693,6 +4740,14 @@
     "message": "Leave the room?",
     "translation": "离开房间？"
   },
+  "iabCPQ": {
+    "message": "Leave this room to join {name}?",
+    "translation": "离开当前房间并加入 {name}？"
+  },
+  "oqWzrf": {
+    "message": "Leave this room to watch {name}?",
+    "translation": "离开当前房间并观战 {name}？"
+  },
   "t4L8cu": {
     "message": "Leave tutorial",
     "translation": "退出教程"
@@ -4713,6 +4768,11 @@
   "xXagjO": {
     "message": "LEGEND · 2 halves",
     "translation": "LEGEND · 2 张"
+  },
+  "74WSXO": {
+    "message": "Let in",
+    "context": "let a friend into the room",
+    "translation": "允许加入"
   },
   "YVrOwc": {
     "message": "Level-Up",
@@ -5741,6 +5801,10 @@
   "BpB3jt": {
     "message": "Open a deck file (.txt or .csv)",
     "translation": "打开卡组文件（.txt 或 .csv）"
+  },
+  "3Vvgyn": {
+    "message": "Open a room to invite friends",
+    "translation": "开设房间后才能邀请好友"
   },
   "E9wRDu": {
     "message": "Open log",
@@ -7729,6 +7793,11 @@
     ],
     "translation": "状态与招式"
   },
+  "wCq8nG": {
+    "message": "Stay",
+    "context": "stay in the room",
+    "translation": "留下"
+  },
   "iFt0Ce": {
     "message": "Still uploading…",
     "translation": "仍在上传…"
@@ -8776,6 +8845,11 @@
     "context": "join a room to spectate",
     "translation": "观战"
   },
+  "3jqIru": {
+    "message": "Watch",
+    "context": "watch a friend’s game",
+    "translation": "观战"
+  },
   "bbQDbO": {
     "message": "Watch from your Solo table. The last 100 are kept, and starred games stay.",
     "translation": "在你的单人牌桌观看。保留最近 100 场，标星对局不会被清除。"
@@ -8783,6 +8857,10 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "观看回放…"
+  },
+  "qIcnai": {
+    "message": "Watch their game",
+    "translation": "观看对方的对战"
   },
   "oGWXbZ": {
     "message": "Watching",
@@ -8915,6 +8993,10 @@
   "gymL5v": {
     "message": "You won't be friends, and they can't send you requests or invites. They won't be told.",
     "translation": "你们不会成为好友，对方也无法向你发送请求或邀请。对方不会收到通知。"
+  },
+  "erakDM": {
+    "message": "You're not friends with {name}",
+    "translation": "你和 {name} 还不是好友"
   },
   "VvkF_g": {
     "message": "You're watching",

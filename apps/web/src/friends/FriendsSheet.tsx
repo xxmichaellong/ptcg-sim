@@ -1,7 +1,11 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { CaretLeftIcon } from '@phosphor-icons/react/dist/csr/CaretLeft';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
+import { DoorOpenIcon } from '@phosphor-icons/react/dist/csr/DoorOpen';
+import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye';
 import { EyeSlashIcon } from '@phosphor-icons/react/dist/csr/EyeSlash';
+import { PaperPlaneTiltIcon } from '@phosphor-icons/react/dist/csr/PaperPlaneTilt';
+import type { Icon } from '@phosphor-icons/react';
 import { LinkIcon } from '@phosphor-icons/react/dist/csr/Link';
 import { ProhibitIcon } from '@phosphor-icons/react/dist/csr/Prohibit';
 import { UserMinusIcon } from '@phosphor-icons/react/dist/csr/UserMinus';
@@ -34,17 +38,21 @@ import {
   type FriendsList,
 } from './friends-api.js';
 import { usePresence, usePresenceMap } from './friends-presence.js';
+import { goToRoom, inviteFriend } from './friends-invites.js';
+import { useWhere, type LiveWhere } from './friends-live.js';
 import {
   changeFriend,
   markRequestsSeen,
   refreshFriends,
   setAppearOffline,
+  setFriendsShowing,
   setOpenFriendsHandler,
   useFriends,
 } from './friends-state.js';
 import {
   backFriendsPage as back,
   closeFriends,
+  friendsSheetState,
   openFriends,
   pushFriendsPage as push,
   useFriendsSheet as useSheet,
@@ -207,6 +215,116 @@ const PersonRow = ({
   );
 };
 
+// ---- Playing together (step 3) ---------------------------------------------
+
+type PlayAction = 'invite' | 'ask' | 'watch';
+
+/**
+ * What playing with a friend means from here: invite them to this tab's
+ * room, ask into theirs, or watch theirs (one they watch, or one this tab
+ * can't join as a player). Nothing for a friend offline or already here.
+ */
+const playActions = (
+  where: LiveWhere,
+  presence: FriendPresence | undefined
+): readonly PlayAction[] => {
+  if (!presence || presence.state === 'offline') return [];
+  const here = where.kind === 'room' ? where.room : undefined;
+  if (presence.room && presence.room === here) return [];
+  const actions: PlayAction[] = [];
+  if (where.kind === 'room' && where.role === 'player') actions.push('invite');
+  if (presence.state === 'playing' && presence.room) actions.push('ask');
+  if (presence.room) actions.push('watch');
+  return actions;
+};
+
+/** The one a friend's row offers. */
+const playAction = (
+  where: LiveWhere,
+  presence: FriendPresence | undefined
+): PlayAction | undefined => playActions(where, presence)[0];
+
+const usePlayLabels = () => {
+  const { t } = useLingui();
+  return {
+    invite: t({ message: 'Invite', context: 'invite a friend to my room' }),
+    ask: t({ message: 'Ask to join', context: 'ask a friend to let me in' }),
+    watch: t({ message: 'Watch', context: 'watch a friend’s game' }),
+  } as const;
+};
+
+const play = (
+  action: PlayAction,
+  friend: Pick<FriendProfile, 'id' | 'name'>,
+  room: string | undefined
+): void => {
+  if (action === 'watch') {
+    if (room) {
+      closeFriends();
+      void goToRoom(room, 'spectator', friend.name);
+    }
+    return;
+  }
+  void inviteFriend(friend, action);
+};
+
+const PlayPill = ({
+  action,
+  friend,
+  room,
+}: {
+  readonly action: PlayAction;
+  readonly friend: Pick<FriendProfile, 'id' | 'name'>;
+  readonly room: string | undefined;
+}) => {
+  const labels = usePlayLabels();
+  return (
+    <Pill
+      id={`friendPlay-${friend.id}`}
+      accent={action !== 'watch'}
+      onClick={() => play(action, friend, room)}
+    >
+      {labels[action]}
+    </Pill>
+  );
+};
+
+/** A friend's page: every way to play with them now. */
+const PlayRows = ({
+  friend,
+  presence,
+}: {
+  readonly friend: Pick<FriendProfile, 'id' | 'name'>;
+  readonly presence: FriendPresence | undefined;
+}) => {
+  const { t } = useLingui();
+  const where = useWhere();
+  const actions = playActions(where, presence);
+  if (actions.length === 0) return null;
+  const rows: Readonly<
+    Record<PlayAction, { readonly icon: Icon; readonly label: string }>
+  > = {
+    invite: { icon: PaperPlaneTiltIcon, label: t`Invite to my room` },
+    ask: { icon: DoorOpenIcon, label: t`Ask to join` },
+    watch: { icon: EyeIcon, label: t`Watch their game` },
+  };
+  return (
+    <SettingsGroup>
+      {actions.map((action) => (
+        <SettingsLinkRow
+          key={action}
+          id={`friendPlayRow-${action}`}
+          icon={rows[action].icon}
+          tone={action === 'watch' ? 'teal' : 'green'}
+          label={rows[action].label}
+          trailing="none"
+          onClick={() => play(action, friend, presence?.room)}
+        />
+      ))}
+    </SettingsGroup>
+  );
+};
+
 /** Changes a friendship from a button, one at a time. */
 const useChange = () => {
   const [busy, setBusy] = useState<string | null>(null);
@@ -234,6 +352,7 @@ const HomePage = () => {
   const { t, i18n } = useLingui();
   const { status, list } = useFriends();
   const presence = usePresenceMap();
+  const where = useWhere();
   const { busy, run } = useChange();
   const friends = [...list.friends].sort(byPresence(presence));
   // Coming back to the list reads it again: answers may have come.
@@ -311,15 +430,26 @@ const HomePage = () => {
             )}
           </div>
         ) : (
-          friends.map((entry) => (
-            <PersonRow
-              key={entry.id}
-              rowId={`friend-${entry.id}`}
-              person={entry}
-              subtitle={<PresenceLine presence={presence.get(entry.id)} />}
-              onOpen={() => push({ kind: 'player', id: entry.id })}
-            />
-          ))
+          friends.map((entry) => {
+            const action = playAction(where, presence.get(entry.id));
+            return (
+              <PersonRow
+                key={entry.id}
+                rowId={`friend-${entry.id}`}
+                person={entry}
+                subtitle={<PresenceLine presence={presence.get(entry.id)} />}
+                onOpen={() => push({ kind: 'player', id: entry.id })}
+              >
+                {action ? (
+                  <PlayPill
+                    action={action}
+                    friend={entry}
+                    room={presence.get(entry.id)?.room}
+                  />
+                ) : null}
+              </PersonRow>
+            );
+          })
         )}
       </SettingsGroup>
       {recent.length > 0 ? (
@@ -647,6 +777,9 @@ const PlayerPage = ({ id }: { readonly id: string }) => {
           </span>
         </div>
       </SettingsGroup>
+      {relation === 'friend' && entry ? (
+        <PlayRows friend={entry} presence={presence} />
+      ) : null}
       {relation === 'friend' ? (
         <SettingsGroup>
           <SettingsLinkRow
@@ -734,7 +867,11 @@ export const FriendsSheetHost = () => {
   const available = status === 'ready' && account !== null;
   useEffect(() => {
     setOpenFriendsHandler(() => openFriends());
-    return () => setOpenFriendsHandler(undefined);
+    setFriendsShowing(() => friendsSheetState().open);
+    return () => {
+      setOpenFriendsHandler(undefined);
+      setFriendsShowing(() => false);
+    };
   }, []);
   // A friend's invite link opens Friends on them, once the account is
   // known (signed out, at Sign in, to sign in first); a link pasted into

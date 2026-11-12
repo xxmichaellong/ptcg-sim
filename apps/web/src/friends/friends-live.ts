@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
 import { accountSnapshot, subscribeAccount } from '../account/account-state.js';
 import { readPresence, readPresenceMap } from './friends-api.js';
@@ -63,12 +63,28 @@ const sameWhere = (left: LiveWhere, right: LiveWhere): boolean =>
       left.role === right.role &&
       left.room === right.room));
 
+const whereListeners = new Set<() => void>();
+
 /** Where this tab is now: the room route says, as it changes. */
 export const reportWhere = (next: LiveWhere): void => {
   if (sameWhere(where, next)) return;
   where = next;
   send({ type: 'where', where });
+  for (const listener of whereListeners) listener();
 };
+
+/** Where this tab is, for the sheet's Invite and Ask to join. */
+export const useWhere = (): LiveWhere =>
+  useSyncExternalStore(
+    (listener) => {
+      whereListeners.add(listener);
+      return () => {
+        whereListeners.delete(listener);
+      };
+    },
+    () => where,
+    () => where
+  );
 
 const received = (data: unknown): void => {
   const type: unknown = Reflect.get(Object(data), 'type');

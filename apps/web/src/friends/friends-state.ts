@@ -120,6 +120,12 @@ const writeSeen = (seen: Seen): void => {
 };
 
 let openFriendsHandler: (() => void) | undefined;
+let friendsShowing: () => boolean = () => false;
+
+/** Whether Friends is on screen: its requests need no notice then. */
+export const setFriendsShowing = (showing: () => boolean): void => {
+  friendsShowing = showing;
+};
 
 /** What "Tap to answer" opens: the Friends sheet (FriendsSheet.tsx). */
 export const setOpenFriendsHandler = (open: (() => void) | undefined): void => {
@@ -139,6 +145,7 @@ const noticeRequests = (next: FriendsSnapshot): void => {
   const fresh = next.list.incoming.filter((entry) => entry.since > seen);
   if (fresh.length === 0) return;
   writeSeen({ accountId: next.accountId, upTo: latest });
+  if (friendsShowing()) return;
   const first = fresh[0];
   const count = fresh.length;
   toast({

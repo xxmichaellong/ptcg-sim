@@ -44,6 +44,11 @@ const setup = async () => {
       return { ...EMPTY, appearOffline: hidden };
     },
     fetch: async () => new Response('live', { status: 200 }),
+    inviteFriend: async (hash, _now, other, kind, answering) => {
+      if (hash !== secretHash) return null;
+      changes.push(`${kind}:${other}:${String(answering)}`);
+      return 'sent';
+    },
   };
   const may: FriendsAccountObject = {
     ...dawn,
@@ -147,6 +152,32 @@ describe('friends over HTTP', () => {
     expect(
       (await send('/v2/account/live', { headers: upgrade, signedIn: false })).status
     ).toBe(401);
+  });
+
+  it('invites and asks, same-origin, of well-formed kinds only', async () => {
+    const { send, changes } = await setup();
+    expect(friendsRoute(`/v2/friends/${MAY}/invite`)).toEqual({
+      kind: 'invite',
+      id: MAY,
+    });
+    const invite = await send(`/v2/friends/${MAY}/invite`, post({ kind: 'invite' }));
+    expect(await invite.json()).toEqual({ outcome: 'sent' });
+    await send(`/v2/friends/${MAY}/invite`, post({ kind: 'ask', answering: true }));
+    expect(
+      (await send(`/v2/friends/${MAY}/invite`, post({ kind: 'summon' }))).status
+    ).toBe(400);
+    expect(
+      (
+        await send(`/v2/friends/${MAY}/invite`, {
+          ...post({ kind: 'invite' }),
+          headers: {
+            Origin: 'https://evil.example',
+            'Content-Type': 'application/json',
+          },
+        })
+      ).status
+    ).toBe(403);
+    expect(changes).toEqual([`invite:${MAY}:false`, `ask:${MAY}:true`]);
   });
 
   it('refuses the signed out, other sites, odd actions and floods', async () => {

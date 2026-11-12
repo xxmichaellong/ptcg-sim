@@ -47,9 +47,24 @@ export type FriendAction = (typeof FRIEND_ACTIONS)[number];
 const isFriendAction = (value: unknown): value is FriendAction =>
   (FRIEND_ACTIONS as readonly unknown[]).includes(value);
 
+/** Playing together (step 3): to my room, or asking into theirs. */
+export type InviteKind = 'invite' | 'ask';
+
+export type InviteOutcome =
+  | 'sent'
+  /** No tab of theirs is open. */
+  | 'offline'
+  /** An invite from someone not playing in a room now. */
+  | 'not_in_room'
+  | 'not_friends'
+  | 'slow_down'
+  | 'failed';
+
 export type FriendsRoute =
   | { readonly kind: 'friends' }
   | { readonly kind: 'friend'; readonly id: string }
+  /** `POST { kind, answering? }`: an invite or an ask (step 3). */
+  | { readonly kind: 'invite'; readonly id: string }
   | { readonly kind: 'player'; readonly id: string }
   /** `PUT { appearOffline }` (step 2). */
   | { readonly kind: 'settings' }
@@ -64,6 +79,8 @@ export const friendsRoute = (pathname: string): FriendsRoute | undefined => {
   if (pathname === '/v2/account/live') return { kind: 'live' };
   const friend = new RegExp(`^/v2/friends/${ID}$`, 'u').exec(pathname);
   if (friend?.[1]) return { kind: 'friend', id: friend[1] };
+  const invite = new RegExp(`^/v2/friends/${ID}/invite$`, 'u').exec(pathname);
+  if (invite?.[1]) return { kind: 'invite', id: invite[1] };
   const player = new RegExp(`^/v2/players/${ID}$`, 'u').exec(pathname);
   if (player?.[1]) return { kind: 'player', id: player[1] };
   return undefined;
@@ -89,6 +106,13 @@ export interface FriendsAccountObject {
   ): Promise<FriendsView | null>;
   /** Takes the live line's upgrade (checks the session itself). */
   fetch(request: Request): Promise<Response>;
+  inviteFriend(
+    secretHash: string,
+    now: number,
+    otherId: string,
+    kind: InviteKind,
+    answering: boolean
+  ): Promise<InviteOutcome | null>;
 }
 
 export interface FriendsHttpDependencies {
@@ -110,6 +134,24 @@ const readAction = async (request: Request): Promise<FriendAction | undefined> =
       'action'
     );
     return isFriendAction(action) ? action : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const readInvite = async (
+  request: Request
+): Promise<
+  { readonly kind: InviteKind; readonly answering: boolean } | undefined
+> => {
+  if (!isIdentityJsonRequest(request)) return undefined;
+  try {
+    const body = Object(await readBoundedJsonRequest(request, 256));
+    const kind: unknown = Reflect.get(body, 'kind');
+    const answering: unknown = Reflect.get(body, 'answering');
+    return kind === 'invite' || kind === 'ask'
+      ? { kind, answering: answering === true }
+      : undefined;
   } catch {
     return undefined;
   }
@@ -163,6 +205,34 @@ export const handleFriendsRequest = async (
   dependencies: FriendsHttpDependencies
 ): Promise<Response> => {
   if (route.kind === 'live') return openLive(request, dependencies);
+  if (route.kind === 'invite') {
+    if (request.method !== 'POST') {
+      return json({ error: 'method_not_allowed' }, 405, { Allow: 'POST' });
+    }
+    if (!isSameOriginBrowserRequest(request)) {
+      return json({ error: 'forbidden' }, 403);
+    }
+    const invite = await readInvite(request);
+    if (!invite) return json({ error: 'invalid_request' }, 400);
+    const token = readSessionToken(request);
+    if (!token) return signedOut(request);
+    const decision = await dependencies.rateLimit();
+    if (!decision.allowed) {
+      return json({ error: 'rate_limited' }, 429, {
+        'Retry-After': String(decision.retryAfterSeconds),
+      });
+    }
+    const outcome = await dependencies
+      .account(token.accountId)
+      .inviteFriend(
+        await sha256Hex(token.secret),
+        dependencies.now(),
+        route.id,
+        invite.kind,
+        invite.answering
+      );
+    return outcome ? json({ outcome }, 200) : signedOut(request);
+  }
   if (route.kind === 'settings') {
     if (request.method !== 'PUT') {
       return json({ error: 'method_not_allowed' }, 405, { Allow: 'PUT' });

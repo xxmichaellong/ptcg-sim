@@ -17,6 +17,7 @@ import { CommandPaletteHost } from './commands/CommandPalette.js';
 import { FriendsSheetHost } from './friends/FriendsSheet.js';
 import { startFriends } from './friends/friends-state.js';
 import { startFriendsLive } from './friends/friends-live.js';
+import { startFriendInvites } from './friends/friends-invites.js';
 import { ShortcutsDialogHost } from './hotkeys/ShortcutsDialog.js';
 import { installLeaveGuard } from './leave-guard.js';
 import { installPageMotion } from './motion/page-motion.js';
@@ -117,6 +118,7 @@ startAccountSync();
 // the account for their presence.
 startFriends();
 startFriendsLive();
+startFriendInvites();
 
 // One overlay host for the whole page: the lobby, the room, the Deck panel
 // and the dev room all raise their dialogs and toasts through it.

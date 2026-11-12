@@ -1,3 +1,4 @@
+import { ROOM_ALIAS_PATTERN } from '@ptcgsim/protocol';
 import { DurableObject } from 'cloudflare:workers';
 
 import { WebCryptoAuthoritySource } from '../authority-crypto.js';
@@ -41,7 +42,11 @@ import {
   type FriendsView,
   type PeerRequestAnswer,
 } from './account-friends.js';
-import type { FriendAction } from './friends-http.js';
+import type {
+  FriendAction,
+  InviteKind,
+  InviteOutcome,
+} from './friends-http.js';
 import { APPEAR_OFFLINE_SETTING } from './account-friends.js';
 import {
   LIVE_TAG,
@@ -67,6 +72,11 @@ interface AccountObjectEnv {
 
 /** The one presence hub (ADR-055). */
 export const PRESENCE_HUB_NAME = 'hub';
+
+/** An invite or an ask lasts this long on the friend's screen. */
+export const INVITE_LIFETIME_MS = 30 * 60 * 1000;
+/** One invite or ask a second per account. */
+const INVITE_SPACING_MS = 1000;
 
 /** One account (ADR-052), by its id: its profile, methods and sessions. */
 export class PtcgAccount
@@ -253,6 +263,81 @@ export class PtcgAccount
   async friendPresence(from: string, view: unknown): Promise<void> {
     if (this.friendRows.row(from)?.state !== 'friend') return;
     this.broadcast({ type: 'presence', id: from, view });
+  }
+
+  // ---- Playing together (ADR-055 step 3) -------------------------------
+
+  private lastInviteAt = 0;
+
+  /**
+   * Invites a friend to the room this account plays in, or asks to join
+   * theirs, by the player; null signed out. The room is the one its own
+   * tabs say they play in, never one the request names.
+   */
+  async inviteFriend(
+    secretHash: string,
+    now: number,
+    otherId: string,
+    kind: InviteKind,
+    answering: boolean
+  ): Promise<InviteOutcome | null> {
+    const view = this.store.read(secretHash, now);
+    const me = this.store.publicProfile();
+    if (!view || !me) return null;
+    if (this.friendRows.row(otherId)?.state !== 'friend') return 'not_friends';
+    if (now - this.lastInviteAt < INVITE_SPACING_MS) return 'slow_down';
+    this.lastInviteAt = now;
+    let room: string | undefined;
+    if (kind === 'invite') {
+      const here = tabsPresence(this.tabs());
+      if (here.state !== 'playing' || !here.room) return 'not_in_room';
+      room = here.room;
+    }
+    try {
+      return await this.objects.PTCG_ACCOUNT.getByName(otherId).peerInvite(
+        me,
+        kind,
+        room ?? null,
+        answering,
+        now
+      );
+    } catch {
+      return 'failed';
+    }
+  }
+
+  /**
+   * From a friend's object: an invite or an ask, to this account's open
+   * tabs. Nothing is kept: with no tab open, it is "offline".
+   */
+  async peerInvite(
+    from: unknown,
+    kind: InviteKind,
+    room: string | null,
+    answering: boolean,
+    now: number
+  ): Promise<InviteOutcome> {
+    const profile = readFriendProfile(from);
+    if (!profile || (kind !== 'invite' && kind !== 'ask')) return 'failed';
+    if (
+      this.friendRows.row(profile.id)?.state !== 'friend' ||
+      this.friendRows.isBlocked(profile.id)
+    ) {
+      return 'not_friends';
+    }
+    if (kind === 'invite' && (!room || !ROOM_ALIAS_PATTERN.test(room))) {
+      return 'failed';
+    }
+    if (this.ctx.getWebSockets(LIVE_TAG).length === 0) return 'offline';
+    this.broadcast({
+      type: kind,
+      from: profile,
+      ...(kind === 'invite' && room ? { room } : {}),
+      answering: answering === true,
+      sentAt: now,
+      expiresAt: now + INVITE_LIFETIME_MS,
+    });
+    return 'sent';
   }
 
   /** From the hub: whether any tab is still open. Not a player's call. */

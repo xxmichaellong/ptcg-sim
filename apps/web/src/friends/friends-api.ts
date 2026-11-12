@@ -265,7 +265,6 @@ export const postFriendChange = async (
   };
 };
 
-/** Who an id belongs to; undefined when nobody has it. */
 /** Appear offline on or off; answers the list. */
 export const putAppearOffline = async (
   appearOffline: boolean
@@ -277,6 +276,86 @@ export const putAppearOffline = async (
     )
   );
 
+/** Playing together (step 3): to my room, or asking into theirs. */
+export type InviteKind = 'invite' | 'ask';
+
+/** How an invite or an ask went (the server's InviteOutcome). */
+export type InviteOutcome =
+  'sent' | 'offline' | 'not_in_room' | 'not_friends' | 'slow_down' | 'failed';
+
+const INVITE_OUTCOMES: readonly InviteOutcome[] = [
+  'sent',
+  'offline',
+  'not_in_room',
+  'not_friends',
+  'slow_down',
+  'failed',
+];
+
+export const postInvite = async (
+  id: string,
+  kind: InviteKind,
+  answering: boolean
+): Promise<InviteOutcome> => {
+  const outcome: unknown = Reflect.get(
+    Object(
+      await send(`/v2/friends/${id}/invite`, 'POST', {
+        kind,
+        ...(answering ? { answering: true } : {}),
+      })
+    ),
+    'outcome'
+  );
+  return (INVITE_OUTCOMES as readonly unknown[]).includes(outcome)
+    ? (outcome as InviteOutcome)
+    : 'failed';
+};
+
+/** An invite or an ask as the live line brings it. */
+export interface InviteMessage {
+  readonly kind: InviteKind;
+  readonly from: FriendProfile;
+  /** An invite's room, to join by. */
+  readonly room?: string;
+  /** Letting in: an invite that answers this tab's ask. */
+  readonly answering: boolean;
+  readonly sentAt: number;
+  readonly expiresAt: number;
+}
+
+export const readInviteMessage = (
+  value: unknown
+): InviteMessage | undefined => {
+  const type: unknown = Reflect.get(Object(value), 'type');
+  const from = readProfile(Reflect.get(Object(value), 'from'));
+  const room: unknown = Reflect.get(Object(value), 'room');
+  const sentAt: unknown = Reflect.get(Object(value), 'sentAt');
+  const expiresAt: unknown = Reflect.get(Object(value), 'expiresAt');
+  if (
+    (type !== 'invite' && type !== 'ask') ||
+    !from ||
+    typeof sentAt !== 'number' ||
+    typeof expiresAt !== 'number'
+  ) {
+    return undefined;
+  }
+  if (
+    type === 'invite' &&
+    !(typeof room === 'string' && ROOM_ALIAS_PATTERN.test(room))
+  ) {
+    return undefined;
+  }
+  return {
+    kind: type,
+    from,
+    ...(type === 'invite' && typeof room === 'string' ? { room } : {}),
+    answering: Reflect.get(Object(value), 'answering') === true,
+    sentAt,
+    expiresAt,
+  };
+};
+
+/** Who an id belongs to; undefined when nobody has it. */
 export const lookUpPlayer = async (
   id: string
 ): Promise<FriendProfile | undefined> => {

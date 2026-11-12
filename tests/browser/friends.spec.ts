@@ -1,7 +1,12 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
+import { roomCodeOf } from './support/room-code.js';
 import { ownRoomBudget } from './support/room-budget.js';
-import { dismissWelcome, openAppMenu } from './support/table-shell.js';
+import {
+  dismissWelcome,
+  openAppMenu,
+  openPlayOnline,
+} from './support/table-shell.js';
 
 /**
  * ADR-055: two players add each other from Friends on the app bar, by User
@@ -219,4 +224,87 @@ test('friends see each other come and go, and appear offline', async ({
   await dawn.context.close();
   await expect(row).toContainText('Last seen', { timeout: 15_000 });
   await may.context.close();
+});
+
+/** Opens an online room from Play online; its code. */
+const openRoom = async (page: Page, name: string): Promise<string> => {
+  await openPlayOnline(page);
+  await page.locator('#nameInput').fill(name);
+  await page.locator('#generateIdButton').click();
+  return roomCodeOf(page);
+};
+
+const inRoom = (page: Page, code: string) =>
+  expect(page.locator('.ptcgsim-app-bar__switch #p2Button')).toHaveAttribute(
+    'data-room-code',
+    code,
+    { timeout: 30_000 }
+  );
+
+test('invites a friend into a room, and the friend joins from the notice', async ({
+  browser,
+}) => {
+  test.setTimeout(150_000);
+  const dawn = await player(browser, someone('Dawn'));
+  const may = await player(browser, someone('May'));
+  await befriend(dawn, may);
+  const code = await openRoom(dawn.page, 'Dawn');
+
+  // Dawn, in her room, invites May from her row.
+  await openFriends(dawn.page);
+  await expect(dawn.page.locator(`#friend-${may.id}`)).toContainText('Online');
+  await dawn.page.locator(`#friendPlay-${may.id}`).click();
+  await expect(toast(dawn.page, `Invite sent to ${may.name}`)).toBeVisible();
+
+  // May's notice joins her to it.
+  const invite = toast(may.page, `${dawn.name} invited you to play`);
+  await expect(invite).toBeVisible();
+  await invite.getByRole('button', { name: 'Join' }).click();
+  await inRoom(may.page, code);
+  // Dawn's list now has May in a game.
+  await expect(dawn.page.locator(`#friend-${may.id}`)).toContainText(
+    'In a game'
+  );
+
+  await dawn.context.close();
+  await may.context.close();
+});
+
+test('asks to join and is let in; another friend watches', async ({
+  browser,
+}) => {
+  test.setTimeout(180_000);
+  const dawn = await player(browser, someone('Dawn'));
+  const may = await player(browser, someone('May'));
+  const iris = await player(browser, someone('Iris'));
+  await befriend(dawn, may);
+  // Iris asks: Dawn's own requests are one a second.
+  await befriend(iris, dawn);
+  const code = await openRoom(dawn.page, 'Dawn');
+
+  // May sees Dawn in a game and asks to join; Dawn lets her in.
+  await openFriends(may.page);
+  const row = may.page.locator(`#friend-${dawn.id}`);
+  await expect(row).toContainText('In a game');
+  await may.page.locator(`#friendPlay-${dawn.id}`).click();
+  await expect(
+    toast(may.page, `Asked ${dawn.name} to let you in`)
+  ).toBeVisible();
+  const ask = toast(dawn.page, `${may.name} wants to join you`);
+  await expect(ask).toBeVisible();
+  await ask.getByRole('button', { name: 'Let in' }).click();
+  await inRoom(may.page, code);
+
+  // Iris watches from Dawn's page.
+  await openFriends(iris.page);
+  await iris.page.locator(`#friend-${dawn.id} .friends-row__open`).click();
+  await iris.page.locator('#friendPlayRow-watch').click();
+  await inRoom(iris.page, code);
+  await expect(
+    iris.page.locator('.ptcgsim-app-bar__switch #p2Button')
+  ).toHaveAttribute('data-watching', 'true');
+
+  await dawn.context.close();
+  await may.context.close();
+  await iris.context.close();
 });

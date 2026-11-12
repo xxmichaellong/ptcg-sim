@@ -79,6 +79,14 @@
     "message": "{0} has left your hand.",
     "translation": "{0} đã rời khỏi tay bài của bạn."
   },
+  "3mbZq7": {
+    "message": "{0} invited you to play",
+    "translation": "{0} đã mời bạn chơi"
+  },
+  "DgCaFP": {
+    "message": "{0} let you in",
+    "translation": "{0} đã cho bạn vào"
+  },
   "FGOUAP": {
     "message": "{0} of {1}",
     "comments": [
@@ -103,6 +111,10 @@
   "eC0xf_": {
     "message": "{0} wants to be friends",
     "translation": "{0} muốn kết bạn"
+  },
+  "zxm7Xg": {
+    "message": "{0} wants to join you",
+    "translation": "{0} muốn tham gia cùng bạn"
   },
   "THa0qf": {
     "message": "{0}, {count} in deck",
@@ -1047,6 +1059,10 @@
   "Uzm69g": {
     "message": "{name} is on {seat}",
     "translation": "{name} ở {seat}"
+  },
+  "eESDMH": {
+    "message": "{name} isn't online",
+    "translation": "{name} không trực tuyến"
   },
   "gQ4n1o": {
     "message": "{name} joined",
@@ -2126,6 +2142,19 @@
     "message": "As one",
     "context": "play the selected pieces as one card",
     "translation": "Gộp thành một"
+  },
+  "wd1_ha": {
+    "message": "Ask to join",
+    "translation": "Xin tham gia"
+  },
+  "_WWAPl": {
+    "message": "Ask to join",
+    "context": "ask a friend to let me in",
+    "translation": "Xin tham gia"
+  },
+  "AEHiGA": {
+    "message": "Asked {name} to let you in",
+    "translation": "Đã nhờ {name} cho bạn vào"
   },
   "eiQJaM": {
     "message": "Asleep",
@@ -4525,6 +4554,11 @@
     "message": "Invitation link ready",
     "translation": "Liên kết mời đã sẵn sàng"
   },
+  "R_3_0a": {
+    "message": "Invite",
+    "context": "invite a friend to my room",
+    "translation": "Mời"
+  },
   "qsqt0w": {
     "message": "Invite link",
     "translation": "Liên kết mời"
@@ -4532,6 +4566,14 @@
   "KLJ4eD": {
     "message": "Invite link copied",
     "translation": "Đã sao chép liên kết mời"
+  },
+  "kRn4dw": {
+    "message": "Invite sent to {name}",
+    "translation": "Đã gửi lời mời đến {name}"
+  },
+  "Pu5aJu": {
+    "message": "Invite to my room",
+    "translation": "Mời vào phòng của tôi"
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
@@ -4568,6 +4610,11 @@
     "message": "Join",
     "context": "a room",
     "translation": "Vào"
+  },
+  "Tb-yuK": {
+    "message": "Join",
+    "context": "join a friend’s room",
+    "translation": "Tham gia"
   },
   "Fz2DU1": {
     "message": "Join a room",
@@ -4693,6 +4740,14 @@
     "message": "Leave the room?",
     "translation": "Rời khỏi phòng?"
   },
+  "iabCPQ": {
+    "message": "Leave this room to join {name}?",
+    "translation": "Rời phòng này để tham gia cùng {name}?"
+  },
+  "oqWzrf": {
+    "message": "Leave this room to watch {name}?",
+    "translation": "Rời phòng này để xem {name}?"
+  },
   "t4L8cu": {
     "message": "Leave tutorial",
     "translation": "Thoát hướng dẫn"
@@ -4713,6 +4768,11 @@
   "xXagjO": {
     "message": "LEGEND · 2 halves",
     "translation": "LEGEND · 2 nửa"
+  },
+  "74WSXO": {
+    "message": "Let in",
+    "context": "let a friend into the room",
+    "translation": "Cho vào"
   },
   "YVrOwc": {
     "message": "Level-Up",
@@ -5741,6 +5801,10 @@
   "BpB3jt": {
     "message": "Open a deck file (.txt or .csv)",
     "translation": "Mở tệp bộ bài (.txt hoặc .csv)"
+  },
+  "3Vvgyn": {
+    "message": "Open a room to invite friends",
+    "translation": "Mở phòng để mời bạn bè"
   },
   "E9wRDu": {
     "message": "Open log",
@@ -7729,6 +7793,11 @@
     ],
     "translation": "Trạng thái và chiêu thức"
   },
+  "wCq8nG": {
+    "message": "Stay",
+    "context": "stay in the room",
+    "translation": "Ở lại"
+  },
   "iFt0Ce": {
     "message": "Still uploading…",
     "translation": "Đang tải lên…"
@@ -8776,6 +8845,11 @@
     "context": "join a room to spectate",
     "translation": "Xem"
   },
+  "3jqIru": {
+    "message": "Watch",
+    "context": "watch a friend’s game",
+    "translation": "Xem"
+  },
   "bbQDbO": {
     "message": "Watch from your Solo table. The last 100 are kept, and starred games stay.",
     "translation": "Xem lại từ bàn Solo của bạn. 100 ván gần nhất được giữ lại, và ván có gắn sao sẽ được giữ."
@@ -8783,6 +8857,10 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Xem bản xem lại…"
+  },
+  "qIcnai": {
+    "message": "Watch their game",
+    "translation": "Xem ván của họ"
   },
   "oGWXbZ": {
     "message": "Watching",
@@ -8915,6 +8993,10 @@
   "gymL5v": {
     "message": "You won't be friends, and they can't send you requests or invites. They won't be told.",
     "translation": "Hai bên sẽ không là bạn bè, và họ không thể gửi lời mời hay lời mời chơi cho bạn. Họ sẽ không được thông báo."
+  },
+  "erakDM": {
+    "message": "You're not friends with {name}",
+    "translation": "Bạn chưa kết bạn với {name}"
   },
   "VvkF_g": {
     "message": "You're watching",

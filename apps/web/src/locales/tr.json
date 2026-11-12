@@ -79,6 +79,14 @@
     "message": "{0} has left your hand.",
     "translation": "{0} elinden çıktı."
   },
+  "3mbZq7": {
+    "message": "{0} invited you to play",
+    "translation": "{0} seni oynamaya davet etti"
+  },
+  "DgCaFP": {
+    "message": "{0} let you in",
+    "translation": "{0} seni içeri aldı"
+  },
   "FGOUAP": {
     "message": "{0} of {1}",
     "comments": [
@@ -103,6 +111,10 @@
   "eC0xf_": {
     "message": "{0} wants to be friends",
     "translation": "{0} arkadaş olmak istiyor"
+  },
+  "zxm7Xg": {
+    "message": "{0} wants to join you",
+    "translation": "{0} sana katılmak istiyor"
   },
   "THa0qf": {
     "message": "{0}, {count} in deck",
@@ -1047,6 +1059,10 @@
   "Uzm69g": {
     "message": "{name} is on {seat}",
     "translation": "{name}, {seat} koltuğunda"
+  },
+  "eESDMH": {
+    "message": "{name} isn't online",
+    "translation": "{name} çevrimiçi değil"
   },
   "gQ4n1o": {
     "message": "{name} joined",
@@ -2126,6 +2142,19 @@
     "message": "As one",
     "context": "play the selected pieces as one card",
     "translation": "Tek kart olarak"
+  },
+  "wd1_ha": {
+    "message": "Ask to join",
+    "translation": "Katılma isteği gönder"
+  },
+  "_WWAPl": {
+    "message": "Ask to join",
+    "context": "ask a friend to let me in",
+    "translation": "Katılma isteği gönder"
+  },
+  "AEHiGA": {
+    "message": "Asked {name} to let you in",
+    "translation": "{name} oyuncusundan seni içeri alması istendi"
   },
   "eiQJaM": {
     "message": "Asleep",
@@ -4525,6 +4554,11 @@
     "message": "Invitation link ready",
     "translation": "Davet bağlantısı hazır"
   },
+  "R_3_0a": {
+    "message": "Invite",
+    "context": "invite a friend to my room",
+    "translation": "Davet et"
+  },
   "qsqt0w": {
     "message": "Invite link",
     "translation": "Davet bağlantısı"
@@ -4532,6 +4566,14 @@
   "KLJ4eD": {
     "message": "Invite link copied",
     "translation": "Davet bağlantısı kopyalandı"
+  },
+  "kRn4dw": {
+    "message": "Invite sent to {name}",
+    "translation": "{name} oyuncusuna davet gönderildi"
+  },
+  "Pu5aJu": {
+    "message": "Invite to my room",
+    "translation": "Odama davet et"
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
@@ -4567,6 +4609,11 @@
   "085CJe": {
     "message": "Join",
     "context": "a room",
+    "translation": "Katıl"
+  },
+  "Tb-yuK": {
+    "message": "Join",
+    "context": "join a friend’s room",
     "translation": "Katıl"
   },
   "Fz2DU1": {
@@ -4693,6 +4740,14 @@
     "message": "Leave the room?",
     "translation": "Odadan ayrılmak istiyor musun?"
   },
+  "iabCPQ": {
+    "message": "Leave this room to join {name}?",
+    "translation": "{name} oyuncusuna katılmak için bu odadan ayrılacak mısın?"
+  },
+  "oqWzrf": {
+    "message": "Leave this room to watch {name}?",
+    "translation": "{name} oyuncusunu izlemek için bu odadan ayrılacak mısın?"
+  },
   "t4L8cu": {
     "message": "Leave tutorial",
     "translation": "Eğitimden çık"
@@ -4713,6 +4768,11 @@
   "xXagjO": {
     "message": "LEGEND · 2 halves",
     "translation": "LEGEND · 2 yarı"
+  },
+  "74WSXO": {
+    "message": "Let in",
+    "context": "let a friend into the room",
+    "translation": "İçeri al"
   },
   "YVrOwc": {
     "message": "Level-Up",
@@ -5741,6 +5801,10 @@
   "BpB3jt": {
     "message": "Open a deck file (.txt or .csv)",
     "translation": "Deste dosyası aç (.txt veya .csv)"
+  },
+  "3Vvgyn": {
+    "message": "Open a room to invite friends",
+    "translation": "Arkadaş davet etmek için bir oda aç"
   },
   "E9wRDu": {
     "message": "Open log",
@@ -7729,6 +7793,11 @@
     ],
     "translation": "Durum ve hamleler"
   },
+  "wCq8nG": {
+    "message": "Stay",
+    "context": "stay in the room",
+    "translation": "Kal"
+  },
   "iFt0Ce": {
     "message": "Still uploading…",
     "translation": "Hâlâ yükleniyor…"
@@ -8776,6 +8845,11 @@
     "context": "join a room to spectate",
     "translation": "İzle"
   },
+  "3jqIru": {
+    "message": "Watch",
+    "context": "watch a friend’s game",
+    "translation": "İzle"
+  },
   "bbQDbO": {
     "message": "Watch from your Solo table. The last 100 are kept, and starred games stay.",
     "translation": "Solo masandan izle. Son 100 oyun saklanır, yıldızlı oyunlar kalır."
@@ -8783,6 +8857,10 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Tekrar izle…"
+  },
+  "qIcnai": {
+    "message": "Watch their game",
+    "translation": "Oyununu izle"
   },
   "oGWXbZ": {
     "message": "Watching",
@@ -8915,6 +8993,10 @@
   "gymL5v": {
     "message": "You won't be friends, and they can't send you requests or invites. They won't be told.",
     "translation": "Arkadaş olmazsınız, sana istek veya davet de gönderemez. Ona bildirilmez."
+  },
+  "erakDM": {
+    "message": "You're not friends with {name}",
+    "translation": "{name} ile arkadaş değilsin"
   },
   "VvkF_g": {
     "message": "You're watching",

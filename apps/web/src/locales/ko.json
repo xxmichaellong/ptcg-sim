@@ -79,6 +79,14 @@
     "message": "{0} has left your hand.",
     "translation": "{0}이(가) 패에서 사라졌습니다."
   },
+  "3mbZq7": {
+    "message": "{0} invited you to play",
+    "translation": "{0}님이 플레이에 초대했습니다"
+  },
+  "DgCaFP": {
+    "message": "{0} let you in",
+    "translation": "{0}님이 입장을 허락했습니다"
+  },
   "FGOUAP": {
     "message": "{0} of {1}",
     "comments": [
@@ -103,6 +111,10 @@
   "eC0xf_": {
     "message": "{0} wants to be friends",
     "translation": "{0}님이 친구가 되고 싶어 합니다"
+  },
+  "zxm7Xg": {
+    "message": "{0} wants to join you",
+    "translation": "{0}님이 참가를 요청했습니다"
   },
   "THa0qf": {
     "message": "{0}, {count} in deck",
@@ -1047,6 +1059,10 @@
   "Uzm69g": {
     "message": "{name} is on {seat}",
     "translation": "{name}: {seat}"
+  },
+  "eESDMH": {
+    "message": "{name} isn't online",
+    "translation": "{name}님은 온라인이 아닙니다"
   },
   "gQ4n1o": {
     "message": "{name} joined",
@@ -2126,6 +2142,19 @@
     "message": "As one",
     "context": "play the selected pieces as one card",
     "translation": "한 장으로"
+  },
+  "wd1_ha": {
+    "message": "Ask to join",
+    "translation": "참가 요청"
+  },
+  "_WWAPl": {
+    "message": "Ask to join",
+    "context": "ask a friend to let me in",
+    "translation": "참가 요청"
+  },
+  "AEHiGA": {
+    "message": "Asked {name} to let you in",
+    "translation": "{name}님에게 입장을 요청했습니다"
   },
   "eiQJaM": {
     "message": "Asleep",
@@ -4525,6 +4554,11 @@
     "message": "Invitation link ready",
     "translation": "초대 링크가 준비되었습니다"
   },
+  "R_3_0a": {
+    "message": "Invite",
+    "context": "invite a friend to my room",
+    "translation": "초대"
+  },
   "qsqt0w": {
     "message": "Invite link",
     "translation": "초대 링크"
@@ -4532,6 +4566,14 @@
   "KLJ4eD": {
     "message": "Invite link copied",
     "translation": "초대 링크를 복사했습니다"
+  },
+  "kRn4dw": {
+    "message": "Invite sent to {name}",
+    "translation": "{name}님에게 초대를 보냈습니다"
+  },
+  "Pu5aJu": {
+    "message": "Invite to my room",
+    "translation": "내 방에 초대"
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
@@ -4567,6 +4609,11 @@
   "085CJe": {
     "message": "Join",
     "context": "a room",
+    "translation": "참가"
+  },
+  "Tb-yuK": {
+    "message": "Join",
+    "context": "join a friend’s room",
     "translation": "참가"
   },
   "Fz2DU1": {
@@ -4693,6 +4740,14 @@
     "message": "Leave the room?",
     "translation": "방을 나가시겠습니까?"
   },
+  "iabCPQ": {
+    "message": "Leave this room to join {name}?",
+    "translation": "{name}님에게 참가하려면 이 방을 나가시겠습니까?"
+  },
+  "oqWzrf": {
+    "message": "Leave this room to watch {name}?",
+    "translation": "{name}님의 게임을 관전하려면 이 방을 나가시겠습니까?"
+  },
   "t4L8cu": {
     "message": "Leave tutorial",
     "translation": "튜토리얼 나가기"
@@ -4713,6 +4768,11 @@
   "xXagjO": {
     "message": "LEGEND · 2 halves",
     "translation": "LEGEND · 2분할"
+  },
+  "74WSXO": {
+    "message": "Let in",
+    "context": "let a friend into the room",
+    "translation": "입장 허락"
   },
   "YVrOwc": {
     "message": "Level-Up",
@@ -5741,6 +5801,10 @@
   "BpB3jt": {
     "message": "Open a deck file (.txt or .csv)",
     "translation": "덱 파일 열기 (.txt 또는 .csv)"
+  },
+  "3Vvgyn": {
+    "message": "Open a room to invite friends",
+    "translation": "방을 열어 친구를 초대하세요"
   },
   "E9wRDu": {
     "message": "Open log",
@@ -7729,6 +7793,11 @@
     ],
     "translation": "상태와 기술"
   },
+  "wCq8nG": {
+    "message": "Stay",
+    "context": "stay in the room",
+    "translation": "남기"
+  },
   "iFt0Ce": {
     "message": "Still uploading…",
     "translation": "아직 업로드 중입니다…"
@@ -8776,6 +8845,11 @@
     "context": "join a room to spectate",
     "translation": "관전"
   },
+  "3jqIru": {
+    "message": "Watch",
+    "context": "watch a friend’s game",
+    "translation": "관전"
+  },
   "bbQDbO": {
     "message": "Watch from your Solo table. The last 100 are kept, and starred games stay.",
     "translation": "솔로 테이블에서 시청하세요. 최근 100개가 보관되며, 별표한 게임은 유지됩니다."
@@ -8783,6 +8857,10 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "리플레이 보기…"
+  },
+  "qIcnai": {
+    "message": "Watch their game",
+    "translation": "상대 게임 관전"
   },
   "oGWXbZ": {
     "message": "Watching",
@@ -8915,6 +8993,10 @@
   "gymL5v": {
     "message": "You won't be friends, and they can't send you requests or invites. They won't be told.",
     "translation": "서로 친구가 되지 않으며, 상대는 나에게 요청이나 초대를 보낼 수 없습니다. 상대에게 알림은 가지 않습니다."
+  },
+  "erakDM": {
+    "message": "You're not friends with {name}",
+    "translation": "{name}님과 친구가 아닙니다"
   },
   "VvkF_g": {
     "message": "You're watching",

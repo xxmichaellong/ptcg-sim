@@ -79,6 +79,14 @@
     "message": "{0} has left your hand.",
     "translation": "{0} a quitté votre main."
   },
+  "3mbZq7": {
+    "message": "{0} invited you to play",
+    "translation": "{0} vous a invité à jouer"
+  },
+  "DgCaFP": {
+    "message": "{0} let you in",
+    "translation": "{0} vous a laissé entrer"
+  },
   "FGOUAP": {
     "message": "{0} of {1}",
     "comments": [
@@ -103,6 +111,10 @@
   "eC0xf_": {
     "message": "{0} wants to be friends",
     "translation": "{0} souhaite devenir votre ami"
+  },
+  "zxm7Xg": {
+    "message": "{0} wants to join you",
+    "translation": "{0} souhaite vous rejoindre"
   },
   "THa0qf": {
     "message": "{0}, {count} in deck",
@@ -1047,6 +1059,10 @@
   "Uzm69g": {
     "message": "{name} is on {seat}",
     "translation": "{name} est sur {seat}"
+  },
+  "eESDMH": {
+    "message": "{name} isn't online",
+    "translation": "{name} n’est pas en ligne"
   },
   "gQ4n1o": {
     "message": "{name} joined",
@@ -2126,6 +2142,19 @@
     "message": "As one",
     "context": "play the selected pieces as one card",
     "translation": "Comme une seule"
+  },
+  "wd1_ha": {
+    "message": "Ask to join",
+    "translation": "Demander à rejoindre"
+  },
+  "_WWAPl": {
+    "message": "Ask to join",
+    "context": "ask a friend to let me in",
+    "translation": "Demander à rejoindre"
+  },
+  "AEHiGA": {
+    "message": "Asked {name} to let you in",
+    "translation": "Demande envoyée à {name} pour entrer"
   },
   "eiQJaM": {
     "message": "Asleep",
@@ -4525,6 +4554,11 @@
     "message": "Invitation link ready",
     "translation": "Lien d'invitation prêt"
   },
+  "R_3_0a": {
+    "message": "Invite",
+    "context": "invite a friend to my room",
+    "translation": "Inviter"
+  },
   "qsqt0w": {
     "message": "Invite link",
     "translation": "Lien d'invitation"
@@ -4532,6 +4566,14 @@
   "KLJ4eD": {
     "message": "Invite link copied",
     "translation": "Lien d'invitation copié"
+  },
+  "kRn4dw": {
+    "message": "Invite sent to {name}",
+    "translation": "Invitation envoyée à {name}"
+  },
+  "Pu5aJu": {
+    "message": "Invite to my room",
+    "translation": "Inviter dans ma salle"
   },
   "0pN9y3": {
     "message": "It stays open for another draw. Press <0>Esc</0> twice to close it.",
@@ -4567,6 +4609,11 @@
   "085CJe": {
     "message": "Join",
     "context": "a room",
+    "translation": "Rejoindre"
+  },
+  "Tb-yuK": {
+    "message": "Join",
+    "context": "join a friend’s room",
     "translation": "Rejoindre"
   },
   "Fz2DU1": {
@@ -4693,6 +4740,14 @@
     "message": "Leave the room?",
     "translation": "Quitter la salle ?"
   },
+  "iabCPQ": {
+    "message": "Leave this room to join {name}?",
+    "translation": "Quitter cette salle pour rejoindre {name} ?"
+  },
+  "oqWzrf": {
+    "message": "Leave this room to watch {name}?",
+    "translation": "Quitter cette salle pour regarder {name} ?"
+  },
   "t4L8cu": {
     "message": "Leave tutorial",
     "translation": "Quitter le tutoriel"
@@ -4713,6 +4768,11 @@
   "xXagjO": {
     "message": "LEGEND · 2 halves",
     "translation": "LÉGENDE · 2 moitiés"
+  },
+  "74WSXO": {
+    "message": "Let in",
+    "context": "let a friend into the room",
+    "translation": "Laisser entrer"
   },
   "YVrOwc": {
     "message": "Level-Up",
@@ -5741,6 +5801,10 @@
   "BpB3jt": {
     "message": "Open a deck file (.txt or .csv)",
     "translation": "Ouvrir un fichier de deck (.txt ou .csv)"
+  },
+  "3Vvgyn": {
+    "message": "Open a room to invite friends",
+    "translation": "Ouvrez une salle pour inviter des amis"
   },
   "E9wRDu": {
     "message": "Open log",
@@ -7729,6 +7793,11 @@
     ],
     "translation": "État et actions"
   },
+  "wCq8nG": {
+    "message": "Stay",
+    "context": "stay in the room",
+    "translation": "Rester"
+  },
   "iFt0Ce": {
     "message": "Still uploading…",
     "translation": "Envoi en cours…"
@@ -8776,6 +8845,11 @@
     "context": "join a room to spectate",
     "translation": "Regarder"
   },
+  "3jqIru": {
+    "message": "Watch",
+    "context": "watch a friend’s game",
+    "translation": "Regarder"
+  },
   "bbQDbO": {
     "message": "Watch from your Solo table. The last 100 are kept, and starred games stay.",
     "translation": "Regardez depuis votre table Solo. Les 100 dernières sont gardées, et les parties favorites restent."
@@ -8783,6 +8857,10 @@
   "sFWtjQ": {
     "message": "Watch replay…",
     "translation": "Regarder un replay…"
+  },
+  "qIcnai": {
+    "message": "Watch their game",
+    "translation": "Regarder sa partie"
   },
   "oGWXbZ": {
     "message": "Watching",
@@ -8915,6 +8993,10 @@
   "gymL5v": {
     "message": "You won't be friends, and they can't send you requests or invites. They won't be told.",
     "translation": "Vous ne serez pas amis, et ce joueur ne pourra plus vous envoyer de demandes ni d'invitations. Il n'en sera pas informé."
+  },
+  "erakDM": {
+    "message": "You're not friends with {name}",
+    "translation": "Vous n’êtes pas ami avec {name}"
   },
   "VvkF_g": {
     "message": "You're watching",
