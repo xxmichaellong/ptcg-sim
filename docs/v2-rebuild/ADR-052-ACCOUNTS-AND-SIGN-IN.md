@@ -47,8 +47,8 @@ On the Workers Free plan (ADR-051), a new account writes four rows and a returni
 
 ## Settings
 
-- **The first row.** It sits above the player names: Sign in (shown only where a provider is on offer), or the avatar and name.
-- **Sign in.** One button per provider, "For players 13 and older." and a Privacy link (`/privacy.html`).
+- **The first row.** Settings' first row: Sign in (shown only where a provider is on offer, a person in the icons' two-tone style where the avatar will be, "Decks, replays, friends & more"), or the avatar and name.
+- **Sign in.** One button per provider, each with the provider's own mark as its brand rules ask (Google's four-colour G on its neutral #F2F2F2 button, Discord's Clyde in white on Blurple; `ProviderLogo.tsx`), "For players 13 and older." and a Privacy link (`/privacy.html`). Sign-in methods shows the same marks.
 - **Account.** About me (avatar, the name edited in place, User ID with Copy, Joined), then Connections (Sign-in methods; this device's decks not yet added; Sign out, which asks whether to clear this device), then Delete account at the foot.
 - **Avatar.** The sleeve designer's emblem picker, where None means the initial.
 - **Sign-in methods.** Connect and Disconnect, with the current session marked and the last method locked.

@@ -3204,6 +3204,14 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "เด็ค การเล่นออนไลน์ บันทึกเกม และการตั้งค่า"
   },
+  "1Zlglq": {
+    "message": "Decks, replays, friends & more",
+    "translation": "เด็ค รีเพลย์ เพื่อน และอื่น ๆ"
+  },
+  "6soIXc": {
+    "message": "Decks, replays, friends & more, on every device.",
+    "translation": "เด็ค รีเพลย์ เพื่อน และอื่น ๆ ใช้ได้บนทุกอุปกรณ์"
+  },
   "cnGeoo": {
     "message": "Delete",
     "translation": "ลบ"
@@ -4425,10 +4433,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "เก็บไว้"
-  },
-  "TaE8k-": {
-    "message": "Keep decks and replays everywhere",
-    "translation": "เก็บเด็คและรีเพลย์ไว้ได้ทุกที่"
   },
   "94aPBP": {
     "message": "Keep your decks and settings here",
@@ -8619,10 +8623,6 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "เด็คของคุณ"
-  },
-  "zCckVB": {
-    "message": "Your decks and replays, on every device.",
-    "translation": "เด็คและรีเพลย์ของคุณ ในทุกอุปกรณ์"
   },
   "S7YY4L": {
     "message": "Your discard pile",

@@ -19,6 +19,7 @@ import { cancelAllDialogRequests } from '../../ui/dialog-requests.js';
 import { preferences } from '../../preferences/preference-store.js';
 import { TableMotionStore } from '../table-motion.js';
 import { LANDING_MAX_MS, TOUCH_PICKUP_MS } from './useOverlayCardDrag.js';
+import { GHOST_KEPT_ATTRIBUTES } from './overlayMotion.js';
 import { ZONE_BROWSER_PREFERENCES } from './zone-browser-preferences.js';
 import { OverlayHost } from '../../ui/OverlayHost.js';
 import {
@@ -1529,7 +1530,7 @@ describe('legacy board overlays', () => {
       expect(
         attributes.filter(
           (name) =>
-            (name.startsWith('data-') && name !== 'data-menu-hint') ||
+            (name.startsWith('data-') && !GHOST_KEPT_ATTRIBUTES.has(name)) ||
             name === 'role' ||
             name === 'tabindex' ||
             name === 'id'

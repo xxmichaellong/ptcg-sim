@@ -11,6 +11,7 @@ import { KeyIcon } from '@phosphor-icons/react/dist/csr/Key';
 import { LockSimpleIcon } from '@phosphor-icons/react/dist/csr/LockSimple';
 import { SignOutIcon } from '@phosphor-icons/react/dist/csr/SignOut';
 import { SmileyIcon } from '@phosphor-icons/react/dist/csr/Smiley';
+import { UserCircleIcon } from '@phosphor-icons/react/dist/csr/UserCircle';
 import type { Icon } from '@phosphor-icons/react';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 
@@ -34,6 +35,7 @@ import {
 } from './account-api.js';
 import { emblemFile } from '../card-backs/card-back-emblems.js';
 import { AccountReplaysRow } from './AccountReplaysPage.js';
+import { ProviderLogo } from './ProviderLogo.js';
 import {
   addDeviceDecks,
   clearAccountFromDevice,
@@ -157,11 +159,17 @@ export const AccountRow = ({
         data-kind="link"
         onClick={() => navigate('signIn', 'signInRow')}
       >
-        <span className="account-avatar" data-kind="empty" aria-hidden="true" />
+        <span
+          className="settings-icon account-guest"
+          data-tone="gold"
+          aria-hidden="true"
+        >
+          <UserCircleIcon weight="duotone" />
+        </span>
         <span className="settings-row__text">
           <span className="settings-row__label">{t`Sign in`}</span>
           <span className="settings-row__subtitle">
-            {t`Keep decks and replays everywhere`}
+            {t`Decks, replays, friends & more`}
           </span>
         </span>
         <CaretRightIcon
@@ -186,7 +194,7 @@ export const SignInPage = ({ back }: { readonly back: () => void }) => {
   return (
     <>
       <p className="account-lede">
-        <Trans>Your decks and replays, on every device.</Trans>
+        <Trans>Decks, replays, friends & more, on every device.</Trans>
       </p>
       <div className="account-providers">
         {providers.map((provider) => {
@@ -201,7 +209,11 @@ export const SignInPage = ({ back }: { readonly back: () => void }) => {
               data-provider={provider}
               onClick={() => startSignIn(provider)}
             >
-              <Glyph aria-hidden="true" weight="bold" />
+              {provider === 'test' ? (
+                <Glyph aria-hidden="true" weight="bold" />
+              ) : (
+                <ProviderLogo provider={provider} />
+              )}
               {t`Continue with ${name}`}
             </button>
           );
@@ -564,10 +576,16 @@ export const SignInMethodsPage = () => {
             data-icon="true"
             data-provider={provider}
           >
-            <SettingsIcon
-              icon={PROVIDER_ICONS[provider]}
-              tone={PROVIDER_TONES[provider]}
-            />
+            {provider === 'test' ? (
+              <SettingsIcon
+                icon={PROVIDER_ICONS[provider]}
+                tone={PROVIDER_TONES[provider]}
+              />
+            ) : (
+              <span className="settings-icon account-method__logo">
+                <ProviderLogo provider={provider} size={24} />
+              </span>
+            )}
             <span className="settings-row__text">
               <span className="settings-row__label">{name}</span>
               <span className="settings-row__subtitle">{subtitle}</span>

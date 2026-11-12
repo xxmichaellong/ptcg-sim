@@ -26,8 +26,22 @@ import {
 
 export type OverlayExitVariant = 'menu' | 'panel' | 'preview' | 'scrim';
 
-/** Presentational attributes a ghost keeps; every other `data-*` goes. */
-const GHOST_KEPT_ATTRIBUTES = new Set(['data-menu-hint']);
+/**
+ * Presentational attributes a ghost keeps, so its last frame looks like the
+ * element did (a Settings icon's colour, a row's layout); every other
+ * `data-*` goes. None places an element or names it for a test.
+ */
+export const GHOST_KEPT_ATTRIBUTES: ReadonlySet<string> = new Set([
+  'data-menu-hint',
+  'data-tone',
+  'data-kind',
+  'data-accent',
+  'data-danger',
+  'data-disabled',
+  'data-icon',
+  'data-provider',
+  'data-event-type',
+]);
 const GHOST_STRIPPED_ATTRIBUTES = new Set([
   'id',
   'role',

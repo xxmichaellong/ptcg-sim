@@ -3204,6 +3204,14 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "المجموعات واللعب عبر الإنترنت والسجل والإعدادات"
   },
+  "1Zlglq": {
+    "message": "Decks, replays, friends & more",
+    "translation": "المجموعات وإعادات اللعب والأصدقاء والمزيد"
+  },
+  "6soIXc": {
+    "message": "Decks, replays, friends & more, on every device.",
+    "translation": "المجموعات وإعادات اللعب والأصدقاء والمزيد، على كل جهاز."
+  },
   "cnGeoo": {
     "message": "Delete",
     "translation": "حذف"
@@ -4425,10 +4433,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "إبقاء"
-  },
-  "TaE8k-": {
-    "message": "Keep decks and replays everywhere",
-    "translation": "احتفظ بالمجموعات وإعادات اللعب في كل مكان"
   },
   "94aPBP": {
     "message": "Keep your decks and settings here",
@@ -8619,10 +8623,6 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "مجموعاتك"
-  },
-  "zCckVB": {
-    "message": "Your decks and replays, on every device.",
-    "translation": "مجموعاتك وإعاداتك، على كل جهاز."
   },
   "S7YY4L": {
     "message": "Your discard pile",

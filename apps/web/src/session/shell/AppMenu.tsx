@@ -278,7 +278,7 @@ export const menuActions = (
       id: 'importReplay',
       label: t`Watch replay…`,
       icon: FilmReelIcon,
-      tone: 'purple',
+      tone: 'gold',
       disabled: game.busy === true,
       onSelect: game.onImportReplay,
     });

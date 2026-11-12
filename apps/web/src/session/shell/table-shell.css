@@ -365,9 +365,13 @@
   background-color: oklch(1 0 0 / 0.16);
 }
 
+/* On the bar's dark glass (either theme), a warm cream count: easy to
+   read, nothing urgent about it. */
 .ptcgsim-app-bar .ptcgsim-rail-button__badge {
   top: -3px;
   right: -3px;
+  background: oklch(0.9 0.035 80);
+  color: oklch(0.27 0.03 55);
 }
 
 /* The log's newest lines drop below the bar, at its right edge. */

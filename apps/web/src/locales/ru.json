@@ -3204,6 +3204,14 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "Колоды, игра онлайн, журнал и настройки"
   },
+  "1Zlglq": {
+    "message": "Decks, replays, friends & more",
+    "translation": "Колоды, повторы, друзья и не только"
+  },
+  "6soIXc": {
+    "message": "Decks, replays, friends & more, on every device.",
+    "translation": "Колоды, повторы, друзья и не только — на любом устройстве."
+  },
   "cnGeoo": {
     "message": "Delete",
     "translation": "Удалить"
@@ -4425,10 +4433,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Оставить"
-  },
-  "TaE8k-": {
-    "message": "Keep decks and replays everywhere",
-    "translation": "Колоды и повторы на всех устройствах"
   },
   "94aPBP": {
     "message": "Keep your decks and settings here",
@@ -8619,10 +8623,6 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "Твои колоды"
-  },
-  "zCckVB": {
-    "message": "Your decks and replays, on every device.",
-    "translation": "Твои колоды и повторы на всех устройствах."
   },
   "S7YY4L": {
     "message": "Your discard pile",

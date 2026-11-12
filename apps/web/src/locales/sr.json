@@ -3204,6 +3204,14 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "Шпилови, игра на мрежи, дневник и подешавања"
   },
+  "1Zlglq": {
+    "message": "Decks, replays, friends & more",
+    "translation": "Шпилови, снимци, пријатељи и више"
+  },
+  "6soIXc": {
+    "message": "Decks, replays, friends & more, on every device.",
+    "translation": "Шпилови, снимци, пријатељи и више, на сваком уређају."
+  },
   "cnGeoo": {
     "message": "Delete",
     "translation": "Обриши"
@@ -4425,10 +4433,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Задржи"
-  },
-  "TaE8k-": {
-    "message": "Keep decks and replays everywhere",
-    "translation": "Чувај шпилове и снимке свуда"
   },
   "94aPBP": {
     "message": "Keep your decks and settings here",
@@ -8619,10 +8623,6 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "Твоји шпилови"
-  },
-  "zCckVB": {
-    "message": "Your decks and replays, on every device.",
-    "translation": "Твоји шпилови и снимци на сваком уређају."
   },
   "S7YY4L": {
     "message": "Your discard pile",

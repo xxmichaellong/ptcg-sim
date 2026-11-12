@@ -3204,6 +3204,14 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "Mga deck, online play, log, at Settings"
   },
+  "1Zlglq": {
+    "message": "Decks, replays, friends & more",
+    "translation": "Mga deck, replay, kaibigan at iba pa"
+  },
+  "6soIXc": {
+    "message": "Decks, replays, friends & more, on every device.",
+    "translation": "Mga deck, replay, kaibigan at iba pa, sa bawat device."
+  },
   "cnGeoo": {
     "message": "Delete",
     "translation": "Burahin"
@@ -4425,10 +4433,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Panatilihin"
-  },
-  "TaE8k-": {
-    "message": "Keep decks and replays everywhere",
-    "translation": "Itago ang mga deck at replay saanman"
   },
   "94aPBP": {
     "message": "Keep your decks and settings here",
@@ -8619,10 +8623,6 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "Ang mga deck mo"
-  },
-  "zCckVB": {
-    "message": "Your decks and replays, on every device.",
-    "translation": "Ang mga deck at replay mo, sa lahat ng device."
   },
   "S7YY4L": {
     "message": "Your discard pile",

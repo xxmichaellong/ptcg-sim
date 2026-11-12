@@ -73,9 +73,13 @@ first page.
    - **About**: What's new (the release), Sponsors, Discord and Source code
      (outside).
 
-3. **Rows** (`ui/SettingsList.tsx`): a coloured icon tile on the first
-   page (fixed colours, white glyphs at 3:1 or better in both themes), the
-   label, a line under it, then what it is set to and a chevron (a page),
+3. **Rows** (`ui/SettingsList.tsx`): a large two-tone icon, no tile
+   (2026-11-12, the owner: the tiles "don't add much"): the glyph's line
+   in the row's colour and its fill a wash of it, each tone a hue and a
+   strength (OKLCH) lit lighter by night and darker by day, lifted off the
+   panel by a hairline shadow. Where Phosphor had no fitting glyph the sim
+   draws its own on Phosphor's grid (`DeckIcon`, `CardFanIcon` for Cards).
+   Then the label, a line under it, then what it is set to and a chevron (a page),
    an arrow (outside), a switch, or a check. A hairline runs between rows
    from their words onward; headings above a card are small capitals, notes
    below it are muted. Pressed, a row's icon leans and sinks, springing

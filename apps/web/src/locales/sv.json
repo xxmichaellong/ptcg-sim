@@ -3204,6 +3204,14 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "Lekar, onlinespel, loggen och inställningar"
   },
+  "1Zlglq": {
+    "message": "Decks, replays, friends & more",
+    "translation": "Lekar, repriser, vänner med mera"
+  },
+  "6soIXc": {
+    "message": "Decks, replays, friends & more, on every device.",
+    "translation": "Lekar, repriser, vänner med mera, på alla enheter."
+  },
   "cnGeoo": {
     "message": "Delete",
     "translation": "Ta bort"
@@ -4425,10 +4433,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Behåll"
-  },
-  "TaE8k-": {
-    "message": "Keep decks and replays everywhere",
-    "translation": "Behåll lekar och repriser överallt"
   },
   "94aPBP": {
     "message": "Keep your decks and settings here",
@@ -8619,10 +8623,6 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "Dina lekar"
-  },
-  "zCckVB": {
-    "message": "Your decks and replays, on every device.",
-    "translation": "Dina lekar och repriser, på alla enheter."
   },
   "S7YY4L": {
     "message": "Your discard pile",

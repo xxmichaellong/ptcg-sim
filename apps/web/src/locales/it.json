@@ -3204,6 +3204,14 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "Mazzi, gioco online, registro e Impostazioni"
   },
+  "1Zlglq": {
+    "message": "Decks, replays, friends & more",
+    "translation": "Mazzi, replay, amici e altro"
+  },
+  "6soIXc": {
+    "message": "Decks, replays, friends & more, on every device.",
+    "translation": "Mazzi, replay, amici e altro, su ogni dispositivo."
+  },
   "cnGeoo": {
     "message": "Delete",
     "translation": "Elimina"
@@ -4425,10 +4433,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Mantieni"
-  },
-  "TaE8k-": {
-    "message": "Keep decks and replays everywhere",
-    "translation": "Ritrova mazzi e replay ovunque"
   },
   "94aPBP": {
     "message": "Keep your decks and settings here",
@@ -8619,10 +8623,6 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "I tuoi mazzi"
-  },
-  "zCckVB": {
-    "message": "Your decks and replays, on every device.",
-    "translation": "I tuoi mazzi e le tue riproduzioni, su ogni dispositivo."
   },
   "S7YY4L": {
     "message": "Your discard pile",

@@ -3204,6 +3204,14 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "Barajas, juego en línea, registro y ajustes"
   },
+  "1Zlglq": {
+    "message": "Decks, replays, friends & more",
+    "translation": "Barajas, repeticiones, amigos y más"
+  },
+  "6soIXc": {
+    "message": "Decks, replays, friends & more, on every device.",
+    "translation": "Barajas, repeticiones, amigos y más, en todos tus dispositivos."
+  },
   "cnGeoo": {
     "message": "Delete",
     "translation": "Eliminar"
@@ -4425,10 +4433,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Conservar"
-  },
-  "TaE8k-": {
-    "message": "Keep decks and replays everywhere",
-    "translation": "Conserva tus barajas y repeticiones en todas partes"
   },
   "94aPBP": {
     "message": "Keep your decks and settings here",
@@ -8619,10 +8623,6 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "Tus barajas"
-  },
-  "zCckVB": {
-    "message": "Your decks and replays, on every device.",
-    "translation": "Tus barajas y repeticiones, en todos tus dispositivos."
   },
   "S7YY4L": {
     "message": "Your discard pile",

@@ -29,9 +29,16 @@
   object-fit: contain;
 }
 
-.account-avatar[data-kind='empty'] {
-  border: 1px dashed var(--color-border-strong, var(--color-border));
-  background: var(--color-surface-2);
+/* Signed out: the avatar's place holds a person, in the icons' two-tone
+   style (settings-list.css), sized like the avatar it stands in for. */
+.settings-icon.account-guest {
+  width: 40px;
+  height: 40px;
+}
+
+.settings-icon.account-guest > svg {
+  width: 46px;
+  height: 46px;
 }
 
 .settings-row.account-row {
@@ -82,14 +89,26 @@
 }
 
 .account-provider > svg {
+  flex: none;
   width: 20px;
   height: 20px;
 }
 
+/* Discord's Clyde in Blurple on a plain ground. */
+.settings-icon.account-method__logo {
+  color: #5865f2;
+}
+
+.settings-icon.account-method__logo > svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Google's neutral button: its G on #F2F2F2, the label #1F1F1F. */
 .account-provider[data-provider='google'] {
-  border-color: #f7f4f1;
-  background: #f7f4f1;
-  color: #1d1915;
+  border-color: #f2f2f2;
+  background: #f2f2f2;
+  color: #1f1f1f;
 }
 
 .account-provider[data-provider='discord'] {

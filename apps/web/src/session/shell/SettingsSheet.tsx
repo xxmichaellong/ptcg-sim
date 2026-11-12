@@ -6,7 +6,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import type { Icon } from '@phosphor-icons/react';
 import { ArrowsDownUpIcon } from '@phosphor-icons/react/dist/csr/ArrowsDownUp';
 import { BugIcon } from '@phosphor-icons/react/dist/csr/Bug';
-import { CardsIcon } from '@phosphor-icons/react/dist/csr/Cards';
+import { CardFanIcon } from '../../ui/CardFanIcon.js';
 import { CaretLeftIcon } from '@phosphor-icons/react/dist/csr/CaretLeft';
 import { ClipboardTextIcon } from '@phosphor-icons/react/dist/csr/ClipboardText';
 import { DiscordLogoIcon } from '@phosphor-icons/react/dist/csr/DiscordLogo';
@@ -18,7 +18,7 @@ import { KeyboardIcon } from '@phosphor-icons/react/dist/csr/Keyboard';
 import { PaletteIcon } from '@phosphor-icons/react/dist/csr/Palette';
 import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { TranslateIcon } from '@phosphor-icons/react/dist/csr/Translate';
-import { WaveSineIcon } from '@phosphor-icons/react/dist/csr/WaveSine';
+import { ShootingStarIcon } from '@phosphor-icons/react/dist/csr/ShootingStar';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { CARD_IMAGE_LANGUAGES, isCardImageLanguage } from '@ptcgsim/deck-core';
 import {
@@ -331,8 +331,8 @@ const HomePage = ({
         {pageRow('table', 'settingsTableRow', PaletteIcon, 'green', {
           text: tableArt,
         })}
-        {pageRow('cards', 'settingsCardsRow', CardsIcon, 'blue')}
-        {pageRow('motion', 'settingsMotionRow', WaveSineIcon, 'purple')}
+        {pageRow('cards', 'settingsCardsRow', CardFanIcon, 'blue')}
+        {pageRow('motion', 'settingsMotionRow', ShootingStarIcon, 'purple')}
         {pageRow('language', 'settingsLanguageRow', TranslateIcon, 'teal', {
           text: language.name,
           lang: language.lang,
@@ -352,7 +352,7 @@ const HomePage = ({
       </SettingsGroup>
       {actions.saves.length > 0 || accountGames ? (
         <SettingsGroup>
-          {pageRow('saves', 'settingsSavesRow', FilmReelIcon, 'purple')}
+          {pageRow('saves', 'settingsSavesRow', FilmReelIcon, 'gold')}
         </SettingsGroup>
       ) : null}
       <SettingsGroup>

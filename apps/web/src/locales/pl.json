@@ -3204,6 +3204,14 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "Talie, gra online, dziennik i ustawienia"
   },
+  "1Zlglq": {
+    "message": "Decks, replays, friends & more",
+    "translation": "Talie, powtórki, znajomi i więcej"
+  },
+  "6soIXc": {
+    "message": "Decks, replays, friends & more, on every device.",
+    "translation": "Talie, powtórki, znajomi i więcej, na każdym urządzeniu."
+  },
   "cnGeoo": {
     "message": "Delete",
     "translation": "Usuń"
@@ -4425,10 +4433,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Zachowaj"
-  },
-  "TaE8k-": {
-    "message": "Keep decks and replays everywhere",
-    "translation": "Miej talie i powtórki wszędzie"
   },
   "94aPBP": {
     "message": "Keep your decks and settings here",
@@ -8619,10 +8623,6 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "Twoje talie"
-  },
-  "zCckVB": {
-    "message": "Your decks and replays, on every device.",
-    "translation": "Twoje talie i powtórki na każdym urządzeniu."
   },
   "S7YY4L": {
     "message": "Your discard pile",

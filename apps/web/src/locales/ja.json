@@ -3204,6 +3204,14 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "デッキ、オンライン対戦、ログ、設定"
   },
+  "1Zlglq": {
+    "message": "Decks, replays, friends & more",
+    "translation": "デッキ、リプレイ、フレンドなど"
+  },
+  "6soIXc": {
+    "message": "Decks, replays, friends & more, on every device.",
+    "translation": "デッキ、リプレイ、フレンドなどを、どのデバイスでも。"
+  },
   "cnGeoo": {
     "message": "Delete",
     "translation": "削除"
@@ -4425,10 +4433,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "保持"
-  },
-  "TaE8k-": {
-    "message": "Keep decks and replays everywhere",
-    "translation": "デッキとリプレイをどの端末でも使えます"
   },
   "94aPBP": {
     "message": "Keep your decks and settings here",
@@ -8619,10 +8623,6 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "自分のデッキ"
-  },
-  "zCckVB": {
-    "message": "Your decks and replays, on every device.",
-    "translation": "デッキもリプレイも、どの端末でも。"
   },
   "S7YY4L": {
     "message": "Your discard pile",

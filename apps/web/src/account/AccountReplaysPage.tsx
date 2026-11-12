@@ -58,7 +58,7 @@ export const AccountReplaysRow = ({
         <SettingsLinkRow
           id="accountReplaysRow"
           icon={FilmReelIcon}
-          tone="purple"
+          tone="gold"
           label={t`Your games`}
           onClick={onOpen}
         />
@@ -71,7 +71,7 @@ export const AccountReplaysRow = ({
       <SettingsLinkRow
         id="accountReplaysSignInRow"
         icon={FilmReelIcon}
-        tone="purple"
+        tone="gold"
         label={t`Your games`}
         subtitle={t`Sign in to keep your games`}
         onClick={onSignIn}

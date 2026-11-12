@@ -250,24 +250,41 @@
   font-weight: var(--weight-semibold);
 }
 
-/* ---- The icon tile ---------------------------------------------------- */
+/* ---- The icon --------------------------------------------------------- */
+/* No tile: a large two-tone glyph in the row's own colour, its line in the
+   tone and its fill a wash of it, lifted off the panel like a piece on the
+   table. Each tone is a hue and a strength; the theme sets how light. */
 
 .settings-icon {
+  --settings-ink: oklch(0.8 var(--tone-c) var(--tone-h));
+  --settings-wash: oklch(0.66 var(--tone-c) var(--tone-h) / 0.42);
+  --settings-lift: rgb(0 0 0 / 0.35);
   display: inline-grid;
   flex: none;
   width: 30px;
   height: 30px;
   place-items: center;
-  border-radius: 8px;
-  background: var(--settings-tone);
-  box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.18);
-  color: #fff;
+  color: var(--settings-ink);
+  filter: drop-shadow(0 1px 0 var(--settings-lift));
   transition: transform var(--duration-bouncy) var(--ease-bouncy);
 }
 
+:root[data-theme='day'] .settings-icon {
+  --settings-ink: oklch(0.5 var(--tone-c) var(--tone-h));
+  --settings-wash: oklch(0.78 var(--tone-c) var(--tone-h) / 0.55);
+  --settings-lift: rgb(255 255 255 / 0.7);
+}
+
 .settings-icon > svg {
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 28px;
+}
+
+/* The glyph's light layer (Phosphor's duotone, at 0.2 of the line), in
+   the tone's wash instead. */
+.settings-icon > svg [opacity] {
+  fill: var(--settings-wash);
+  opacity: 1;
 }
 
 /* Pressed, the icon leans and sinks; let go, it springs back. */
@@ -279,7 +296,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .settings-row:not(:disabled, [data-disabled='true']):hover .settings-icon {
-    transform: rotate(-6deg) scale(1.06);
+    transform: rotate(-6deg) scale(1.08);
   }
 }
 
@@ -296,42 +313,54 @@
   }
 }
 
-/* Each tone keeps white glyphs at 3:1 or better. */
+/* Each tone: a hue and a strength (OKLCH), lit by the theme above. */
 .settings-icon[data-tone='blue'] {
-  --settings-tone: #2f6fd0;
+  --tone-h: 255;
+  --tone-c: 0.13;
 }
 .settings-icon[data-tone='brown'] {
-  --settings-tone: #8a5a32;
+  --tone-h: 60;
+  --tone-c: 0.08;
 }
 .settings-icon[data-tone='cyan'] {
-  --settings-tone: #0f7f9c;
+  --tone-h: 220;
+  --tone-c: 0.11;
 }
 .settings-icon[data-tone='gold'] {
-  --settings-tone: #a86b00;
+  --tone-h: 82;
+  --tone-c: 0.14;
 }
 .settings-icon[data-tone='green'] {
-  --settings-tone: #2b8a55;
+  --tone-h: 150;
+  --tone-c: 0.14;
 }
 .settings-icon[data-tone='indigo'] {
-  --settings-tone: #5048c8;
+  --tone-h: 278;
+  --tone-c: 0.13;
 }
 .settings-icon[data-tone='orange'] {
-  --settings-tone: #c2561c;
+  --tone-h: 52;
+  --tone-c: 0.15;
 }
 .settings-icon[data-tone='pink'] {
-  --settings-tone: #c43d76;
+  --tone-h: 355;
+  --tone-c: 0.14;
 }
 .settings-icon[data-tone='purple'] {
-  --settings-tone: #7d4cc9;
+  --tone-h: 305;
+  --tone-c: 0.14;
 }
 .settings-icon[data-tone='red'] {
-  --settings-tone: #c93c32;
+  --tone-h: 25;
+  --tone-c: 0.16;
 }
 .settings-icon[data-tone='slate'] {
-  --settings-tone: #5a6472;
+  --tone-h: 255;
+  --tone-c: 0.025;
 }
 .settings-icon[data-tone='teal'] {
-  --settings-tone: #12806f;
+  --tone-h: 180;
+  --tone-c: 0.11;
 }
 
 /* ---- The foot -------------------------------------------------------- */

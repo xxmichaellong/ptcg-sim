@@ -28,7 +28,7 @@ export type SettingsTone =
   | 'slate'
   | 'teal';
 
-/** A row's icon: a glyph on a small coloured tile. */
+/** A row's icon: a two-tone glyph in its own colour (settings-list.css). */
 export const SettingsIcon = ({
   icon: Glyph,
   tone,
@@ -37,7 +37,7 @@ export const SettingsIcon = ({
   readonly tone: SettingsTone;
 }) => (
   <span className="settings-icon" data-tone={tone} aria-hidden="true">
-    <Glyph weight="fill" />
+    <Glyph weight="duotone" />
   </span>
 );
 

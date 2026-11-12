@@ -3204,6 +3204,14 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "Bộ bài, chơi trực tuyến, nhật ký và Cài đặt"
   },
+  "1Zlglq": {
+    "message": "Decks, replays, friends & more",
+    "translation": "Bộ bài, bản ghi, bạn bè và hơn thế nữa"
+  },
+  "6soIXc": {
+    "message": "Decks, replays, friends & more, on every device.",
+    "translation": "Bộ bài, bản ghi, bạn bè và hơn thế nữa, trên mọi thiết bị."
+  },
   "cnGeoo": {
     "message": "Delete",
     "translation": "Xóa"
@@ -4425,10 +4433,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Giữ lại"
-  },
-  "TaE8k-": {
-    "message": "Keep decks and replays everywhere",
-    "translation": "Giữ bộ bài và bản ghi lại trên mọi thiết bị"
   },
   "94aPBP": {
     "message": "Keep your decks and settings here",
@@ -8619,10 +8623,6 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "Các bộ bài của bạn"
-  },
-  "zCckVB": {
-    "message": "Your decks and replays, on every device.",
-    "translation": "Bộ bài và bản replay của bạn, trên mọi thiết bị."
   },
   "S7YY4L": {
     "message": "Your discard pile",

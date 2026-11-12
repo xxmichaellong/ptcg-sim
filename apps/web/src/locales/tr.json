@@ -3204,6 +3204,14 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "Desteler, çevrimiçi oyun, kayıt ve Ayarlar"
   },
+  "1Zlglq": {
+    "message": "Decks, replays, friends & more",
+    "translation": "Desteler, tekrarlar, arkadaşlar ve daha fazlası"
+  },
+  "6soIXc": {
+    "message": "Decks, replays, friends & more, on every device.",
+    "translation": "Desteler, tekrarlar, arkadaşlar ve daha fazlası, her cihazda."
+  },
   "cnGeoo": {
     "message": "Delete",
     "translation": "Sil"
@@ -4425,10 +4433,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "Koru"
-  },
-  "TaE8k-": {
-    "message": "Keep decks and replays everywhere",
-    "translation": "Desteleri ve tekrarları her yerde sakla"
   },
   "94aPBP": {
     "message": "Keep your decks and settings here",
@@ -8619,10 +8623,6 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "Destelerin"
-  },
-  "zCckVB": {
-    "message": "Your decks and replays, on every device.",
-    "translation": "Destelerin ve tekrarların, her cihazında."
   },
   "S7YY4L": {
     "message": "Your discard pile",

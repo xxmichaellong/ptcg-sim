@@ -3204,6 +3204,14 @@
     "message": "Decks, playing online, the log and Settings",
     "translation": "덱, 온라인 플레이, 로그, 설정"
   },
+  "1Zlglq": {
+    "message": "Decks, replays, friends & more",
+    "translation": "덱, 리플레이, 친구 등"
+  },
+  "6soIXc": {
+    "message": "Decks, replays, friends & more, on every device.",
+    "translation": "덱, 리플레이, 친구 등을 모든 기기에서 이용하세요."
+  },
   "cnGeoo": {
     "message": "Delete",
     "translation": "삭제"
@@ -4425,10 +4433,6 @@
     "message": "Keep",
     "context": "keep the changed shortcuts",
     "translation": "유지"
-  },
-  "TaE8k-": {
-    "message": "Keep decks and replays everywhere",
-    "translation": "덱과 리플레이를 어디서나 보관하세요"
   },
   "94aPBP": {
     "message": "Keep your decks and settings here",
@@ -8619,10 +8623,6 @@
   "APqbzr": {
     "message": "Your decks",
     "translation": "내 덱 목록"
-  },
-  "zCckVB": {
-    "message": "Your decks and replays, on every device.",
-    "translation": "덱과 리플레이를 모든 기기에서 이용하세요."
   },
   "S7YY4L": {
     "message": "Your discard pile",

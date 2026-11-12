@@ -7,6 +7,7 @@ import {
   listenForGhostExit,
   readOverlayMotion,
   sceneRectToClient,
+  stripGhost,
   zoomFromRect,
 } from './overlayMotion.js';
 
@@ -38,6 +39,30 @@ describe('overlay motion', () => {
     document.documentElement.style.removeProperty('--motion-scale');
     vi.useRealTimers();
     vi.restoreAllMocks();
+  });
+
+  it('strips a ghost of what finds it, and keeps how it looks', () => {
+    const row = document.createElement('button');
+    row.id = 'settingsTableRow';
+    row.setAttribute('role', 'menuitem');
+    row.dataset['kind'] = 'link';
+    row.dataset['testid'] = 'table';
+    row.setAttribute('aria-label', 'Table');
+    const icon = document.createElement('span');
+    icon.className = 'settings-icon';
+    icon.dataset['tone'] = 'green';
+    row.append(icon);
+    stripGhost(row);
+    // A Settings icon keeps its colour and a row its layout as the drawer
+    // slides out (they once lost both, and the account circle went orange).
+    expect(icon.dataset['tone']).toBe('green');
+    expect(row.dataset['kind']).toBe('link');
+    expect(row.id).toBe('');
+    expect(row.hasAttribute('role')).toBe(false);
+    expect(row.hasAttribute('data-testid')).toBe(false);
+    expect(row.hasAttribute('aria-label')).toBe(false);
+    expect(row.getAttribute('aria-hidden')).toBe('true');
+    expect(row.hasAttribute('inert')).toBe(true);
   });
 
   it('reads the page root motion choice', () => {
