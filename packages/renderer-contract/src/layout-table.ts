@@ -209,6 +209,22 @@ const HAND_PILL_GAP_PX = 8;
 const HAND_PILL_DROP_PX = 6;
 const HAND_PILL_WIDTH_PX = 64;
 const HAND_PILL_HEIGHT_PX = 26;
+/**
+ * The seat's name heads its hand's pill (2026-11-12): the slot widens by
+ * up to this much for it, taken from the strip's start only while the
+ * strip keeps HAND_STRIP_KEPT_PX (a portrait phone's hand stays as the
+ * device QA left it); less than HAND_PILL_NAME_MIN_PX is no room at all,
+ * and the web app sets the name beside the pill instead.
+ */
+const HAND_PILL_NAME_MAX_PX = 96;
+const HAND_PILL_NAME_MIN_PX = 48;
+const HAND_STRIP_KEPT_PX = 420;
+
+/** The room a hand strip this long spares for its seat's name in the pill. */
+const pillNameRoom = (strip: number): number => {
+  const room = Math.min(HAND_PILL_NAME_MAX_PX, strip - HAND_STRIP_KEPT_PX);
+  return room >= HAND_PILL_NAME_MIN_PX ? room : 0;
+};
 /** The least room between the pill and the screen's edge (TableHandPill). */
 const HAND_PILL_EDGE_PX = 4;
 /**
@@ -278,6 +294,8 @@ interface LocalRegion {
   /** In the half's own frame: top is the centre line, bottom the player's edge. */
   readonly rect: Rect;
   readonly countAnchor?: 'pile' | 'hand';
+  /** The hand's: the room its pill keeps for the seat's name. */
+  readonly pillNameRoom?: number;
 }
 
 interface HalfGeometry {
@@ -770,6 +788,26 @@ const handStripPillFirst = (
 };
 
 /**
+ * A hand strip, short by the room its pill keeps for the seat's name where
+ * it can spare it: from its start when the pill lies before it, else from
+ * its end, the pill's side either way.
+ */
+const withPillName = (
+  start: number,
+  end: number,
+  pillFirst: boolean
+): {
+  readonly start: number;
+  readonly end: number;
+  readonly nameRoom: number;
+} => {
+  const nameRoom = pillNameRoom(end - start);
+  return pillFirst
+    ? { start: start + nameRoom, end, nameRoom }
+    : { start, end: end - nameRoom, nameRoom };
+};
+
+/**
  * The app bar's corner a hand strip keeps clear, at whichever end it lies:
  * its start on a turned far half, its end on a mirrored one (ADR-046).
  */
@@ -1220,11 +1258,16 @@ const layoutHalfAs = (
   const pillFirst = options.handPillAtStart
     ? handStripPillFirst(width, handTop, besideHand, options.handEndReservePx)
     : undefined;
-  const handStart =
-    pillFirst?.start ?? Math.max(side, options.handStartReservePx ?? 0);
-  const handEnd =
+  const {
+    start: handStart,
+    end: handEnd,
+    nameRoom,
+  } = withPillName(
+    pillFirst?.start ?? Math.max(side, options.handStartReservePx ?? 0),
     pillFirst?.end ??
-    handEndFor(width, handTop, besideHand, options.handEndReservePx);
+      handEndFor(width, handTop, besideHand, options.handEndReservePx),
+    pillFirst !== undefined
+  );
   const handRect: Rect = {
     x: handStart,
     y: handTop,
@@ -1246,7 +1289,12 @@ const layoutHalfAs = (
     ),
     handCard,
     regions: [
-      { kind: 'hand', rect: handRect, countAnchor: 'hand' },
+      {
+        kind: 'hand',
+        rect: handRect,
+        countAnchor: 'hand',
+        pillNameRoom: nameRoom,
+      },
       { kind: 'board', rect: boardRect },
       { kind: 'active', rect: activeRect },
       { kind: 'bench', rect: benchRect },
@@ -1486,11 +1534,16 @@ const layoutHalfPortraitAs = (
   const pillFirst = options.handPillAtStart
     ? handStripPillFirst(width, handTop, pilesAbove, options.handEndReservePx)
     : undefined;
-  const handStart =
-    pillFirst?.start ?? Math.max(edge, options.handStartReservePx ?? 0);
-  const handEnd =
+  const {
+    start: handStart,
+    end: handEnd,
+    nameRoom,
+  } = withPillName(
+    pillFirst?.start ?? Math.max(edge, options.handStartReservePx ?? 0),
     pillFirst?.end ??
-    handEndFor(width, handTop, pilesAbove, options.handEndReservePx);
+      handEndFor(width, handTop, pilesAbove, options.handEndReservePx),
+    pillFirst !== undefined
+  );
   const handRect: Rect = {
     x: handStart,
     y: handTop,
@@ -1507,7 +1560,12 @@ const layoutHalfPortraitAs = (
     ),
     handCard,
     regions: [
-      { kind: 'hand', rect: handRect, countAnchor: 'hand' },
+      {
+        kind: 'hand',
+        rect: handRect,
+        countAnchor: 'hand',
+        pillNameRoom: nameRoom,
+      },
       { kind: 'board', rect: boardRect },
       { kind: 'active', rect: activeRect },
       { kind: 'bench', rect: benchRect },
@@ -1912,7 +1970,9 @@ const countLabelFor = (
   anchor: 'pile' | 'hand',
   physical: Rect,
   side: BoardSide,
-  mirrored = false
+  mirrored = false,
+  /** The hand's: the room its pill keeps for the seat's name. */
+  nameRoom = 0
 ): BoardLayoutCountLabel => {
   // Piles wear their count as a badge on the corner nearest the player; the
   // hand shows its count in the slot kept at the far end of its strip, level
@@ -1933,10 +1993,11 @@ const countLabelFor = (
   // Every hand's pill lies on the window's left, before its strip, both
   // set against the slot's left so they line up one above the other; a
   // wider one (Solo's cover beside the count and Sort) grows over the
-  // strip's empty start, never off the window (2026-11-06).
+  // strip's empty start, never off the window (2026-11-06). The seat's name
+  // heads it where the strip spared it room (2026-11-12).
   return {
     anchor: {
-      x: physical.x - HAND_PILL_GAP_PX - HAND_PILL_WIDTH_PX,
+      x: physical.x - HAND_PILL_GAP_PX - HAND_PILL_WIDTH_PX - nameRoom,
       y:
         side === 'local'
           ? physical.y + HAND_PILL_DROP_PX
@@ -1945,6 +2006,7 @@ const countLabelFor = (
     horizontalAlign: 'left',
     verticalAlign: side === 'local' ? 'top' : 'bottom',
     fontSizePx: 13,
+    nameRoomPx: nameRoom,
   };
 };
 
@@ -2395,7 +2457,13 @@ export const createTableLayoutSnapshot = (
         affordances: source.affordances,
         childCardAffordances: source.childCardAffordances,
         countLabel: local.countAnchor
-          ? countLabelFor(local.countAnchor, physical, template.side, reflected)
+          ? countLabelFor(
+              local.countAnchor,
+              physical,
+              template.side,
+              reflected,
+              local.pillNameRoom
+            )
           : null,
         ...(reflected ? { mirrored: true as const } : {}),
         ...(local.kind === 'bench' && activePhysical

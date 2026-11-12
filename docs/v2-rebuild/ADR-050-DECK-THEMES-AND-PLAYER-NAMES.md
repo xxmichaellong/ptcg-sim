@@ -5,6 +5,7 @@
 - Request: compose a deck's sleeves, coin and playmat, reuse named themes, edit both board names in Settings, and simplify Play online.
 - Amends: ADR-033 (deck building), ADR-041/048 (custom assets), ADR-047 (rooms by code).
 - Parity: PX-102, PX-103.
+- Amended 2026-11-12: the names left Settings for the table (Names on the table, below).
 
 ## Deck composition
 
@@ -22,9 +23,15 @@ Deleting a custom asset in Customize also takes it off saved decks wearing it, i
 
 ## Canonical player metadata
 
-Settings' first page exposes both player names. Solo can edit either, multiplayer only its own, and spectators/replays cannot change live names. `SetPlayerProfile` carries a bounded name and/or playmat through authority, events, projections, persistence and replay. The room resolves seat permissions before execution. Published acknowledgements update clean name fields without replacing a newer unsaved draft. Blur and Enter save trimmed edits; Escape cancels the draft. A disabled field shows the canonical value while keeping an unsaved draft for editing to resume, including after a reconnect. A revert queues behind an earlier pending change. Name saves follow their actual submission outcome: version conflicts retry up to three attempts, and a final refusal or unsent request reports feedback and leaves the draft visibly retryable. Newer saved names supersede older retries; a room change or closed session cancels the old work. Late failures cannot mark a newer or escaped draft invalid.
+Each seat's name heads its hand's pill on the table (2026-11-12; until then, fields on Settings' first page). Solo can edit either, multiplayer only its own, and spectators/replays cannot change live names. `SetPlayerProfile` carries a bounded name and/or playmat through authority, events, projections, persistence and replay. The room resolves seat permissions before execution. Published acknowledgements update clean name fields without replacing a newer unsaved draft. Blur and Enter save trimmed edits; Escape cancels the draft. A name that can't be edited for now shows the canonical value while keeping an unsaved draft for editing to resume, including after a reconnect. A revert queues behind an earlier pending change. Name saves follow their actual submission outcome: version conflicts retry up to three attempts, and a final refusal or unsent request reports feedback and leaves the draft visibly retryable. Newer saved names supersede older retries; a room change or closed session cancels the old work. Late failures cannot mark a newer or escaped draft invalid.
 
 Authenticated session names follow a canonical player-name change in the same committed candidate, including Undo. Unchanged players' session records retain their identity and fields; command candidate validation permits only the corresponding name change alongside the ordinary issuer outcome update. Renaming does not invalidate a live connection.
+
+## Names on the table
+
+The owner found the names at the top of Settings out of place (2026-11-12) and chose to put them on the table: each seat's name heads its hand's pill, in that seat's colour, `[Red | 7 | 👁 | ⇅]`. Where the viewer may rename the seat (by the rules above), the name is a button ("Rename Red") that becomes a field in place ("Name for Red"), selected; Enter or leaving it saves, Esc puts the name back, and keyboard focus returns to the name, except on a touch screen, where the keyboard just closes. A new name shows at once while the room takes it. A refused save rings the name and keeps what was typed, flagged invalid, for the next press to retry. Elsewhere (a spectator, a replay) the name is plain text. Typing never reaches the table's keys.
+
+The table keeps room for the name in the pill's slot: up to 96px more, taken from the start of the hand's strip only while the strip keeps 420px. Under 48px counts as no room. So a portrait phone's hand keeps the width the 2026-10-28 device QA set. Where no room is kept, the name sits beside the pill as a small pill of its own, toward the window's edge: below the near seat's, above the far seat's. The pill and name are positioned and kept on screen together (`TableSeatName`, `TableHandPill` in `LegacyBoardChrome.tsx`). The layout's count label carries the kept room as `nameRoomPx`.
 
 ## Room entry
 
@@ -34,4 +41,4 @@ The form follows [GOV.UK's button guidance](https://design-system.service.gov.uk
 
 ## Verification
 
-Coverage includes deck-look round trips and copies; preservation of real edits; latest queued choices and Undo; both Solo names and authority-session consistency; multiplayer seat permissions; landscape asset design; native paste/file-import races; and desktop/phone room entry. All 20 language catalogs are synchronized. The shared gate and independent review loop are required before shipping.
+Coverage includes deck-look round trips and copies; preservation of real edits; latest queued choices and Undo; both Solo names, renamed on the table (`player-name-controls.spec.ts`, `TableSeatName.test.tsx`, the pill's room in `layout-table.test.ts`), and authority-session consistency; multiplayer seat permissions; landscape asset design; native paste/file-import races; and desktop/phone room entry. All 20 language catalogs are synchronized. The shared gate and independent review loop are required before shipping.

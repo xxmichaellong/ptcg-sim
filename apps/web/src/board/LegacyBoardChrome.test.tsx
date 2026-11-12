@@ -966,6 +966,119 @@ describe('LegacyBoardChrome', () => {
     await act(async () => root.unmount());
   });
 
+  it("heads each hand's pill with its seat's name, renamed there by whoever may", async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const onRename = vi.fn(() => true);
+    const handCount = (
+      playerId: string,
+      side: 'local' | 'opponent',
+      nameRoomPx: number
+    ): TableHandCount => ({
+      playerId: asPlayerId(playerId),
+      node: {
+        id: `${playerId}-hand-count`,
+        zoneId: `${playerId}-hand`,
+        playerId: asPlayerId(playerId),
+        side,
+        kind: 'hand',
+        count: 7,
+        anchor: { x: 4, y: side === 'local' ? 680 : 40 },
+        horizontalAlign: 'left',
+        verticalAlign: side === 'local' ? 'top' : 'bottom',
+        fontSizePx: 13,
+        color: 'rgb(90 110 188)',
+        zIndex: 1,
+        label: '7 cards in hand',
+        hint: '7 cards in your hand',
+        ...(nameRoomPx ? { nameRoomPx } : {}),
+      },
+    });
+    try {
+      await act(async () =>
+        root.render(
+          <LegacyBoardChrome
+            layout={createTableLayoutSnapshot({
+              ...layoutState(),
+              geometryVersion: TABLE_LAYOUT_GEOMETRY_VERSION,
+              shellMode: 'fullscreen',
+              vertical: DEFAULT_TABLE_VERTICAL_LAYOUT,
+            })}
+            localPlayerId={asPlayerId('spike-blue')}
+            players={players}
+            darkMode
+            actions={{ toggleOncePerGame: vi.fn(), toggleHandSort: vi.fn() }}
+            handCounts={[
+              // Room kept for the name: it heads the pill.
+              handCount('spike-blue', 'local', 96),
+              // None: it lies beside the pill, toward the window's edge.
+              handCount('spike-red', 'opponent', 0),
+            ]}
+            seatNames={{
+              editablePlayerIds: [asPlayerId('spike-blue')],
+              onRename,
+            }}
+          />
+        )
+      );
+      const near = host.querySelector<HTMLElement>('.table-hand-seat--local')!;
+      expect(near.dataset['name']).toBe('in-pill');
+      expect(near.style.getPropertyValue('--table-hand-name-room')).toBe(
+        '96px'
+      );
+      const pill = near.querySelector<HTMLElement>('.table-hand-pill')!;
+      expect(
+        [...pill.children].map((child) => child.className.split(' ').at(-1))
+      ).toEqual([
+        'table-hand-pill__name',
+        'table-hand-pill__count',
+        'table-hand-pill__sort',
+      ]);
+      const far = host.querySelector<HTMLElement>(
+        '.table-hand-seat--opponent'
+      )!;
+      expect(far.dataset['name']).toBe('beside');
+      expect(far.dataset['edge']).toBe('above');
+      expect(
+        [...far.children].map((child) => child.className.split(' ').at(-1))
+      ).toEqual(['table-hand-pill--opponent', 'table-hand-pill__name']);
+      // Only the seat the viewer may rename is a button.
+      expect(far.querySelector('button.table-hand-pill__name')).toBeNull();
+      expect(far.querySelector('.table-hand-pill__name')?.textContent).toBe(
+        'Red'
+      );
+      const rename = pill.querySelector<HTMLButtonElement>(
+        'button.table-hand-pill__name'
+      )!;
+      expect(rename.getAttribute('aria-label')).toBe('Rename Blue');
+      await act(async () => rename.click());
+      const field = host.querySelector<HTMLInputElement>(
+        '.table-hand-pill__name-field'
+      )!;
+      expect(field.getAttribute('aria-label')).toBe('Name for Blue');
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          'value'
+        )!.set!.call(field, 'Dawn');
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      await act(async () =>
+        field.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
+        )
+      );
+      expect(onRename).toHaveBeenCalledExactlyOnceWith(
+        asPlayerId('spike-blue'),
+        'Dawn'
+      );
+    } finally {
+      await act(async () => root.unmount());
+      host.remove();
+    }
+  });
+
   it('keeps the hand pill on the table, clear of the docked log', async () => {
     const host = document.createElement('div');
     document.body.append(host);
@@ -988,7 +1101,7 @@ describe('LegacyBoardChrome', () => {
     const rect = Element.prototype.getBoundingClientRect;
     Element.prototype.getBoundingClientRect = function (this: Element) {
       const [x, y, width, height] = this.classList.contains(
-        'table-hand-pill--local'
+        'table-hand-seat--local'
       )
         ? [edge - 50, hand.y + 6, 62, 28]
         : [0, 0, layout.viewport.width, layout.viewport.height];
@@ -1036,7 +1149,7 @@ describe('LegacyBoardChrome', () => {
           />
         )
       );
-      const pill = host.querySelector<HTMLElement>('.table-hand-pill--local')!;
+      const pill = host.querySelector<HTMLElement>('.table-hand-seat--local')!;
       // Back inside the table, short of the log (and, by the piles' column
       // on this short table, below the pile it would touch).
       expect(pill.style.translate).toMatch(/^-16px /u);
@@ -1069,7 +1182,7 @@ describe('LegacyBoardChrome', () => {
     const rect = Element.prototype.getBoundingClientRect;
     Element.prototype.getBoundingClientRect = function (this: Element) {
       const [x, y, width, height] = this.classList.contains(
-        'table-hand-pill--local'
+        'table-hand-seat--local'
       )
         ? [at.x, at.y, 62, 28]
         : [0, 0, layout.viewport.width, layout.viewport.height];
@@ -1117,7 +1230,7 @@ describe('LegacyBoardChrome', () => {
           />
         )
       );
-      const pill = host.querySelector<HTMLElement>('.table-hand-pill--local')!;
+      const pill = host.querySelector<HTMLElement>('.table-hand-seat--local')!;
       // Moved toward the screen's edge, below the pile.
       const [, dy] = pill.style.translate.split(' ').map(parseFloat);
       expect(dy).toBeGreaterThan(0);

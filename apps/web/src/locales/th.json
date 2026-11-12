@@ -5076,9 +5076,9 @@
     "message": "Name every Ability and attack.",
     "translation": "ตั้งชื่อความสามารถและท่าต่อสู้ทุกอย่าง"
   },
-  "fdwra1": {
-    "message": "Name for {seat}",
-    "translation": "ชื่อของ {seat}"
+  "NsfBlM": {
+    "message": "Name for {name}",
+    "translation": "ชื่อสำหรับ {name}"
   },
   "nkyXf5": {
     "message": "Name or number",
@@ -5836,10 +5836,6 @@
     "context": "unnamed seat",
     "translation": "ผู้เล่น"
   },
-  "gfFbl3": {
-    "message": "Player names",
-    "translation": "ชื่อผู้เล่น"
-  },
   "5Y1AnD": {
     "message": "Playmat",
     "translation": "แผ่นรองเล่น"
@@ -6309,10 +6305,18 @@
     "message": "Remove your decks and settings from this device",
     "translation": "ลบเด็คและการตั้งค่าของคุณออกจากอุปกรณ์นี้"
   },
+  "2wxgft": {
+    "message": "Rename",
+    "translation": "เปลี่ยนชื่อ"
+  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "เปลี่ยนชื่อ"
+  },
+  "oq1VDm": {
+    "message": "Rename {shown}",
+    "translation": "เปลี่ยนชื่อ {shown}"
   },
   "ftWMve": {
     "message": "Repeat Ball",

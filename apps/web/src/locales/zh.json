@@ -5076,9 +5076,9 @@
     "message": "Name every Ability and attack.",
     "translation": "请为每个特性和招式命名。"
   },
-  "fdwra1": {
-    "message": "Name for {seat}",
-    "translation": "{seat}的名称"
+  "NsfBlM": {
+    "message": "Name for {name}",
+    "translation": "{name}的名称"
   },
   "nkyXf5": {
     "message": "Name or number",
@@ -5836,10 +5836,6 @@
     "context": "unnamed seat",
     "translation": "玩家"
   },
-  "gfFbl3": {
-    "message": "Player names",
-    "translation": "玩家名称"
-  },
   "5Y1AnD": {
     "message": "Playmat",
     "translation": "对战垫"
@@ -6309,10 +6305,18 @@
     "message": "Remove your decks and settings from this device",
     "translation": "从此设备上移除你的卡组和设置"
   },
+  "2wxgft": {
+    "message": "Rename",
+    "translation": "重命名"
+  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "重命名"
+  },
+  "oq1VDm": {
+    "message": "Rename {shown}",
+    "translation": "重命名{shown}"
   },
   "ftWMve": {
     "message": "Repeat Ball",

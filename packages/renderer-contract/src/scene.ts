@@ -1213,6 +1213,9 @@ export const createBoardScene = (
             : (view.players[zone.ownerId]?.displayName ??
                 t({ message: 'Player', context: 'unnamed seat' }))
         ),
+        ...(region.countLabel.nameRoomPx
+          ? { nameRoomPx: region.countLabel.nameRoomPx }
+          : {}),
       });
     }
     const pileTopIndex = pile

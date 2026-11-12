@@ -82,7 +82,7 @@ const overlaps = (
 /** Every card and zone the table paints, by its box on screen. */
 const tableBoxes = (page: Page) =>
   page
-    .locator('.ptcgsim-card, .ptcgsim-zone, .table-hand-pill')
+    .locator('.ptcgsim-card, .ptcgsim-zone, .table-hand-seat')
     .evaluateAll((nodes) =>
       nodes
         .map((node) => {

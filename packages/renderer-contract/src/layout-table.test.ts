@@ -1802,16 +1802,19 @@ describe('table layout (geometry v2)', () => {
             (candidate) => candidate.kind === 'hand'
           )!;
           const count = hand.countLabel!;
+          // The seat's name heads it where the strip spared the room.
+          const width = PILL.width + (count.nameRoomPx ?? 0);
           const pill: Rect = {
             x:
               count.horizontalAlign === 'left'
                 ? count.anchor.x
-                : count.anchor.x - PILL.width,
+                : count.anchor.x - width,
             y:
               count.verticalAlign === 'top'
                 ? count.anchor.y
                 : count.anchor.y - PILL.height,
-            ...PILL,
+            width,
+            height: PILL.height,
           };
           const label = `${width}x${height}${touch ? ' touch' : ''}${
             hideEmptyLostZone ? ' no Lost Zone' : ''
@@ -1864,7 +1867,12 @@ describe('table layout (geometry v2)', () => {
       const pill = region(snapshot, 'local', 'hand').countLabel!;
       expect(pill.horizontalAlign, label).toBe('left');
       expect(pill.anchor.x, label).toBeLessThanOrEqual(prizes.x + 0.01);
-      expect(hand.x, label).toBeLessThanOrEqual(pill.anchor.x + 72 + 0.01);
+      expect(hand.x, label).toBeLessThanOrEqual(
+        pill.anchor.x + 72 + (pill.nameRoomPx ?? 0) + 0.01
+      );
+      // The name is in the pill on a wide window; a portrait phone's hand
+      // keeps its strip and sets the name beside the pill (2026-11-12).
+      expect(pill.nameRoomPx ?? 0, label).toBe(width < 500 ? 0 : 96);
       const mat = region(snapshot, 'local', 'deck').physicalDeclaredBounds;
       expect(hand.x + hand.width, label).toBeGreaterThanOrEqual(
         Math.min(mat.x + mat.width, width - 12) - 0.01

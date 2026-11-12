@@ -308,6 +308,11 @@ export interface BoardLayoutCountLabel {
   readonly verticalAlign: 'top' | 'bottom';
   /** v1 `clamp(10px, 4vh, 20px)` resolved against the player frame. */
   readonly fontSizePx: number;
+  /**
+   * A table hand's: the room its pill keeps for the seat's name before
+   * the count (layout-table's HAND_PILL_NAME_MAX_PX); 0, none to spare.
+   */
+  readonly nameRoomPx?: number;
 }
 
 export interface BoardPlayerLayout {

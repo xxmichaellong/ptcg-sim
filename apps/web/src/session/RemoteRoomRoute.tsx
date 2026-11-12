@@ -1,4 +1,3 @@
-import { savePlayerName } from './save-player-name.js';
 import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -1159,24 +1158,6 @@ export const RemoteRoomRoute = ({
               menu={menu}
               darkMode={effectivePreferences.darkMode}
               onDarkModeChange={setDarkMode}
-              playerNames={(state.view?.playerOrder ?? []).flatMap((id) => {
-                const player = state.view?.players[id];
-                return player
-                  ? [
-                      {
-                        id,
-                        name: player.displayName,
-                        editable:
-                          !replaying &&
-                          runtime.session.getSnapshot().phase === 'ready' &&
-                          state.view?.viewer.kind === 'player' &&
-                          (solo || state.view.viewer.playerId === id),
-                        onChange: (displayName: string) =>
-                          savePlayerName(runtime.session, id, displayName),
-                      },
-                    ]
-                  : [];
-              })}
               onEditCoin={() => {
                 if (boardCommands.current) boardCommands.current.editCoin();
                 else void editBrowserCoin();

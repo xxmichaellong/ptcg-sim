@@ -6,6 +6,8 @@ import {
   closeSheet,
   dismissWelcome,
   openSettings,
+  renameSeat,
+  seatName,
 } from './support/table-shell.js';
 for (const viewport of [
   { width: 1440, height: 900 },
@@ -124,21 +126,13 @@ for (const viewport of [
         'background-image',
         /data:image\/svg/
       );
+      // Each seat is renamed from its name on the table (2026-11-12).
+      await renameSeat(page, 'local', 'Michael');
+      await renameSeat(page, 'opponent', 'Practice');
       await openSettings(page);
-      const p1 = page.getByRole('textbox', {
-          name: 'Name for P1',
-          exact: true,
-        }),
-        p2 = page.getByRole('textbox', { name: 'Name for P2', exact: true });
-      await p1.fill('Michael');
-      await p1.press('Enter');
-      await p2.fill('Practice');
-      await p2.press('Enter');
       await closeSheet(page);
-      await openSettings(page);
-      await expect(p1).toHaveValue('Michael');
-      await expect(p2).toHaveValue('Practice');
-      await closeSheet(page);
+      await expect(seatName(page, 'local')).toHaveText('Michael');
+      await expect(seatName(page, 'opponent')).toHaveText('Practice');
       await openPlayOnline(page);
       await expect(page.locator('#playOnlineSheet')).toBeVisible();
       await expect(page.locator('#pasteInvitationButton')).toHaveCount(0);

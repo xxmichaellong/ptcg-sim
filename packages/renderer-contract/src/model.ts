@@ -313,6 +313,11 @@ export interface ZoneCountSceneNode {
   readonly label: string;
   /** What the badge's tooltip says: "47 cards in your deck". */
   readonly hint: string;
+  /**
+   * A table hand's: the room its pill keeps for the seat's name before the
+   * count (BoardLayoutCountLabel's); 0, none to spare.
+   */
+  readonly nameRoomPx?: number;
 }
 
 export interface BoardScenePlayerFrame {

@@ -186,9 +186,37 @@ textarea {
   .ptcgsim-zone-count--badge.ptcgsim-zone-count-hand {
   visibility: hidden;
 }
-.board-spike-host[data-geometry='2'] .table-hand-pill {
+/* The pill and, where it lies beside it, the seat's name: placed together
+   where the table counts the hand (TableHandPill). */
+.board-spike-host[data-geometry='2'] .table-hand-seat {
   --table-hand-tint: var(--color-you);
+  /* The seat's name in its colour, a little toward the text's for the
+     contrast on either table. */
+  --table-hand-ink: color-mix(
+    in oklab,
+    var(--color-you) 80%,
+    var(--color-text)
+  );
 
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  pointer-events: none;
+  z-index: var(--table-layer-rail);
+}
+.board-spike-host[data-geometry='2'] .table-hand-seat--opponent {
+  --table-hand-ink: color-mix(
+    in oklab,
+    var(--color-opponent) 80%,
+    var(--color-text)
+  );
+}
+/* Beside the pill, the name lies toward the window's edge. */
+.board-spike-host[data-geometry='2'] .table-hand-seat[data-edge='above'] {
+  flex-direction: column-reverse;
+}
+.board-spike-host[data-geometry='2'] .table-hand-pill {
   display: flex;
   align-items: stretch;
   height: 26px;
@@ -199,7 +227,77 @@ textarea {
   color: var(--color-text);
   box-shadow: var(--shadow-2);
   pointer-events: auto;
-  z-index: var(--table-layer-rail);
+}
+/* The seat's name (TableSeatName): at the pill's head, its rounded end,
+   in the room the table kept for it, a rule between it and the count. */
+.board-spike-host[data-geometry='2'] .table-hand-pill__name {
+  display: block;
+  min-width: 0;
+  max-width: var(--table-hand-name-room, 96px);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 8px 0 11px;
+  overflow: hidden;
+  border: 0;
+  border-right: 1px solid var(--color-border);
+  border-radius: 999px 0 0 999px;
+  background: transparent;
+  color: var(--table-hand-ink);
+  font: 600 12.5px/24px var(--font-ui, sans-serif);
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+/* Beside the pill: a small pill of its own, as wide as the corner it
+   shares with the count's. */
+.board-spike-host[data-geometry='2']
+  .table-hand-seat[data-name='beside']
+  > .table-hand-pill__name {
+  max-width: 72px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in oklab, var(--table-hand-tint) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--color-surface-2) 92%, transparent);
+  box-shadow: var(--shadow-1, none);
+  font-size: 11.5px;
+  line-height: 16px;
+}
+.board-spike-host[data-geometry='2'] button.table-hand-pill__name {
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .board-spike-host[data-geometry='2'] button.table-hand-pill__name:hover {
+    background: color-mix(in oklab, var(--table-hand-tint) 16%, transparent);
+  }
+}
+.board-spike-host[data-geometry='2']
+  button.table-hand-pill__name:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: -2px;
+}
+/* Refused by the room: what was typed waits, ringed, for another try. */
+.board-spike-host[data-geometry='2']
+  button.table-hand-pill__name[data-failed='true'] {
+  box-shadow: inset 0 0 0 1.5px var(--color-danger);
+}
+.board-spike-host[data-geometry='2'] .table-hand-pill__name-field,
+.board-spike-host[data-geometry='2']
+  .table-hand-seat[data-name='beside']
+  > .table-hand-pill__name-field {
+  /* Room to type, past the name's own while it is being written. */
+  max-width: 180px;
+  background: var(--color-surface-sunken);
+  color: var(--color-text);
+  outline: 2px solid var(--table-hand-ink);
+  outline-offset: -2px;
+  cursor: text;
+  user-select: text;
+}
+.board-spike-host[data-geometry='2']
+  .table-hand-pill__name-field[aria-invalid='true'] {
+  outline-color: var(--color-danger);
 }
 .board-spike-host[data-geometry='2'] .table-hand-pill__count {
   display: flex;
@@ -257,7 +355,7 @@ textarea {
     height: auto;
   }
 }
-.board-spike-host[data-geometry='2'] .table-hand-pill--opponent {
+.board-spike-host[data-geometry='2'] .table-hand-seat--opponent {
   --table-hand-tint: var(--color-opponent);
 }
 /* Solo's far hand: an eye between the count and Sort covers it, latched in

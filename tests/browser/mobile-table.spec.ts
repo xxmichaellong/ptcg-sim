@@ -169,11 +169,13 @@ test.describe('an upright phone', () => {
     await loadRandomDeck(page);
     await setUp(page);
 
-    // Both hands' count pills sit inside the window, not off its edges.
+    // Both hands' count pills, and their seats' names beside them, sit
+    // inside the window, not off its edges.
     const pills = page.locator('.table-hand-pill');
     await expect(pills).toHaveCount(2);
+    const seats = page.locator('.table-hand-seat');
     for (let index = 0; index < 2; index += 1) {
-      const box = (await pills.nth(index).boundingBox())!;
+      const box = (await seats.nth(index).boundingBox())!;
       const size = page.viewportSize()!;
       expect(box.x).toBeGreaterThanOrEqual(0);
       expect(box.y).toBeGreaterThanOrEqual(0);

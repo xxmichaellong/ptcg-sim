@@ -32,6 +32,7 @@ import {
   oncePerGameTooltip,
 } from './OncePerGameTile.js';
 import { TableRail, type RailAction } from './rail/TableRail.js';
+import { TableSeatName } from './TableSeatName.js';
 import type { ActionMenuEntry } from '../ui/ActionMenu.js';
 import { Tooltip } from '../ui/Tooltip.js';
 
@@ -345,6 +346,35 @@ export interface HandCover {
   readonly onChange: (hidden: boolean) => void;
 }
 
+/**
+ * Each seat's name on its hand's pill (2026-11-12): the seats the viewer
+ * may rename there (both at a Solo table, their own in a room; none while
+ * a replay plays or for a spectator), and how a new name is saved.
+ */
+export interface SeatNames {
+  readonly editablePlayerIds: readonly PlayerId[];
+  readonly onRename: (
+    playerId: PlayerId,
+    name: string
+  ) => void | boolean | Promise<boolean>;
+}
+
+/** A seat's name for its pill, and its renaming where the viewer may. */
+const seatFor = (
+  playerId: PlayerId,
+  name: string,
+  names: SeatNames | undefined
+) => {
+  const onRename = names?.onRename;
+  return names?.editablePlayerIds.includes(playerId) && onRename
+    ? {
+        name,
+        editable: true,
+        onRename: (value: string) => onRename(playerId, value),
+      }
+    : { name, editable: false };
+};
+
 /** The least room between a hand's pill and the table's edge. */
 const HAND_PILL_EDGE = 4;
 /**
@@ -358,7 +388,9 @@ const MAT_MARGIN_PX = 16;
 /**
  * The hand's count and its Sort as one pill where the table counts the
  * hand: [7 | ⇅]. Sort is the checkbox it always was (its id, role and
- * keys), drawn as the pill's latched-in end.
+ * keys), drawn as the pill's latched-in end. The seat's name heads it
+ * where the table kept it room ([Red | 7 | ⇅]), else sits beside it,
+ * toward the window's edge (a portrait phone keeps its hand's strip).
  */
 const TableHandPill = memo(function TableHandPill({
   count,
@@ -368,6 +400,7 @@ const TableHandPill = memo(function TableHandPill({
   sorted,
   onToggleHandSort,
   cover,
+  seat,
 }: {
   readonly count: TableHandCount;
   /** Where the table ends, short of a docked log. */
@@ -384,9 +417,25 @@ const TableHandPill = memo(function TableHandPill({
   readonly onToggleHandSort: LegacyBoardChromeActions['toggleHandSort'];
   /** The far hand at a Solo table: an eye that covers it. */
   readonly cover?: HandCover;
+  /** The seat's name, and whether the viewer may rename it here. */
+  readonly seat?: {
+    readonly name: string;
+    readonly editable: boolean;
+    readonly onRename?: (name: string) => void | boolean | Promise<boolean>;
+  };
 }) {
   const { t } = useLingui();
   const { node, playerId } = count;
+  const tipSide = node.side === 'local' ? 'top' : 'bottom';
+  const nameRoom = node.nameRoomPx ?? 0;
+  const name = seat ? (
+    <TableSeatName
+      name={seat.name}
+      editable={seat.editable}
+      {...(seat.onRename ? { onRename: seat.onRename } : {})}
+      side={tipSide}
+    />
+  ) : null;
   // Anchored exactly as the board anchors its count badges.
   const horizontal =
     node.horizontalAlign === 'left'
@@ -396,14 +445,15 @@ const TableHandPill = memo(function TableHandPill({
     node.verticalAlign === 'top'
       ? { top: node.anchor.y }
       : { bottom: `calc(100% - ${String(node.anchor.y)}px)` };
-  // The table keeps the pill's room past the hand's end, clear of the
-  // screen's edge and of the piles beside it (layout-table's handEndFor).
+  // The table keeps room for the pill and its name by the hand, clear of
+  // the screen's edge and of the piles beside it (layout-table's
+  // handEndFor).
   // Measured after layout, it is still nudged back inside the table (short
   // of a docked log) and off the zones as drawn, should a font or a tilt
   // make it reach them.
-  const pill = useRef<HTMLDivElement>(null);
+  const placed = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
-    const element = pill.current;
+    const element = placed.current;
     if (!element) return;
     const fit = (): void => {
       element.style.translate = '';
@@ -461,7 +511,14 @@ const TableHandPill = memo(function TableHandPill({
     };
     fit();
     globalThis.addEventListener('resize', fit);
-    return () => globalThis.removeEventListener('resize', fit);
+    // A name renamed (or being typed) changes its width.
+    const resized =
+      typeof ResizeObserver === 'function' ? new ResizeObserver(fit) : null;
+    resized?.observe(element);
+    return () => {
+      globalThis.removeEventListener('resize', fit);
+      resized?.disconnect();
+    };
   }, [
     node.anchor.x,
     node.anchor.y,
@@ -473,85 +530,99 @@ const TableHandPill = memo(function TableHandPill({
   ]);
   const sortId =
     playerSide === 'local' ? 'sortHandCheckbox' : 'oppSortHandCheckbox';
+  // Beside the pill, the name lies toward the window's edge: below the
+  // near hand's, above the far one's.
+  const beside = name !== null && nameRoom === 0;
   return (
     <div
-      ref={pill}
-      className={`table-hand-pill table-hand-pill--${playerSide}`}
-      data-hand-pill-player={playerId}
-      data-sorted={sorted ? 'true' : undefined}
+      ref={placed}
+      className={`table-hand-seat table-hand-seat--${playerSide}`}
+      data-name={name === null ? undefined : beside ? 'beside' : 'in-pill'}
+      data-edge={node.verticalAlign === 'top' ? 'below' : 'above'}
       style={{
         position: 'absolute',
         ...horizontal,
         ...vertical,
-        ...({ '--table-hand-tint': node.color } as CSSProperties),
+        ...({
+          '--table-hand-tint': node.color,
+          ...(nameRoom > 0
+            ? { '--table-hand-name-room': `${String(nameRoom)}px` }
+            : {}),
+        } as CSSProperties),
       }}
     >
-      <Tooltip
-        content={node.hint}
-        side={node.side === 'local' ? 'top' : 'bottom'}
-        tapToShow
+      <div
+        className={`table-hand-pill table-hand-pill--${playerSide}`}
+        data-hand-pill-player={playerId}
+        data-sorted={sorted ? 'true' : undefined}
       >
-        <span className="table-hand-pill__count" aria-hidden="true">
-          {node.count}
-        </span>
-      </Tooltip>
-      {cover ? (
-        <Tooltip
-          content={
-            cover.hidden ? t`Show opponent's hand` : t`Hide opponent's hand`
-          }
-          side={node.side === 'local' ? 'top' : 'bottom'}
-        >
-          <label
-            className="legacy-hand-sort legacy-hand-sort--toggle table-hand-pill__cover"
-            htmlFor="hideHandCheckbox"
-            data-player-side={playerSide}
-          >
-            <input
-              id="hideHandCheckbox"
-              type="checkbox"
-              checked={cover.hidden}
-              onChange={(event) => cover.onChange(event.currentTarget.checked)}
-            />
-            {cover.hidden ? (
-              <EyeSlashIcon aria-hidden="true" weight="bold" />
-            ) : (
-              <EyeIcon aria-hidden="true" weight="bold" />
-            )}
-            <span className="ds-visually-hidden">
-              <Trans>Hide opponent's hand</Trans>
-            </span>
-          </label>
+        {beside ? null : name}
+        <Tooltip content={node.hint} side={tipSide} tapToShow>
+          <span className="table-hand-pill__count" aria-hidden="true">
+            {node.count}
+          </span>
         </Tooltip>
-      ) : null}
-      {onToggleHandSort ? (
-        <Tooltip
-          content={
-            sorted ? t`Stop sorting hand` : t`Sort hand in decklist order`
-          }
-          side={node.side === 'local' ? 'top' : 'bottom'}
-        >
-          <label
-            className={`legacy-hand-sort legacy-hand-sort--toggle legacy-hand-sort--${playerSide} table-hand-pill__sort`}
-            htmlFor={sortId}
-            data-hand-sort-player={playerId}
-            data-player-side={playerSide}
+        {cover ? (
+          <Tooltip
+            content={
+              cover.hidden ? t`Show opponent's hand` : t`Hide opponent's hand`
+            }
+            side={node.side === 'local' ? 'top' : 'bottom'}
           >
-            <input
-              id={sortId}
-              type="checkbox"
-              checked={sorted}
-              onChange={(event) =>
-                onToggleHandSort(playerId, event.currentTarget.checked)
-              }
-            />
-            <SortAscendingIcon aria-hidden="true" weight="bold" />
-            <span className="ds-visually-hidden">
-              <Trans context="sort the hand">Sort</Trans>
-            </span>
-          </label>
-        </Tooltip>
-      ) : null}
+            <label
+              className="legacy-hand-sort legacy-hand-sort--toggle table-hand-pill__cover"
+              htmlFor="hideHandCheckbox"
+              data-player-side={playerSide}
+            >
+              <input
+                id="hideHandCheckbox"
+                type="checkbox"
+                checked={cover.hidden}
+                onChange={(event) =>
+                  cover.onChange(event.currentTarget.checked)
+                }
+              />
+              {cover.hidden ? (
+                <EyeSlashIcon aria-hidden="true" weight="bold" />
+              ) : (
+                <EyeIcon aria-hidden="true" weight="bold" />
+              )}
+              <span className="ds-visually-hidden">
+                <Trans>Hide opponent's hand</Trans>
+              </span>
+            </label>
+          </Tooltip>
+        ) : null}
+        {onToggleHandSort ? (
+          <Tooltip
+            content={
+              sorted ? t`Stop sorting hand` : t`Sort hand in decklist order`
+            }
+            side={node.side === 'local' ? 'top' : 'bottom'}
+          >
+            <label
+              className={`legacy-hand-sort legacy-hand-sort--toggle legacy-hand-sort--${playerSide} table-hand-pill__sort`}
+              htmlFor={sortId}
+              data-hand-sort-player={playerId}
+              data-player-side={playerSide}
+            >
+              <input
+                id={sortId}
+                type="checkbox"
+                checked={sorted}
+                onChange={(event) =>
+                  onToggleHandSort(playerId, event.currentTarget.checked)
+                }
+              />
+              <SortAscendingIcon aria-hidden="true" weight="bold" />
+              <span className="ds-visually-hidden">
+                <Trans context="sort the hand">Sort</Trans>
+              </span>
+            </label>
+          </Tooltip>
+        ) : null}
+      </div>
+      {beside ? name : null}
     </div>
   );
 });
@@ -577,6 +648,7 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
   oncePerGameMarkers = BOTH_MARKERS,
   handCounts,
   handCover,
+  seatNames,
 }: {
   readonly layout: BoardLayoutSnapshot;
   /** The Stadium as painted, including assembled or rotated pieces. */
@@ -617,6 +689,11 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
    * from the near seat (and shows it again).
    */
   readonly handCover?: HandCover;
+  /**
+   * Each seat's name heads its hand's pill; given, the viewer may rename
+   * these seats there.
+   */
+  readonly seatNames?: SeatNames;
 }) {
   const pills =
     layout.geometryVersion === 2 && handCounts ? handCounts : undefined;
@@ -823,6 +900,15 @@ export const LegacyBoardChrome = memo(function LegacyBoardChrome({
             onToggleHandSort={actions.toggleHandSort}
             {...(handCover?.playerId === count.playerId
               ? { cover: handCover }
+              : {})}
+            {...(players[count.playerId]
+              ? {
+                  seat: seatFor(
+                    count.playerId,
+                    players[count.playerId]!.displayName,
+                    seatNames
+                  ),
+                }
               : {})}
           />
         ) : null

@@ -54,6 +54,7 @@ import {
 } from 'react';
 
 import { ROOM_DEFAULT_PREFERENCES } from './room-preferences.js';
+import { savePlayerName } from './save-player-name.js';
 import type { BoardSessionControllerState } from '../board/BoardSessionController.js';
 import { TableCoins } from '../board/TableCoin.js';
 import { tableCoinSpots } from '../board/table-coin.js';
@@ -1776,6 +1777,27 @@ export const RemoteSessionBoard = ({
           (count) => count.playerId !== boardState?.scene?.bottomPlayerId
         )?.playerId
       : undefined;
+  // Each seat's name heads its hand's pill (2026-11-12): renamed there by
+  // whoever may act for it, as the coin is edited (both seats at a Solo
+  // table, the viewer's own in a room; none in a replay or for a
+  // spectator), through the same save as Settings' fields used.
+  const renamablePlayerIds = useMemo(
+    (): readonly PlayerId[] =>
+      playerActions && views?.viewer.kind === 'player'
+        ? roomMode === 'solo'
+          ? views.playerOrder
+          : [views.viewer.playerId]
+        : [],
+    [playerActions, roomMode, views?.playerOrder, views?.viewer]
+  );
+  const seatNames = useMemo(
+    () => ({
+      editablePlayerIds: renamablePlayerIds,
+      onRename: (playerId: PlayerId, name: string) =>
+        savePlayerName(session, playerId, name),
+    }),
+    [renamablePlayerIds, session]
+  );
   const handCover = useMemo(
     () =>
       farHandPlayerId === undefined
@@ -1979,6 +2001,7 @@ export const RemoteSessionBoard = ({
               oncePerGameMarkers={shownMarkers}
               handCounts={handCounts}
               {...(handCover ? { handCover } : {})}
+              seatNames={seatNames}
             />
           ) : null}
           {layout ? (

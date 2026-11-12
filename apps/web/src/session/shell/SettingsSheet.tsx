@@ -1,7 +1,3 @@
-import {
-  PlayerNameControls,
-  type PlayerNameChoice,
-} from '../PlayerNameControls.js';
 import { Trans, useLingui } from '@lingui/react/macro';
 import type { Icon } from '@phosphor-icons/react';
 import { ArrowsDownUpIcon } from '@phosphor-icons/react/dist/csr/ArrowsDownUp';
@@ -160,7 +156,6 @@ export interface SettingsSheetProps {
   readonly onDarkModeChange: (enabled: boolean) => void;
   /** Opens the live table coin editor, with a personal-default fallback. */
   readonly onEditCoin?: () => void;
-  readonly playerNames?: readonly PlayerNameChoice[];
   /** What lies around the table, and how it changes. */
   readonly background: BackgroundChoice;
   /**
@@ -1077,7 +1072,6 @@ export const SettingsSheet = ({
   darkMode,
   onDarkModeChange,
   onEditCoin,
-  playerNames,
   background,
   boardFlip,
 }: SettingsSheetProps) => {
@@ -1123,11 +1117,6 @@ export const SettingsSheet = ({
         <>
           {' '}
           <AccountRow navigate={pages.navigate} />
-          {playerNames?.length ? (
-            <SettingsBlock>
-              <PlayerNameControls players={playerNames} />
-            </SettingsBlock>
-          ) : null}
           <HomePage context={context} menu={menu} boardFlip={boardFlip} />
         </>
       ) : top === 'signIn' ? (

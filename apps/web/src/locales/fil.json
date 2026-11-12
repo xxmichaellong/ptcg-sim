@@ -5076,9 +5076,9 @@
     "message": "Name every Ability and attack.",
     "translation": "Pangalanan ang bawat Ability at attack."
   },
-  "fdwra1": {
-    "message": "Name for {seat}",
-    "translation": "Pangalan para sa {seat}"
+  "NsfBlM": {
+    "message": "Name for {name}",
+    "translation": "Pangalan para sa {name}"
   },
   "nkyXf5": {
     "message": "Name or number",
@@ -5836,10 +5836,6 @@
     "context": "unnamed seat",
     "translation": "Player"
   },
-  "gfFbl3": {
-    "message": "Player names",
-    "translation": "Mga pangalan ng manlalaro"
-  },
   "5Y1AnD": {
     "message": "Playmat",
     "translation": "Playmat"
@@ -6309,10 +6305,18 @@
     "message": "Remove your decks and settings from this device",
     "translation": "Alisin ang mga deck at setting mo sa device na ito"
   },
+  "2wxgft": {
+    "message": "Rename",
+    "translation": "Palitan ang pangalan"
+  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "Palitan ang pangalan"
+  },
+  "oq1VDm": {
+    "message": "Rename {shown}",
+    "translation": "Palitan ang pangalan ng {shown}"
   },
   "ftWMve": {
     "message": "Repeat Ball",

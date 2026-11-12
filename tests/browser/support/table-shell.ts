@@ -134,6 +134,30 @@ export const closeSheet = async (page: Page): Promise<void> => {
   await tableSettled(page);
 };
 
+/**
+ * A seat's name on its hand's pill (2026-11-12): the near seat's
+ * (`local`, the viewer's own) or the far one's. A button where the viewer
+ * may rename it, its field while being renamed.
+ */
+export const seatName = (page: Page, side: 'local' | 'opponent'): Locator =>
+  page.locator(`.table-hand-seat--${side} .table-hand-pill__name`);
+
+/** Renames a seat from its name on the table, and waits for it to show. */
+export const renameSeat = async (
+  page: Page,
+  side: 'local' | 'opponent',
+  name: string
+): Promise<void> => {
+  await seatName(page, side).click();
+  const field = page.locator(
+    `.table-hand-seat--${side} .table-hand-pill__name-field`
+  );
+  await field.fill(name);
+  await field.press('Enter');
+  await expect(field).toHaveCount(0);
+  await expect(seatName(page, side)).toHaveText(name);
+};
+
 /** The deck screen, from the menu. */
 export const openDeck = async (page: Page): Promise<void> => {
   await chooseMenuItem(page, 'deckImportButton');

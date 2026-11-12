@@ -5076,9 +5076,9 @@
     "message": "Name every Ability and attack.",
     "translation": "Her Yeteneğe ve saldırıya ad ver."
   },
-  "fdwra1": {
-    "message": "Name for {seat}",
-    "translation": "{seat} için ad"
+  "NsfBlM": {
+    "message": "Name for {name}",
+    "translation": "{name} için ad"
   },
   "nkyXf5": {
     "message": "Name or number",
@@ -5836,10 +5836,6 @@
     "context": "unnamed seat",
     "translation": "Oyuncu"
   },
-  "gfFbl3": {
-    "message": "Player names",
-    "translation": "Oyuncu adları"
-  },
   "5Y1AnD": {
     "message": "Playmat",
     "translation": "Oyun matı"
@@ -6309,10 +6305,18 @@
     "message": "Remove your decks and settings from this device",
     "translation": "Destelerini ve ayarlarını bu cihazdan kaldır"
   },
+  "2wxgft": {
+    "message": "Rename",
+    "translation": "Yeniden adlandır"
+  },
   "jionWu": {
     "message": "Rename",
     "context": "menu item",
     "translation": "Yeniden adlandır"
+  },
+  "oq1VDm": {
+    "message": "Rename {shown}",
+    "translation": "{shown} adını değiştir"
   },
   "ftWMve": {
     "message": "Repeat Ball",

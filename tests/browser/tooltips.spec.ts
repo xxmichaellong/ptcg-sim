@@ -47,7 +47,11 @@ test('icon controls name themselves, with their keys, on hover', async ({
   // The hand's Sort, at the end of its count pill (which shows the count
   // alone, PX-046).
   const sort = '.table-hand-pill--local .table-hand-pill__sort';
-  await expect(page.locator('.table-hand-pill--local')).toHaveText('0Sort');
+  // The seat's name heads it (2026-11-12).
+  await expect(
+    page.locator('.table-hand-pill--local .table-hand-pill__count')
+  ).toHaveText('0');
+  await expect(page.locator('.table-hand-pill--local')).toHaveText(/0Sort$/u);
   expect(
     await page
       .locator('.table-hand-pill--local .table-hand-pill__count')
