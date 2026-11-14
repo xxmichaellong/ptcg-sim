@@ -1237,6 +1237,7 @@ export const RemoteRoomRoute = ({
             {/* Where friends see this tab (ADR-055): an online room, as
                 its player or a spectator, or nowhere. */}
             <FriendsWhere
+              runtime={runtime}
               where={
                 !solo &&
                 !replaying &&

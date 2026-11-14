@@ -269,14 +269,14 @@ export const replayRecordIsGame = (record: ReplayRecord): boolean =>
  * The seat a live, claimed player session holds, found by its resume
  * token's digest (as a continuation's requester is, but Solo too).
  */
-export const seatOfResumeToken = async (
+export const sessionOfResumeToken = async (
   snapshot: RoomAuthoritySnapshot,
   resumeToken: unknown,
   crypto: {
     readonly digestCapability: (value: string) => Promise<string>;
     readonly equalDigest: (left: string, right: string) => boolean;
   }
-): Promise<string | undefined> => {
+): Promise<RoomAuthoritySnapshot['sessions'][string] | undefined> => {
   if (
     typeof resumeToken !== 'string' ||
     resumeToken.length < 32 ||
@@ -292,11 +292,17 @@ export const seatOfResumeToken = async (
   );
   if (matches.length !== 1) return undefined;
   const session = matches[0]!;
-  if (!session.active || session.viewer.kind !== 'player') return undefined;
-  const playerId = session.viewer.playerId;
-  return snapshot.admission?.seats[playerId]?.claimedSessionId === session.id
-    ? playerId
-    : undefined;
+  if (!session.active) return undefined;
+  if (session.viewer.kind === 'player' && snapshot.admission?.seats[session.viewer.playerId]?.claimedSessionId !== session.id) return undefined;
+  return session;
+};
+
+/** A claimed player seat, for filing games. */
+export const seatOfResumeToken = async (
+  ...args: Parameters<typeof sessionOfResumeToken>
+): Promise<string | undefined> => {
+  const session = await sessionOfResumeToken(...args);
+  return session?.viewer.kind === 'player' ? session.viewer.playerId : undefined;
 };
 
 /** The storage the archive uses: the Durable Object's, or a test's. */

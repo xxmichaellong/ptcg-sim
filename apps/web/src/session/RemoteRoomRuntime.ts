@@ -98,10 +98,7 @@ export class RemoteRoomRuntime {
       resumeToken: connection.resumeToken,
       ...roomCodes,
     });
-    this.seatResumeToken =
-      connection.requestedRole === 'player'
-        ? connection.resumeToken
-        : undefined;
+    this.seatResumeToken = connection.resumeToken;
     this.continuationOptions = continuation;
     this.continuationSource =
       connection.requestedRole === 'player'
@@ -181,18 +178,23 @@ export class RemoteRoomRuntime {
    * games at this seat are then filed to the account signed in now
    * (ADR-053). The room reads the account from the session cookie itself.
    */
-  async tellSeatAccount(): Promise<void> {
-    if (this.disposed || !this.seatResumeToken) return;
+  async tellSeatAccount(): Promise<boolean> {
+    if (this.disposed || !this.seatResumeToken) return false;
     try {
-      await fetch(`/v2/rooms/${encodeURIComponent(this.roomCode)}/account`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeToken: this.seatResumeToken }),
-        credentials: 'same-origin',
-        cache: 'no-store',
-      });
+      const response = await fetch(
+        `/v2/rooms/${encodeURIComponent(this.roomCode)}/account`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resumeToken: this.seatResumeToken }),
+          credentials: 'same-origin',
+          cache: 'no-store',
+        }
+      );
+      return response.ok;
     } catch {
       // The next connection tells the room anyway.
+      return false;
     }
   }
 

@@ -1,7 +1,11 @@
 import { t } from '@lingui/core/macro';
 
 import { AccountRequestError } from '../account/account-api.js';
-import { refreshAccount } from '../account/account-state.js';
+import {
+  refreshAccount,
+  accountSnapshot,
+  subscribeAccount,
+} from '../account/account-state.js';
 import { requestRoomJoin } from '../session/room-join-request.js';
 import { confirmAction } from '../ui/dialog-requests.js';
 import { toast, toastManager } from '../ui/toast.js';
@@ -12,7 +16,7 @@ import {
   type InviteKind,
   type InviteMessage,
 } from './friends-api.js';
-import { currentWhere, onLiveMessage } from './friends-live.js';
+import { currentWhere, onLiveMessage, subscribeWhere } from './friends-live.js';
 import { presenceOf, subscribePresence } from './friends-presence.js';
 
 /**
@@ -26,7 +30,10 @@ import { presenceOf, subscribePresence } from './friends-presence.js';
 const ASK_ANSWERED_WITHIN_MS = 5 * 60 * 1000;
 
 /** Friends this tab asked to join, and when. */
-const asked = new Map<string, number>();
+const asked = new Map<string, { at: number; context: string }>();
+const context = (): string =>
+  JSON.stringify([accountSnapshot().account?.id, currentWhere()]);
+const asksShowing = new Set<string>();
 
 /** The invites showing, by sender: their room, to drop when they leave. */
 const showing = new Map<
@@ -45,6 +52,7 @@ export const goToRoom = async (
   role: 'player' | 'spectator',
   name: string
 ): Promise<void> => {
+  const startedIn = context();
   const where = currentWhere();
   if (where.kind === 'room' && where.room === room) return;
   if (where.kind === 'room') {
@@ -56,7 +64,7 @@ export const goToRoom = async (
       confirmLabel: t`Leave room`,
       cancelLabel: t({ message: 'Stay', context: 'stay in the room' }),
     });
-    if (!leave) return;
+    if (!leave || context() !== startedIn) return;
   }
   requestRoomJoin({ code: room, role });
 };
@@ -88,13 +96,18 @@ export const inviteFriend = async (
   kind: InviteKind,
   answering = false
 ): Promise<void> => {
+  const startedIn = context();
   try {
     let outcome = await postInvite(friend.id, kind, answering);
+    if (context() !== startedIn) return;
     if (outcome === 'slow_down') {
       await new Promise((resolve) => setTimeout(resolve, 1100));
+      if (context() !== startedIn) return;
       outcome = await postInvite(friend.id, kind, answering);
     }
-    if (kind === 'ask' && outcome === 'sent') asked.set(friend.id, Date.now());
+    if (context() !== startedIn) return;
+    if (kind === 'ask' && outcome === 'sent')
+      asked.set(friend.id, { at: Date.now(), context: startedIn });
     // Letting in says nothing more: the asker joins.
     if (!answering || outcome !== 'sent') {
       toast({
@@ -117,15 +130,22 @@ export const inviteFriend = async (
 
 const received = (message: InviteMessage): void => {
   const { from } = message;
-  if (Date.now() > message.expiresAt) return;
+  if (!accountSnapshot().account || Date.now() > message.expiresAt) return;
   if (message.kind === 'ask') {
+    const askedIn = context();
+    const id = `friend-ask-${from.id}`;
+    asksShowing.add(id);
     toast({
       id: `friend-ask-${from.id}`,
       title: t`${from.name} wants to join you`,
       timeout: 60_000,
       action: {
         label: t({ message: 'Let in', context: 'let a friend into the room' }),
-        onAction: () => void inviteFriend(from, 'invite', true),
+        onAction: () => {
+          asksShowing.delete(id);
+          if (context() === askedIn && Date.now() < message.expiresAt)
+            void inviteFriend(from, 'invite', true);
+        },
       },
     });
     return;
@@ -137,7 +157,8 @@ const received = (message: InviteMessage): void => {
   if (
     message.answering &&
     askedAt &&
-    Date.now() - askedAt < ASK_ANSWERED_WITHIN_MS
+    askedAt.context === context() &&
+    Date.now() - askedAt.at < ASK_ANSWERED_WITHIN_MS
   ) {
     asked.delete(from.id);
     toast({
@@ -149,6 +170,7 @@ const received = (message: InviteMessage): void => {
     return;
   }
   const id = inviteNoticeId(from.id);
+  const invitedIn = context();
   showing.set(from.id, { room, id });
   toast({
     id,
@@ -158,6 +180,7 @@ const received = (message: InviteMessage): void => {
       label: t({ message: 'Join', context: 'join a friend’s room' }),
       onAction: () => {
         showing.delete(from.id);
+        if (context() !== invitedIn || Date.now() >= message.expiresAt) return;
         void goToRoom(room, 'player', from.name);
       },
     },
@@ -170,6 +193,22 @@ let started = false;
 export const startFriendInvites = (): void => {
   if (started) return;
   started = true;
+  const clear = () => {
+    asked.clear();
+    for (const invite of showing.values()) toastManager.close(invite.id);
+    showing.clear();
+    for (const id of asksShowing) toastManager.close(id);
+    asksShowing.clear();
+  };
+  let account = accountSnapshot().account?.id;
+  subscribeAccount(() => {
+    const next = accountSnapshot().account?.id;
+    if (next !== account) {
+      account = next;
+      clear();
+    }
+  });
+  subscribeWhere(clear);
   onLiveMessage((data) => {
     const message = readInviteMessage(data);
     if (message) received(message);

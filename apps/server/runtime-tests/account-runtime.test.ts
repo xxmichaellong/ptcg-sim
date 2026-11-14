@@ -104,21 +104,22 @@ describe('accounts, through the Worker', () => {
     const who = `Brock ${String(Date.now())}`;
     expect(await phone.signIn(who)).toBe('signed_in');
     expect(await laptop.signIn(who)).toBe('signed_in');
+    const expectedAccountId = (await phone.me()).account!.id;
     const body = JSON.stringify({ id: 'deck-1', name: 'Onix Rock' });
-    const pushed = await phone.send('/v2/account/sync', 'POST', {
+    const pushed = await phone.send('/v2/account/sync', 'POST', { expectedAccountId,
       since: 0,
       changes: [{ kind: 'deck', id: 'deck-1', base: 0, changedAt: 1, body }],
     });
     expect(pushed.status).toBe(200);
     const pulled = (await (
-      await laptop.send('/v2/account/sync', 'POST', { since: 0, changes: [] })
+      await laptop.send('/v2/account/sync', 'POST', { expectedAccountId, since: 0, changes: [] })
     ).json()) as { rev: number; records: { id: string; body: string }[] };
     expect(pulled.records).toEqual([
       expect.objectContaining({ id: 'deck-1', body }),
     ]);
     // A stale change is answered with the newer one, not taken.
     const stale = (await (
-      await laptop.send('/v2/account/sync', 'POST', {
+      await laptop.send('/v2/account/sync', 'POST', { expectedAccountId,
         since: 0,
         changes: [{ kind: 'deck', id: 'deck-1', base: 0, changedAt: 2, body }],
       })

@@ -18,7 +18,9 @@ const hub = () => {
   const pushes: { to: string; from: string; view: PresenceView }[] = [];
   const live = new Set<string>();
   let checks = 0;
+  const denied = new Set<string>();
   const presence = new PresenceHub(sql, {
+    allows: async (account, viewer) => !denied.has(`${account}:${viewer}`),
     push: async (to, from, view) => {
       pushes.push({ to, from, view });
     },
@@ -27,7 +29,7 @@ const hub = () => {
       return live.has(account);
     },
   });
-  return { sql, presence, pushes, live, checks: () => checks };
+  return { sql, presence, pushes, live, denied, checks: () => checks };
 };
 
 describe('presence hub', () => {
@@ -88,7 +90,7 @@ describe('presence hub', () => {
       NOW + 100
     );
     expect(pushes.at(-1)?.view).toEqual({ state: 'offline', lastSeen: NOW + 100 });
-    expect(await presence.read([DAWN], NOW + 200)).toEqual({
+    expect(await presence.read(IRIS, [DAWN], NOW + 200)).toEqual({
       [DAWN]: { state: 'offline', lastSeen: NOW + 100 },
     });
     // It still hears its friends: it is online, only unseen.
@@ -106,17 +108,26 @@ describe('presence hub', () => {
     await presence.update(MAY, { state: 'online', hidden: false }, [], NOW);
     live.add(DAWN);
     const later = NOW + STALE_AFTER_MS + 1;
-    expect(await presence.read([DAWN, MAY], later)).toEqual({
+    expect(await presence.read(IRIS, [DAWN, MAY], later)).toEqual({
       [DAWN]: { state: 'online' },
       // May's tabs closed without a goodbye: offline since her last change.
       [MAY]: { state: 'offline', lastSeen: NOW },
     });
     expect(checks()).toBe(2);
     // Found live a moment ago: not asked again so soon.
-    await presence.read([DAWN], later + 1000);
+    await presence.read(IRIS, [DAWN], later + 1000);
     expect(checks()).toBe(2);
-    await presence.read([DAWN], later + VERIFIED_FOR_MS + 1);
+    await presence.read(IRIS, [DAWN], later + VERIFIED_FOR_MS + 1);
     expect(checks()).toBe(3);
+  });
+
+  it('hides a blocked account from a stale one-sided friendship', async () => {
+    const {presence,denied} = hub();
+    await presence.update(DAWN,{state:'playing',room:'K7PQ',hidden:false},[MAY],NOW);
+    expect(await presence.read(MAY,[DAWN],NOW)).toEqual({[DAWN]:{state:'playing',room:'K7PQ'}});
+    denied.add(`${DAWN}:${MAY}`);
+    expect(await presence.read(MAY,[DAWN],NOW+1)).toEqual({[DAWN]:{state:'offline'}});
+    expect(await presence.update(MAY,{state:'online',hidden:false},[DAWN],NOW+2)).toEqual({[DAWN]:{state:'offline'}});
   });
 
   it('forgets a deleted account', async () => {
@@ -124,7 +135,7 @@ describe('presence hub', () => {
     await presence.update(DAWN, { state: 'online', hidden: false }, [], NOW);
     presence.forget(DAWN);
     expect(sql.count('presence')).toBe(0);
-    expect(await presence.read([DAWN], NOW)).toEqual({
+    expect(await presence.read(IRIS, [DAWN], NOW)).toEqual({
       [DAWN]: { state: 'offline' },
     });
   });

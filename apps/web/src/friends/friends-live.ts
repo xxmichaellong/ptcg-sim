@@ -1,6 +1,11 @@
 import { useEffect, useSyncExternalStore } from 'react';
 
-import { accountSnapshot, subscribeAccount } from '../account/account-state.js';
+import type { RemoteRoomRuntime } from '../session/RemoteRoomRuntime.js';
+import {
+  accountSnapshot,
+  subscribeAccount,
+  useAccount,
+} from '../account/account-state.js';
 import { readPresence, readPresenceMap } from './friends-api.js';
 import {
   clearPresence,
@@ -64,6 +69,13 @@ const sameWhere = (left: LiveWhere, right: LiveWhere): boolean =>
       left.room === right.room));
 
 const whereListeners = new Set<() => void>();
+
+export const subscribeWhere = (listener: () => void): (() => void) => {
+  whereListeners.add(listener);
+  return () => {
+    whereListeners.delete(listener);
+  };
+};
 
 /** Where this tab is now: the room route says, as it changes. */
 export const reportWhere = (next: LiveWhere): void => {
@@ -168,14 +180,28 @@ const connect = (): void => {
  */
 export const FriendsWhere = ({
   where: next,
+  runtime,
 }: {
+  readonly runtime: RemoteRoomRuntime;
   readonly where: LiveWhere;
 }): null => {
+  const { account } = useAccount();
+  const accountId = account?.id;
   const role = next.kind === 'room' ? next.role : undefined;
   const room = next.kind === 'room' ? next.room : undefined;
   useEffect(() => {
-    reportWhere(room && role ? { kind: 'room', role, room } : { kind: 'none' });
-  }, [role, room]);
+    let active = true;
+    reportWhere({ kind: 'none' });
+    if (accountId && room && role) {
+      // Bind after sign-in before the live line can advertise this room.
+      void runtime.tellSeatAccount().then((bound) => {
+        if (active && bound) reportWhere({ kind: 'room', role, room });
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [runtime, accountId, role, room]);
   useEffect(() => () => reportWhere({ kind: 'none' }), []);
   return null;
 };

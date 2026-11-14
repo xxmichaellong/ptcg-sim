@@ -133,6 +133,8 @@ const device = (account: ReturnType<typeof fakeAccount>) => {
     now: () => (clock += 1),
   };
   return {
+    environment,
+    storage,
     decks,
     settings,
     sync: (pull = true) => syncOnce('a_account', environment, { pull }),
@@ -153,6 +155,40 @@ const device = (account: ReturnType<typeof fakeAccount>) => {
     },
   };
 };
+
+it('abandons a response after the signed-in account changes', async () => {
+  const account = fakeAccount();
+  await account.send({
+    expectedAccountId: 'first',
+    since: 0,
+    changes: [
+      {
+        kind: 'deck',
+        id: 'private',
+        base: 0,
+        changedAt: 1,
+        body: JSON.stringify(deck('private', 'Private')),
+      },
+    ],
+  });
+  const local = device(account);
+  let current = true;
+  let observed: string | undefined;
+  const outcome = await syncOnce('first', {
+    ...local.environment,
+    isCurrent: () => current,
+    send: async (request) => {
+      observed = request.expectedAccountId;
+      const answer = await account.send(request);
+      current = false;
+      return answer;
+    },
+  });
+  expect(observed).toBe('first');
+  expect(outcome).toBeUndefined();
+  expect(local.decks.size).toBe(0);
+  expect(local.storage.size).toBe(0);
+});
 
 describe('account sync on a device', () => {
   it('brings a deck made on one device to the other', async () => {

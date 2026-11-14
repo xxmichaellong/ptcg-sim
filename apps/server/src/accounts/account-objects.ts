@@ -56,6 +56,7 @@ import {
   samePresence,
   tabsPresence,
   type LiveAttachment,
+  type LiveWhere,
 } from './account-live.js';
 import { readSessionToken, sha256Hex } from './account-session.js';
 import {
@@ -68,6 +69,8 @@ import {
 interface AccountObjectEnv {
   readonly PTCG_ACCOUNT: DurableObjectNamespace<PtcgAccount>;
   readonly PTCG_PRESENCE: DurableObjectNamespace<PtcgPresence>;
+  readonly PTCG_ROOM: { getByName(name: string): { hasAccountPresence(account: string, code: string, role: 'player' | 'spectator'): Promise<boolean> } };
+  readonly PTCG_ROOM_CODE: { getByName(name: string): { resolve(now: number): Promise<string | null> } };
 }
 
 /** The one presence hub (ADR-055). */
@@ -116,17 +119,29 @@ export class PtcgAccount
     return this.objects.PTCG_PRESENCE.getByName(PRESENCE_HUB_NAME);
   }
 
+  /** Revocation, expiry and old attachments fail closed, including after eviction. */
+  private liveAttachment(socket: WebSocket): LiveAttachment | undefined {
+    const attachment = readLiveAttachment(socket.deserializeAttachment());
+    if (socket.readyState === WebSocket.OPEN && attachment &&
+        this.store.sessionActive(attachment.sessionHash, Date.now())) return attachment;
+    // Closing sockets remain in getWebSockets until their close callback.
+    socket.serializeAttachment(null);
+    try { socket.close(1008, 'session ended'); } catch { /* Already closed. */ }
+    return undefined;
+  }
+
   /** The tabs open now, but `leaving`. */
   private tabs(leaving?: WebSocket): LiveAttachment[] {
     return this.ctx
       .getWebSockets(LIVE_TAG)
       .filter((socket) => socket !== leaving)
-      .flatMap((socket) => readLiveAttachment(socket.deserializeAttachment()) ?? []);
+      .flatMap((socket) => this.liveAttachment(socket) ?? []);
   }
 
   private broadcast(message: unknown, only?: WebSocket): void {
     const text = JSON.stringify(message);
     for (const socket of only ? [only] : this.ctx.getWebSockets(LIVE_TAG)) {
+      if (!this.liveAttachment(socket)) continue;
       try {
         socket.send(text);
       } catch {
@@ -175,7 +190,8 @@ export class PtcgAccount
     const friends = this.friendIds();
     if (friends.length === 0) return {};
     try {
-      return await this.hub().read(friends, Date.now());
+      const me = this.store.publicProfile();
+      return me ? await this.hub().read(me.id, friends, Date.now()) : {};
     } catch {
       return {};
     }
@@ -187,10 +203,9 @@ export class PtcgAccount
       return new Response(null, { status: 426 });
     }
     const token = readSessionToken(request);
-    const view = token
-      ? this.store.read(await sha256Hex(token.secret), Date.now())
-      : undefined;
-    if (!token || !view || view.id !== token.accountId) {
+    const sessionHash = token ? await sha256Hex(token.secret) : undefined;
+    const view = sessionHash ? this.store.read(sessionHash, Date.now()) : undefined;
+    if (!token || !sessionHash || !view || view.id !== token.accountId) {
       return new Response(null, { status: 401 });
     }
     // The oldest tab gives way past the most kept.
@@ -207,10 +222,23 @@ export class PtcgAccount
     this.ctx.acceptWebSocket(server, [LIVE_TAG]);
     server.serializeAttachment({
       tab: crypto.randomUUID(),
+      sessionHash,
+      version: 0,
       where: { kind: 'none' },
       greeted: false,
     } satisfies LiveAttachment);
     return new Response(null, { status: 101, webSocket: client });
+  }
+
+  private async verifiedWhere(where: LiveWhere): Promise<LiveWhere> {
+    if (where.kind === 'none') return where;
+    const me = this.store.publicProfile();
+    if (!me) return {kind:'none'};
+    try {
+      const roomId = await this.objects.PTCG_ROOM_CODE.getByName(where.room).resolve(Date.now());
+      if (roomId && await this.objects.PTCG_ROOM.getByName(roomId).hasAccountPresence(me.id, where.room, where.role)) return where;
+    } catch { /* Unverifiable membership is never published. */ }
+    return {kind:'none'};
   }
 
   override async webSocketMessage(
@@ -227,12 +255,17 @@ export class PtcgAccount
     const type: unknown = Reflect.get(Object(data), 'type');
     if (type !== 'hello' && type !== 'where') return;
     const where = readLiveWhere(Reflect.get(Object(data), 'where'));
-    const attachment = readLiveAttachment(socket.deserializeAttachment());
+    const attachment = this.liveAttachment(socket);
     if (!where || !attachment) return;
+    const version = attachment.version + 1;
+    socket.serializeAttachment({...attachment, version});
+    const checked = await this.verifiedWhere(where);
+    const current = this.liveAttachment(socket);
+    if (!current || current.version !== version) return;
     const before = tabsPresence(this.tabs());
     socket.serializeAttachment({
-      ...attachment,
-      where,
+      ...current,
+      where: checked,
       greeted: true,
     } satisfies LiveAttachment);
     const after = tabsPresence(this.tabs());
@@ -267,6 +300,12 @@ export class PtcgAccount
     if (!samePresence(before, tabsPresence(others))) await this.report(socket);
   }
 
+  /** The hub checks this before returning this account's presence to a reader. */
+  async allowsPresence(viewer: string): Promise<boolean> {
+    return this.store.publicProfile() !== undefined &&
+      this.friendRows.row(viewer)?.state === 'friend' && !this.friendRows.isBlocked(viewer);
+  }
+
   /** From the hub: a friend's presence changed. Not a player's call. */
   async friendPresence(from: string, view: unknown): Promise<void> {
     if (this.friendRows.row(from)?.state !== 'friend') return;
@@ -297,7 +336,9 @@ export class PtcgAccount
     this.lastInviteAt = now;
     let room: string | undefined;
     if (kind === 'invite') {
-      const here = tabsPresence(this.tabs());
+      const tabs = await Promise.all(this.tabs().map(async (tab) => ({...tab, where: await this.verifiedWhere(tab.where)})));
+      if (!this.store.sessionActive(secretHash, Date.now()) || this.friendRows.row(otherId)?.state !== 'friend') return 'not_friends';
+      const here = tabsPresence(tabs);
       if (here.state !== 'playing' || !here.room) return 'not_in_room';
       room = here.room;
     }
@@ -336,7 +377,7 @@ export class PtcgAccount
     if (kind === 'invite' && (!room || !ROOM_ALIAS_PATTERN.test(room))) {
       return 'failed';
     }
-    if (this.ctx.getWebSockets(LIVE_TAG).length === 0) return 'offline';
+    if (this.tabs().length === 0) return 'offline';
     this.broadcast({
       type: kind,
       from: profile,
@@ -350,7 +391,7 @@ export class PtcgAccount
 
   /** From the hub: whether any tab is still open. Not a player's call. */
   async isLive(): Promise<boolean> {
-    return this.ctx.getWebSockets(LIVE_TAG).length > 0;
+    return this.tabs().some((tab) => tab.greeted);
   }
 
   /** Appear offline, by the player (ADR-055); null signed out. */
@@ -375,7 +416,9 @@ export class PtcgAccount
     identity: SignInIdentity,
     session: NewSession
   ): Promise<SignInOutcome> {
-    return this.store.signIn(accountId, identity, session);
+    const result = this.store.signIn(accountId, identity, session);
+    this.tabs(); // Session-cap eviction revokes its live connections too.
+    return result;
   }
 
   async read(secretHash: string, now: number): Promise<AccountView | null> {
@@ -402,6 +445,8 @@ export class PtcgAccount
 
   async signOut(secretHash: string): Promise<void> {
     this.store.signOut(secretHash);
+    this.tabs();
+    await this.report();
   }
 
   async holds(provider: AccountProvider, subject: string): Promise<boolean> {
@@ -689,6 +734,8 @@ export class PtcgPresence extends DurableObject<Env> {
       (this.env as unknown as AccountObjectEnv).PTCG_ACCOUNT.getByName(
         to
       ).friendPresence(from, view),
+    allows: (account, viewer) =>
+      (this.env as unknown as AccountObjectEnv).PTCG_ACCOUNT.getByName(account).allowsPresence(viewer),
     live: (account) =>
       (this.env as unknown as AccountObjectEnv).PTCG_ACCOUNT.getByName(
         account
@@ -707,10 +754,11 @@ export class PtcgPresence extends DurableObject<Env> {
   }
 
   async read(
+    viewer: string,
     friends: readonly string[],
     now: number
   ): Promise<Record<string, PresenceView>> {
-    return this.presence.read(friends, now);
+    return this.presence.read(viewer, friends, now);
   }
 
   async forget(account: string): Promise<void> {

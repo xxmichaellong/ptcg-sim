@@ -39,7 +39,7 @@ import {
 } from './accounts/friends-http.js';
 import { readSignInConfiguration } from './accounts/sign-in-providers.js';
 import { WebCryptoAuthoritySource } from './authority-crypto.js';
-import { RoomReplayArchive, seatOfResumeToken } from './replay-archive.js';
+import { RoomReplayArchive, sessionOfResumeToken } from './replay-archive.js';
 import { createContinuationCryptographyFromConfiguration } from './continuation-configuration.js';
 import { handleContinuationCreationRequest } from './continuation-creation-http.js';
 import {
@@ -840,6 +840,22 @@ export class PtcgRoom extends DurableObject<Env> {
     });
   }
 
+  /** Accounts ask this internally; a tab's claimed room alone proves nothing. */
+  async hasAccountPresence(accountId: string, code: string, role: 'player' | 'spectator'): Promise<boolean> {
+    const runtime = await this.runtimePromise;
+    if (!runtime || !(await this.aliasCustody.holds(code))) return false;
+    const snapshot = runtime.coordinator.currentSnapshot();
+    if (snapshot.mode !== 'multiplayer') return false;
+    return this.ctx.getWebSockets().some((socket) => {
+      if (socket.readyState !== WebSocket.OPEN) return false;
+      const attachment = socket.deserializeAttachment() as SocketAttachment | null;
+      if (attachment?.accountId !== accountId || !attachment.sessionId) return false;
+      const session = snapshot.sessions[attachment.sessionId];
+      return session?.active === true && session.viewer.kind === role &&
+        (session.viewer.kind !== 'player' || snapshot.admission?.seats[session.viewer.playerId]?.claimedSessionId === session.id);
+    });
+  }
+
   override async fetch(request: Request): Promise<Response> {
     const requestUrl = new URL(request.url);
     if (seatAccountRoomCodeFromPath(requestUrl.pathname)) {
@@ -1208,13 +1224,23 @@ export class PtcgRoom extends DurableObject<Env> {
     }
     const runtime = await this.runtimePromise;
     if (!runtime) return json({ error: 'not_found' }, 404);
-    const playerId = await seatOfResumeToken(
+    const accountId = await this.signedInAccount(request);
+    const session = await sessionOfResumeToken(
       runtime.coordinator.currentSnapshot(),
       resumeToken,
       this.cryptoSource
     );
-    if (!playerId) return json({ error: 'forbidden' }, 403);
-    await this.replays.bindSeat(playerId, await this.signedInAccount(request));
+    const current = session && runtime.coordinator.currentSnapshot().sessions[session.id];
+    if (!session || !current?.active || current.resumeCapabilityDigest !== session.resumeCapabilityDigest) return json({ error: 'forbidden' }, 403);
+    // The same authenticated room credential binds spectators too. It never
+    // changes another room session, even if the same account has several tabs.
+    for (const socket of this.ctx.getWebSockets()) {
+      const attachment = socket.deserializeAttachment() as SocketAttachment | null;
+      if (attachment?.sessionId !== session.id) continue;
+      const { accountId: _previous, ...rest } = attachment;
+      socket.serializeAttachment({ ...rest, ...(accountId ? {accountId} : {}) });
+    }
+    if (session.viewer.kind === 'player') await this.replays.bindSeat(session.viewer.playerId, accountId);
     return new Response(null, {
       status: 204,
       headers: { 'Cache-Control': 'no-store' },

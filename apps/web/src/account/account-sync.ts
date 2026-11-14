@@ -257,11 +257,14 @@ const browserStorage = (): SyncStorage | null => {
 /* ---- One sync ----------------------------------------------------------- */
 
 export interface SyncEnvironment {
+  /** Cancels a run whose account changed while it was waiting. */
+  readonly isCurrent?: () => boolean;
   readonly library: Pick<DeckLibrary, 'readStored' | 'receive'>;
   readonly store: Pick<PreferenceStore, 'storedText' | 'applyStoredText'>;
   readonly synced: () => readonly Preference<unknown>[];
   readonly storage: SyncStorage;
   readonly send: (body: {
+    readonly expectedAccountId: string;
     readonly since: number;
     readonly changes: readonly Change[];
   }) => Promise<Answer>;
@@ -294,6 +297,8 @@ export const syncOnce = async (
   options: { readonly pull: boolean } = { pull: true }
 ): Promise<SyncOutcome | undefined> => {
   const { library, store, storage } = environment;
+  const current = () => environment.isCurrent?.() !== false;
+  if (!current()) return undefined;
   let state =
     readSyncState(storage.getItem(STATE_KEY), accountId) ??
     freshState(accountId);
@@ -303,6 +308,7 @@ export const syncOnce = async (
     state.cursor === 0 && !state.pulled && Object.keys(base).length === 0;
 
   const storedDecks = await library.readStored();
+  if (!current()) return undefined;
   const decks = new Map<string, SavedDeck>();
   for (const deck of storedDecks ?? []) {
     if (DECK_ID.test(deck.id)) decks.set(deck.id, deck);
@@ -477,7 +483,13 @@ export const syncOnce = async (
       batch.push(change);
       size += length;
     }
-    const answer = await environment.send({ since: cursor, changes: batch });
+    if (!current()) return undefined;
+    const answer = await environment.send({
+      expectedAccountId: accountId,
+      since: cursor,
+      changes: batch,
+    });
+    if (!current()) return undefined;
     const accepted = new Map(
       answer.accepted.map((entry) => [keyOf(entry.kind, entry.id), entry.rev])
     );
@@ -576,6 +588,7 @@ const safeParse = (text: string): unknown => {
 /* ---- This page's sync --------------------------------------------------- */
 
 const sendSync = async (body: {
+  readonly expectedAccountId: string;
   readonly since: number;
   readonly changes: readonly Change[];
 }): Promise<Answer> => {
@@ -622,10 +635,16 @@ let pausedUntil = 0;
 let lastPulledAt = 0;
 let askedAboutDecks = false;
 
+let accountEpoch = 0;
+
 const environment = (): SyncEnvironment | undefined => {
+  const epoch = accountEpoch;
+  const accountId = accountSnapshot().account?.id;
   const storage = browserStorage();
   if (!storage) return undefined;
   return {
+    isCurrent: () =>
+      epoch === accountEpoch && accountSnapshot().account?.id === accountId,
     library: deckLibrary(),
     store: preferences(),
     synced: syncedPreferences,
@@ -782,6 +801,7 @@ export const startAccountSync = (): void => {
     const now = accountSnapshot().account?.id;
     if (now === signedIn) return;
     signedIn = now;
+    accountEpoch += 1;
     askedAboutDecks = false;
     publish({ deviceDecks: 0, lastSyncedAt: undefined });
     if (now) void syncAccountNow(true);

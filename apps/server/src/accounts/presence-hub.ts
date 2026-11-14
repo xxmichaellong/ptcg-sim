@@ -56,6 +56,8 @@ interface Row {
 export interface PresenceHubDependencies {
   /** Tells an online friend's object a change. */
   readonly push: (to: string, from: string, view: PresenceView) => Promise<void>;
+  /** Authoritative friendship: a failed peer removal must not reveal presence. */
+  readonly allows: (account: string, viewer: string) => Promise<boolean>;
   /** Whether an account's object still has tabs open. */
   readonly live: (account: string) => Promise<boolean>;
 }
@@ -205,14 +207,23 @@ export class PresenceHub {
     return rows;
   }
 
+  private async views(viewer: string, ids: readonly string[], rows: Map<string, Row>): Promise<Record<string, PresenceView>> {
+    const answer: Record<string, PresenceView> = Object.fromEntries(ids.map((id) => [id,{state:'offline'}]));
+    await settled(ids.filter((id) => rows.has(id)).map((id) => async () => {
+      if (await this.dependencies.allows(id, viewer).catch(() => false)) answer[id] = viewOf(rows.get(id));
+    }));
+    return answer;
+  }
+
   /** What these friends are shown as now. */
   async read(
+    viewer: string,
     friends: readonly string[],
     now: number
   ): Promise<Record<string, PresenceView>> {
     const ids = friends.filter(isAccountId).slice(0, MAX_PRESENCE_FRIENDS);
     const rows = await this.rows(ids, now);
-    return Object.fromEntries(ids.map((id) => [id, viewOf(rows.get(id))]));
+    return this.views(viewer, ids, rows);
   }
 
   /**
@@ -252,7 +263,7 @@ export class PresenceHub {
           .map((id) => () => this.dependencies.push(id, account, shown))
       );
     }
-    return Object.fromEntries(ids.map((id) => [id, viewOf(rows.get(id))]));
+    return this.views(account, ids, rows);
   }
 
   /** An account deleted: its row goes. */

@@ -338,11 +338,12 @@ describe('accounts over HTTP', () => {
   });
 
   it('shares a device’s changes with the account’s other devices', async () => {
-    const { signIn, send, call } = setup();
+    const { signIn, send, call, me } = setup();
     const phone = new Jar();
     const laptop = new Jar();
     await signIn(phone, 'Dawn');
     await signIn(laptop, 'Dawn');
+    const expectedAccountId = (await me(phone)).account!.id;
     const change = {
       kind: 'deck',
       id: 'deck-1',
@@ -351,6 +352,7 @@ describe('accounts over HTTP', () => {
       body: JSON.stringify({ id: 'deck-1', name: 'Gardevoir' }),
     };
     const pushed = await send(phone, '/v2/account/sync', 'POST', {
+      expectedAccountId,
       since: 0,
       changes: [change],
     });
@@ -360,6 +362,7 @@ describe('accounts over HTTP', () => {
       accepted: [{ kind: 'deck', id: 'deck-1', rev: 1 }],
     });
     const pulled = await send(laptop, '/v2/account/sync', 'POST', {
+      expectedAccountId,
       since: 0,
       changes: [],
     });
@@ -370,7 +373,10 @@ describe('accounts over HTTP', () => {
     // Someone else's account knows nothing of it.
     const other = new Jar();
     await signIn(other, 'Barry');
+    const rejected = await send(other, '/v2/account/sync', 'POST', {expectedAccountId,since:0,changes:[change]});
+    expect(rejected.status).toBe(409);
     const theirs = await send(other, '/v2/account/sync', 'POST', {
+      expectedAccountId: (await me(other)).account!.id,
       since: 0,
       changes: [],
     });

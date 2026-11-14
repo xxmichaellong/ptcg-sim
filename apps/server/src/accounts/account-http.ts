@@ -653,6 +653,9 @@ const syncAccount = async (
   if (!sync) return json({ error: 'invalid_request' }, 400);
   const session = await signedInAccount(request, dependencies);
   if (!session) return signedOut(request);
+  if (Reflect.get(Object(body), 'expectedAccountId') !== session.token.accountId) {
+    return json({ error: 'account_changed' }, 409);
+  }
   const answer = await session.account.sync(
     session.secretHash,
     dependencies.now(),

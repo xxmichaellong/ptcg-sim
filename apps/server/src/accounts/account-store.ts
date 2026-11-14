@@ -323,6 +323,12 @@ export class AccountStoreSql {
     return view;
   }
 
+  /** Checks live connections without renewing a session on background traffic. */
+  sessionActive(secretHash: string, now: number): boolean {
+    const session = this.session(secretHash);
+    return session !== undefined && session.expiresAt > now;
+  }
+
   signOut(secretHash: string): void {
     if (!this.tables(false)) return;
     this.sql.exec('DELETE FROM session WHERE hash = ?', secretHash);

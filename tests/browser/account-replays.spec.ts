@@ -61,8 +61,15 @@ const playAGame = async (page: Page, flips = 4): Promise<void> => {
   await page.locator('#nativeDeckBuilderPlayButton').click();
   await page.locator('#setupButton').click();
   await expect(page.locator('#moreActionsButton')).toBeVisible();
+  const board = page.locator('.ptcgsim-board-surface');
   for (let flip = 0; flip < flips; flip += 1) {
-    await page.locator('#flipCoinButton').click();
+    const coin = page.locator('#flipCoinButton');
+    await expect(coin).not.toHaveAttribute('aria-busy', 'true');
+    const before = Number(await board.getAttribute('data-revision'));
+    await coin.click();
+    await expect
+      .poll(async () => Number(await board.getAttribute('data-revision')))
+      .toBeGreaterThan(before);
   }
   await chooseMoreAction(page, 'resetButton');
   await expect(page.locator('#setupButton')).toBeVisible();

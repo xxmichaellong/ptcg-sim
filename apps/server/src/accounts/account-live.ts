@@ -20,6 +20,10 @@ export type LiveWhere =
 
 export interface LiveAttachment {
   readonly tab: string;
+  /** Digest of the account session that authorized this connection. */
+  readonly sessionHash: string;
+  /** Orders room checks that finish after a newer message. */
+  readonly version: number;
   readonly where: LiveWhere;
   /** Said hello: only then does the tab count as the account online. */
   readonly greeted: boolean;
@@ -46,9 +50,21 @@ export const readLiveAttachment = (
   value: unknown
 ): LiveAttachment | undefined => {
   const tab: unknown = Reflect.get(Object(value), 'tab');
+  const sessionHash: unknown = Reflect.get(Object(value), 'sessionHash');
   const where = readLiveWhere(Reflect.get(Object(value), 'where'));
-  return typeof tab === 'string' && where
-    ? { tab, where, greeted: Reflect.get(Object(value), 'greeted') === true }
+  return typeof tab === 'string' &&
+    typeof sessionHash === 'string' &&
+    /^[a-f0-9]{64}$/u.test(sessionHash) &&
+    where
+    ? {
+        tab,
+        sessionHash,
+        version: Number.isSafeInteger(Reflect.get(Object(value), 'version'))
+          ? Number(Reflect.get(Object(value), 'version'))
+          : 0,
+        where,
+        greeted: Reflect.get(Object(value), 'greeted') === true,
+      }
     : undefined;
 };
 

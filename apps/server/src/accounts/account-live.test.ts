@@ -9,6 +9,8 @@ import {
 
 const tab = (where: LiveAttachment['where'], greeted = true): LiveAttachment => ({
   tab: Math.random().toString(36),
+  sessionHash: 'a'.repeat(64),
+  version: 0,
   where,
   greeted,
 });
@@ -35,6 +37,7 @@ describe('live tabs', () => {
   });
 
   it('reads only well-formed places', () => {
+    expect(readLiveAttachment({ tab: 'legacy', where: {kind:'none'} })).toBeUndefined();
     expect(readLiveWhere({ kind: 'room', role: 'player', room: 'K7PQ' })).toEqual({
       kind: 'room',
       role: 'player',
@@ -50,7 +53,7 @@ describe('live tabs', () => {
       expect(readLiveWhere(bad)).toBeUndefined();
     }
     expect(
-      readLiveAttachment({ tab: 't', where: { kind: 'none' }, greeted: 'yes' })
-    ).toEqual({ tab: 't', where: { kind: 'none' }, greeted: false });
+      readLiveAttachment({ tab: 't', sessionHash: 'a'.repeat(64), where: { kind: 'none' }, greeted: 'yes' })
+    ).toEqual({ tab: 't', sessionHash: 'a'.repeat(64), version: 0, where: { kind: 'none' }, greeted: false });
   });
 });
