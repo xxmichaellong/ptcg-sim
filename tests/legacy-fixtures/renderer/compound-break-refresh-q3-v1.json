@@ -1,0 +1,398 @@
+{
+  "schemaVersion": 1,
+  "recordingMethod": "Chromium 151 CSS-pixel capture of four independent inert replays (local/opponent x active/sole bench) of a three-Pokemon BREAK stack at group q3 through the checked-in refresh path. The construction, layout sources, controlled cardback asset, and q0/q2 refresh baseline are inherited from a digest-pinned dependency. The application module is stubbed; the q3 BREAK setup, negative replay-count calculation, synchronous collapse, ghost-wrapper overlap, and two-animation-frame cleanup are narrowly transcribed from digest-pinned source.",
+  "input": {
+    "viewport": { "width": 1600, "height": 900, "devicePixelRatio": 1 },
+    "asset": {
+      "path": "/src/assets/cardback.png",
+      "naturalWidth": 736,
+      "naturalHeight": 1024
+    },
+    "evolutionOrder": ["base", "middle", "top"],
+    "cases": [
+      "local-active-compound-break-refresh-q3",
+      "local-bench-compound-break-refresh-q3",
+      "opponent-active-compound-break-refresh-q3",
+      "opponent-bench-compound-break-refresh-q3"
+    ],
+    "phaseSequence": [
+      "pre-refresh",
+      "synchronous-post-refresh",
+      "settled-post-refresh"
+    ]
+  },
+  "tolerances": {
+    "anchorPixels": 2,
+    "cardSizeRelative": 0.01,
+    "rotationDegrees": 0.1,
+    "structuredPixels": 0.001
+  },
+  "scope": {
+    "included": [
+      "one marker-free three-Pokemon evolution chain built independently for each case through the ordinary evolve and refresh path",
+      "local/opponent active and sole-bench BREAK q3 cases at the default 1600x900 DPR-1 layout",
+      "the selected top's effective q0 minus BREAK q1 producing numberRotations=-1",
+      "the zero-iteration negative replay loop collapsing [top q0, lower q3, lower q3] to [top q1, lower q0, lower q0]",
+      "pre-refresh, synchronous two-wrapper overlap, observer-settled replacement, stable card identity, topology, margins, authored/painted geometry, and native hit regions"
+    ],
+    "excluded": [
+      "normalizing the q3 collapse into v2 behavior or adding legacy refresh history to canonical state",
+      "nonzero-group single-card Alt-R, lower evolution group/single initiators, converted categories, and non-Pokemon initiators",
+      "Energy, Trainer, Tool, markers, attachment timing/syncRotation histories, mixed dimensions, and noncanonical assets",
+      "additional bench siblings, flex shrink, overflow, active/bench movement, promotion, evolution/removal while BREAK, leaveAll, undo, and replay",
+      "resize-driven board layout, explicit flip, fullscreen, alternate viewport/DPR, concealment, application/network execution, candidate parity, and production geometry"
+    ]
+  },
+  "dependencies": [
+    {
+      "path": "tests/legacy-fixtures/renderer/compound-break-refresh-q0-q2-v1.json",
+      "sha256": "214506f07e534793606a47cca877ed88791370c3696d7333ae6141acc63eff73"
+    }
+  ],
+  "expected": {
+    "frames": {
+      "local": { "x": 0, "y": 450, "width": 1208, "height": 450 },
+      "opponent": { "x": 0, "y": 0, "width": 1208, "height": 450 }
+    },
+    "frameTransforms": {
+      "local": { "a": 1, "b": 0, "c": 0, "d": 1, "rotationDegrees": 0 },
+      "opponent": { "a": -1, "b": 0, "c": 0, "d": -1, "rotationDegrees": 180 }
+    },
+    "frameRotationDegrees": { "local": 0, "opponent": 180 },
+    "localQuarterTurnsByPhase": {
+      "pre-refresh": { "top": 0, "middle": 3, "base": 3 },
+      "synchronous-post-refresh": { "top": 1, "middle": 0, "base": 0 },
+      "settled-post-refresh": { "top": 1, "middle": 0, "base": 0 }
+    },
+    "phaseEvidenceTupleSchema": [
+      "phase name",
+      "stack [x,y,width,height,clientWidth,clientHeight,offsetWidth,offsetHeight,computedWidth,computedHeight,authoredWidth,inlineRight,inlineLeft,computedRight,computedLeft]",
+      "cards [top,middle,base], each [painted x,y,width,height,authored x,y,width,height]",
+      "hit points [commonOverlap,topOnly,middleAndBaseOverlap,baseOnly,topPaintedOnly,topAuthoredOnly], each [x,y] or null"
+    ],
+    "phaseEvidenceBySlot": {
+      "active": [
+        [
+          "pre-refresh",
+          [
+            556.5625,
+            31.5,
+            91,
+            126,
+            91,
+            126,
+            91,
+            126,
+            91,
+            126,
+            91,
+            "1%",
+            "0%",
+            3.85938,
+            0
+          ],
+          [
+            [556.5625, 31.5, 90.5625, 126, 556.5625, 31.5, 90.5625, 126],
+            [
+              538.84375, 43.15625, 126, 90.5625, 556.5625, 25.4375, 90.5625, 126
+            ],
+            [538.84375, 37.09375, 126, 90.5625, 556.5625, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.8125, 45.40625],
+            [558.8125, 33.75],
+            [541.09375, 45.40625],
+            [541.09375, 39.34375],
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [
+            603.984375,
+            31.5,
+            91,
+            126,
+            91,
+            126,
+            91,
+            126,
+            91,
+            126,
+            91,
+            "3%",
+            "2%",
+            11.5938,
+            7.71875
+          ],
+          [
+            [
+              586.265625, 49.21875, 126, 90.5625, 603.984375, 31.5, 90.5625, 126
+            ],
+            [
+              603.984375, 25.4375, 90.5625, 126, 603.984375, 25.4375, 90.5625,
+              126
+            ],
+            [603.984375, 19.375, 90.5625, 126, 603.984375, 19.375, 90.5625, 126]
+          ],
+          [
+            [606.234375, 51.46875],
+            [588.515625, 51.46875],
+            [606.234375, 27.6875],
+            [606.234375, 21.625],
+            [588.515625, 51.46875],
+            [606.234375, 33.75]
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [
+            556.546875,
+            31.5,
+            91,
+            126,
+            91,
+            126,
+            91,
+            126,
+            91,
+            126,
+            91,
+            "3%",
+            "2%",
+            11.5938,
+            7.71875
+          ],
+          [
+            [
+              538.828125, 49.21875, 126, 90.5625, 556.546875, 31.5, 90.5625, 126
+            ],
+            [
+              556.546875, 25.4375, 90.5625, 126, 556.546875, 25.4375, 90.5625,
+              126
+            ],
+            [556.546875, 19.375, 90.5625, 126, 556.546875, 19.375, 90.5625, 126]
+          ],
+          [
+            [558.796875, 51.46875],
+            [541.078125, 51.46875],
+            [558.796875, 27.6875],
+            [558.796875, 21.625],
+            [541.078125, 51.46875],
+            [558.796875, 33.75]
+          ]
+        ]
+      ],
+      "bench": [
+        [
+          "pre-refresh",
+          [
+            552.6875,
+            180,
+            81,
+            112.5,
+            81,
+            113,
+            81,
+            113,
+            81,
+            112.5,
+            81,
+            "1%",
+            "0%",
+            9.53125,
+            0
+          ],
+          [
+            [552.6875, 180, 80.859375, 112.5, 552.6875, 180, 80.859375, 112.5],
+            [
+              536.8671875, 190.4296875, 112.5, 80.859375, 552.6875, 174.609375,
+              80.859375, 112.5
+            ],
+            [
+              536.8671875, 185.0234375, 112.5, 80.859375, 552.6875, 169.203125,
+              80.859375, 112.5
+            ]
+          ],
+          [
+            [554.9375, 192.6796875],
+            [554.9375, 182.25],
+            [539.1171875, 192.6796875],
+            [539.1171875, 187.2734375],
+            null,
+            null
+          ]
+        ],
+        [
+          "synchronous-post-refresh",
+          [
+            597.9375,
+            180,
+            81,
+            112.5,
+            81,
+            113,
+            81,
+            113,
+            81,
+            112.5,
+            81,
+            "3%",
+            "2%",
+            28.625,
+            19.0781
+          ],
+          [
+            [
+              582.1171875, 195.8203125, 112.5, 80.859375, 597.9375, 180,
+              80.859375, 112.5
+            ],
+            [
+              597.9375, 174.609375, 80.859375, 112.5, 597.9375, 174.609375,
+              80.859375, 112.5
+            ],
+            [
+              597.9375, 169.203125, 80.859375, 112.5, 597.9375, 169.203125,
+              80.859375, 112.5
+            ]
+          ],
+          [
+            [600.1875, 198.0703125],
+            [584.3671875, 198.0703125],
+            [600.1875, 176.859375],
+            [600.1875, 171.453125],
+            [584.3671875, 198.0703125],
+            [600.1875, 182.25]
+          ]
+        ],
+        [
+          "settled-post-refresh",
+          [
+            552.671875,
+            180,
+            81,
+            112.5,
+            81,
+            113,
+            81,
+            113,
+            81,
+            112.5,
+            81,
+            "3%",
+            "2%",
+            28.625,
+            19.0781
+          ],
+          [
+            [
+              536.8515625, 195.8203125, 112.5, 80.859375, 552.671875, 180,
+              80.859375, 112.5
+            ],
+            [
+              552.671875, 174.609375, 80.859375, 112.5, 552.671875, 174.609375,
+              80.859375, 112.5
+            ],
+            [
+              552.671875, 169.203125, 80.859375, 112.5, 552.671875, 169.203125,
+              80.859375, 112.5
+            ]
+          ],
+          [
+            [554.921875, 198.0703125],
+            [539.1015625, 198.0703125],
+            [554.921875, 176.859375],
+            [554.921875, 171.453125],
+            [539.1015625, 198.0703125],
+            [554.921875, 182.25]
+          ]
+        ]
+      ]
+    },
+    "hitOrderByPhase": {
+      "pre-refresh": {
+        "commonOverlap": ["top", "middle", "base"],
+        "topOnly": ["top"],
+        "middleAndBaseOverlap": ["middle", "base"],
+        "baseOnly": ["base"],
+        "topPaintedOnly": null,
+        "topAuthoredOnly": null
+      },
+      "synchronous-post-refresh": {
+        "commonOverlap": ["top", "middle", "base"],
+        "topOnly": ["top"],
+        "middleAndBaseOverlap": ["middle", "base"],
+        "baseOnly": ["base"],
+        "topPaintedOnly": ["top"],
+        "topAuthoredOnly": ["middle", "base"]
+      },
+      "settled-post-refresh": {
+        "commonOverlap": ["top", "middle", "base"],
+        "topOnly": ["top"],
+        "middleAndBaseOverlap": ["middle", "base"],
+        "baseOnly": ["base"],
+        "topPaintedOnly": ["top"],
+        "topAuthoredOnly": ["middle", "base"]
+      }
+    },
+    "topology": {
+      "logicalRoles": ["top", "middle", "base"],
+      "domRoles": ["top", "base", "middle"],
+      "zByRole": { "top": 0, "middle": -1, "base": -2 },
+      "bottomLayerMultipliers": { "top": 0, "middle": 1, "base": 2 },
+      "topLayer": 2,
+      "energyLayer": 0,
+      "wrapperTransform": "none",
+      "wrapperZIndex": 0
+    },
+    "operationTrace": [
+      "evolve:base->middle",
+      "refresh:middle:break=false:groupTurns=0",
+      "evolve:middle->top",
+      "refresh:top:break=false:groupTurns=0",
+      "rotate:top:index=0:single=true:0->90:break=false->true",
+      "rotate:top:index=0:single=false:90->180:break=true->true",
+      "rotate:top:index=0:single=false:180->270:break=true->true",
+      "rotate:top:index=0:single=false:270->0:break=true->true",
+      "refresh:top:break=true:groupTurns=-1"
+    ],
+    "transitionTrace": ["refresh:top:break=true:groupTurns=-1"],
+    "refresh": {
+      "wrapperCountsByPhase": [1, 2, 1],
+      "synchronousWrapperCount": 2,
+      "oldWrapperConnectedImmediately": true,
+      "stableWrapperCount": 1,
+      "oldWrapperConnectedAfterSettle": false,
+      "wrapperIdentityChanged": true,
+      "cardNodeIdentityPreserved": true,
+      "observerPairsCreated": 4,
+      "minimumResizeCallbacksBeforeCardRemoval": 4,
+      "resizeCallbacksAddedAfterCardRemoval": 1,
+      "transcribedSourceDisconnectCalls": 0,
+      "harnessDisconnectCallsPerObserverKind": 4
+    }
+  },
+  "provenance": [
+    {
+      "path": "client/src/actions/general/rotate-card.js",
+      "encoding": "utf8",
+      "sha256": "d0870b070c5fedc7225e81661e3bbbfd31225731cf5ac516972d4fe5ac17f5d1"
+    },
+    {
+      "path": "client/src/setup/sizing/refresh-board.js",
+      "encoding": "utf8",
+      "sha256": "b786a66c078de9623e46884e640db2e80f6b9ea8f1078573fee96bd71ecade7d"
+    }
+  ],
+  "provenanceClaims": [
+    {
+      "claim": "BREAK setup and top-selected q1-q2-q3 group history",
+      "sources": ["client/src/actions/general/rotate-card.js"]
+    },
+    {
+      "claim": "BREAK-adjusted negative replay count, zero-iteration replay loop, same-zone re-entry, and final adjustment request",
+      "sources": ["client/src/setup/sizing/refresh-board.js"]
+    }
+  ]
+}

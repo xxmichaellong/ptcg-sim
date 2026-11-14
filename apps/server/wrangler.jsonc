@@ -1,0 +1,471 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "ptcgsim-v2",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-08-31",
+  "compatibility_flags": ["nodejs_compat"],
+  // Production is the public beta (ADR-051), at a Custom Domain: Cloudflare
+  // keeps its DNS record and certificate. ptcgsim.online and www stay v1's.
+  // Only the zone's address, so the zone's rate limit sees every request:
+  // no workers.dev address beside it.
+  "routes": [{ "pattern": "beta.ptcgsim.online", "custom_domain": true }],
+  "workers_dev": false,
+  "vars": {
+    "BUILD_ID": "local-development",
+    // The tournament deck index stays off until the account is on Workers
+    // Paid: its crawl writes more rows than the Free plan's 100k a day,
+    // which every Durable Object in the account shares (ADR-037). "on"
+    // turns it on; a deploy's own --var still wins.
+    "DECK_INDEX_SOURCE": "off",
+    // The stand-in sign-in for local and test builds (ADR-052); never "on"
+    // in a deploy. Google's and Discord's apps come from secrets:
+    // GOOGLE_CLIENT_ID/SECRET and DISCORD_CLIENT_ID/SECRET.
+    "AUTH_TEST_PROVIDER": "off",
+  },
+  "assets": {
+    "directory": "../web/dist",
+    // A missing file is a 404 the Worker answers, never the app's page: a
+    // new build's script asked of an edge that hasn't it yet would come back
+    // as HTML, kept a year under its hashed name (_headers) and never run.
+    // The app is one page (/, everything else in the query string).
+    "not_found_handling": "none",
+    "run_worker_first": [
+      "/v2/*",
+      "!/v2/assets/cardback.png",
+      "!/v2/assets/favicon.ico",
+      "!/v2/assets/blank-logo.png",
+      "!/v2/assets/background1.jpg",
+      "!/v2/assets/background2.webp",
+      "!/v2/assets/table/*",
+      "!/v2/assets/backs/*",
+      "!/v2/assets/emblems/*",
+      "!/v2/assets/energy/*",
+      "!/v2/assets/brand/*",
+    ],
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PTCG_ROOM",
+        "class_name": "PtcgRoom",
+      },
+      // Room codes (ADR-047): one record per code.
+      {
+        "name": "PTCG_ROOM_CODE",
+        "class_name": "PtcgRoomCode",
+      },
+      {
+        "name": "PTCG_CONTINUATION",
+        "class_name": "PtcgContinuation",
+      },
+      {
+        "name": "PTCG_CONTINUATION_QUOTA",
+        "class_name": "PtcgContinuationQuota",
+      },
+      {
+        "name": "PTCG_DECK_FEED",
+        "class_name": "PtcgDeckFeed",
+      },
+      {
+        "name": "PTCG_CARD_CATALOG",
+        "class_name": "PtcgCardCatalog",
+      },
+      {
+        "name": "PTCG_DECK_INDEX",
+        "class_name": "PtcgDeckIndex",
+      },
+      {
+        "name": "PTCG_IMAGE_STORE",
+        "class_name": "PtcgImageStore",
+      },
+      // Accounts (ADR-052): one per account, and one per provider id
+      // pointing at its account.
+      {
+        "name": "PTCG_ACCOUNT",
+        "class_name": "PtcgAccount",
+      },
+      {
+        "name": "PTCG_SIGN_IN",
+        "class_name": "PtcgSignIn",
+      },
+      // Who is online, for friends (ADR-055): one hub, a row per account
+      // written only when its state changes.
+      {
+        "name": "PTCG_PRESENCE",
+        "class_name": "PtcgPresence",
+      },
+    ],
+  },
+  "ratelimits": [
+    {
+      "name": "ROOM_CREATION_RATE_LIMITER",
+      "namespace_id": "260903001",
+      "simple": {
+        "limit": 12,
+        "period": 60,
+      },
+    },
+    {
+      "name": "ROOM_INGRESS_RATE_LIMITER",
+      "namespace_id": "260903005",
+      "simple": {
+        "limit": 20,
+        "period": 60,
+      },
+    },
+    {
+      "name": "CONTINUATION_CREATION_RATE_LIMITER",
+      "namespace_id": "260903002",
+      "simple": {
+        "limit": 30,
+        "period": 60,
+      },
+    },
+    {
+      "name": "CONTINUATION_RESTORE_RATE_LIMITER",
+      "namespace_id": "260903003",
+      "simple": {
+        "limit": 30,
+        "period": 60,
+      },
+    },
+    {
+      "name": "CONTINUATION_REVOCATION_RATE_LIMITER",
+      "namespace_id": "260903004",
+      "simple": {
+        "limit": 30,
+        "period": 60,
+      },
+    },
+    // Card-back pictures uploaded and outside pictures fetched for import
+    // (ADR-041), per address.
+    {
+      "name": "IMAGE_UPLOAD_RATE_LIMITER",
+      "namespace_id": "260903006",
+      "simple": {
+        "limit": 20,
+        "period": 60,
+      },
+    },
+    {
+      "name": "IMAGE_IMPORT_RATE_LIMITER",
+      "namespace_id": "260903007",
+      "simple": {
+        "limit": 10,
+        "period": 60,
+      },
+    },
+    // Lookups and joins by room code, per address (ADR-047): four
+    // characters must not be guessed through quickly.
+    {
+      "name": "ROOM_CODE_RATE_LIMITER",
+      "namespace_id": "260903008",
+      "simple": {
+        "limit": 20,
+        "period": 60,
+      },
+    },
+    // Sign-ins started and finished, and account changes, per address
+    // (ADR-052).
+    {
+      "name": "SIGN_IN_RATE_LIMITER",
+      "namespace_id": "260903009",
+      "simple": {
+        "limit": 20,
+        "period": 60,
+      },
+    },
+    {
+      "name": "ACCOUNT_RATE_LIMITER",
+      "namespace_id": "260903010",
+      "simple": {
+        "limit": 60,
+        "period": 60,
+      },
+    },
+    // Page reports (ADR-054), per address: a page sends a dozen at most.
+    {
+      "name": "PAGE_REPORT_RATE_LIMITER",
+      "namespace_id": "260903011",
+      "simple": {
+        "limit": 30,
+        "period": 60,
+      },
+    },
+  ],
+  // The site's analytics events (ADR-054): the server's own and each page's
+  // report, kept three months for the internal dashboard (apps/ops). Free
+  // up to 100,000 a day, outside the Durable Objects' limits.
+  "analytics_engine_datasets": [
+    { "binding": "ANALYTICS", "dataset": "ptcgsim_events" },
+  ],
+  "exports": {
+    "PtcgContinuation": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgContinuationQuota": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgDeckFeed": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgCardCatalog": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgDeckIndex": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgImageStore": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgRoom": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgRoomCode": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgAccount": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgSignIn": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+    "PtcgPresence": {
+      "type": "durable-object",
+      "storage": "sqlite",
+    },
+  },
+  // Once a day: refreshes the deck picker's current lists from Limitless,
+  // the deck builder's card catalog from TCGdex, and starts the tournament
+  // deck index's discovery (its own alarms keep it crawling).
+  "triggers": {
+    "crons": ["17 6 * * *"],
+  },
+  "observability": {
+    "enabled": true,
+  },
+  // The top level is production. A preview deploy must never replace it or
+  // share its Durable Object storage, even inside the same Cloudflare
+  // account, so it selects this environment, a Worker of its own. Bindings,
+  // vars and exports are not inherited by an environment and are restated;
+  // the rate namespaces are distinct so preview traffic never spends
+  // production's budgets.
+  "env": {
+    "preview": {
+      "name": "ptcgsim-v2-preview",
+      // Never the beta's domain (routes are inherited): its workers.dev
+      // address alone.
+      "routes": [],
+      "workers_dev": true,
+      "vars": {
+        "BUILD_ID": "local-development",
+        // Off until Workers Paid, as in production (ADR-037).
+        "DECK_INDEX_SOURCE": "off",
+        // The stand-in sign-in (ADR-052): on in the preview only, for trying
+        // accounts before Google and Discord are set up. Never the beta.
+        "AUTH_TEST_PROVIDER": "on",
+      },
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "PTCG_ROOM",
+            "class_name": "PtcgRoom",
+          },
+          {
+            "name": "PTCG_ROOM_CODE",
+            "class_name": "PtcgRoomCode",
+          },
+          {
+            "name": "PTCG_CONTINUATION",
+            "class_name": "PtcgContinuation",
+          },
+          {
+            "name": "PTCG_CONTINUATION_QUOTA",
+            "class_name": "PtcgContinuationQuota",
+          },
+          {
+            "name": "PTCG_DECK_FEED",
+            "class_name": "PtcgDeckFeed",
+          },
+          {
+            "name": "PTCG_CARD_CATALOG",
+            "class_name": "PtcgCardCatalog",
+          },
+          {
+            "name": "PTCG_DECK_INDEX",
+            "class_name": "PtcgDeckIndex",
+          },
+          {
+            "name": "PTCG_IMAGE_STORE",
+            "class_name": "PtcgImageStore",
+          },
+          {
+            "name": "PTCG_ACCOUNT",
+            "class_name": "PtcgAccount",
+          },
+          {
+            "name": "PTCG_SIGN_IN",
+            "class_name": "PtcgSignIn",
+          },
+          {
+            "name": "PTCG_PRESENCE",
+            "class_name": "PtcgPresence",
+          },
+        ],
+      },
+      "ratelimits": [
+        {
+          "name": "ROOM_CREATION_RATE_LIMITER",
+          "namespace_id": "260903101",
+          "simple": {
+            "limit": 12,
+            "period": 60,
+          },
+        },
+        {
+          "name": "ROOM_INGRESS_RATE_LIMITER",
+          "namespace_id": "260903105",
+          "simple": {
+            "limit": 20,
+            "period": 60,
+          },
+        },
+        {
+          "name": "CONTINUATION_CREATION_RATE_LIMITER",
+          "namespace_id": "260903102",
+          "simple": {
+            "limit": 30,
+            "period": 60,
+          },
+        },
+        {
+          "name": "CONTINUATION_RESTORE_RATE_LIMITER",
+          "namespace_id": "260903103",
+          "simple": {
+            "limit": 30,
+            "period": 60,
+          },
+        },
+        {
+          "name": "CONTINUATION_REVOCATION_RATE_LIMITER",
+          "namespace_id": "260903104",
+          "simple": {
+            "limit": 30,
+            "period": 60,
+          },
+        },
+        {
+          "name": "IMAGE_UPLOAD_RATE_LIMITER",
+          "namespace_id": "260903106",
+          "simple": {
+            "limit": 20,
+            "period": 60,
+          },
+        },
+        {
+          "name": "IMAGE_IMPORT_RATE_LIMITER",
+          "namespace_id": "260903107",
+          "simple": {
+            "limit": 10,
+            "period": 60,
+          },
+        },
+        {
+          "name": "ROOM_CODE_RATE_LIMITER",
+          "namespace_id": "260903108",
+          "simple": {
+            "limit": 20,
+            "period": 60,
+          },
+        },
+        {
+          "name": "SIGN_IN_RATE_LIMITER",
+          "namespace_id": "260903109",
+          "simple": {
+            "limit": 20,
+            "period": 60,
+          },
+        },
+        {
+          "name": "ACCOUNT_RATE_LIMITER",
+          "namespace_id": "260903110",
+          "simple": {
+            "limit": 60,
+            "period": 60,
+          },
+        },
+        {
+          "name": "PAGE_REPORT_RATE_LIMITER",
+          "namespace_id": "260903111",
+          "simple": {
+            "limit": 30,
+            "period": 60,
+          },
+        },
+      ],
+      // Its own dataset: test traffic never counts as the beta's players.
+      "analytics_engine_datasets": [
+        { "binding": "ANALYTICS", "dataset": "ptcgsim_events_preview" },
+      ],
+      "exports": {
+        "PtcgContinuation": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgContinuationQuota": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgDeckFeed": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgCardCatalog": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgDeckIndex": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgImageStore": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgRoom": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgRoomCode": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgAccount": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgSignIn": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+        "PtcgPresence": {
+          "type": "durable-object",
+          "storage": "sqlite",
+        },
+      },
+      "triggers": {
+        "crons": ["17 6 * * *"],
+      },
+    },
+  },
+}

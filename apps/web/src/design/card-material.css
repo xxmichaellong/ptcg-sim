@@ -1,0 +1,126 @@
+/* Shared card surface: art stays intact; light and foil are independent,
+   pointer-transparent layers. Only an actively handled card paints light.
+   All three card views use the same material, at different intensities. */
+.card-material {
+  isolation: isolate;
+  --card-light: 0;
+  --card-pointer-x: 50%;
+  --card-pointer-y: 35%;
+  --card-foil-strength: 0.24;
+}
+
+.card-material[data-finish]::before,
+.card-material[data-finish]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: opacity calc(240ms * var(--motion-scale, 1)) var(--ease-out);
+}
+
+.card-material[data-finish]::before {
+  background-image:
+    repeating-linear-gradient(
+      112deg,
+      #e6adcf 0%,
+      #e8dba5 12%,
+      #a1dbcf 24%,
+      #9ebde5 36%,
+      #c3aae7 48%,
+      #e6adcf 60%
+    ),
+    repeating-linear-gradient(52deg, #2228 0 1px, #eee3 2px 3px);
+  background-size:
+    260% 260%,
+    100% 100%;
+  background-position:
+    calc(25% + var(--card-pointer-x) * 0.5)
+      calc(25% + var(--card-pointer-y) * 0.5),
+    center;
+  background-blend-mode: soft-light;
+  mix-blend-mode: color-dodge;
+  opacity: calc(
+    var(--card-light) * var(--card-foil-strength) * var(--card-foil-scale, 1)
+  );
+}
+
+.card-material[data-finish]::after {
+  background: radial-gradient(
+    farthest-corner circle at var(--card-pointer-x) var(--card-pointer-y),
+    #fff6,
+    #fff1 28%,
+    #0000 62%,
+    #0003
+  );
+  mix-blend-mode: soft-light;
+  opacity: calc(var(--card-light) * 0.65);
+}
+
+/* A foil already catches the light in its colours: its white highlight
+   stays soft, and its colours a touch lower, so the art keeps its contrast
+   and the foil's texture still shows. */
+.card-material:is([data-finish='holo'], [data-finish='rainbow'])::after {
+  opacity: calc(var(--card-light) * 0.3);
+}
+.card-material:is([data-finish='holo'], [data-finish='rainbow']) {
+  --card-foil-scale: 0.8;
+}
+
+.card-material[data-finish='holo']::before {
+  clip-path: inset(10.5% 8% 47.5% 8% round 1.5%);
+}
+
+.card-material[data-finish='sheen']::before {
+  display: none;
+}
+
+.card-material[data-foil-region='full']::before {
+  clip-path: none;
+}
+.card-material[data-foil-region='artwork']::before {
+  clip-path: inset(10.5% 8% 47.5%);
+}
+.card-material[data-finish='matte']::before,
+.card-material[data-finish='matte']::after,
+.card-material[data-foil-region='none']::before {
+  display: none;
+}
+
+.ptcgsim-card__face.card-material {
+  --card-light: max(var(--ptcgsim-glare, 0), var(--ptcgsim-drag-light, 0));
+  --card-pointer-x: var(--ptcgsim-glare-x, 50%);
+  --card-pointer-y: var(--ptcgsim-glare-y, 35%);
+  --card-foil-strength: 0.18;
+}
+
+.card-inspector__card.card-material {
+  --card-light: var(--inspector-light, 0);
+  --card-pointer-x: var(--inspector-pointer-x, 50%);
+  --card-pointer-y: var(--inspector-pointer-y, 35%);
+}
+
+.ptcgsim-card-preview-tilt.card-material {
+  --card-light: var(--ptcgsim-glare-opacity, 0);
+  --card-pointer-x: var(--ptcgsim-glare-x, 50%);
+  --card-pointer-y: var(--ptcgsim-glare-y, 35%);
+  --card-foil-strength: 0.32;
+}
+
+/* No moving light where motion is off. */
+:root[data-motion='reduced'] .card-material::before,
+:root[data-motion='reduced'] .card-material::after,
+:root[data-motion-speed='instant'] .card-material::before,
+:root[data-motion-speed='instant'] .card-material::after,
+[data-reduced-motion='true'] .card-material::before,
+[data-reduced-motion='true'] .card-material::after {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) .card-material::before,
+  :root:not([data-motion='full']) .card-material::after {
+    opacity: 0;
+  }
+}

@@ -1,0 +1,44 @@
+# ADR-050: Deck themes, player names and room entry
+
+- Status: **ACCEPTED**
+- Decision date: 2026-11-07
+- Request: compose a deck's sleeves, coin and playmat, reuse named themes, edit both board names in Settings, and simplify Play online.
+- Amends: ADR-033 (deck building), ADR-041/048 (custom assets), ADR-047 (rooms by code).
+- Parity: PX-102, PX-103.
+- Amended 2026-11-12: the names left Settings for the table (Names on the table, below).
+
+## Deck composition
+
+Deck list and Customize are separate sections of the editor. A saved deck can carry sleeves, a coin and a playmat. The existing asset chooser supports a landscape mat design/crop, in addition to sleeves and coins. Named themes copy these choices between decks and are kept as bounded device preferences. Reset returns a deck to defaults. A mat without an explicit choice follows the current table style.
+
+Deck fields survive storage, duplication and deferred-draft promotion. Merely opening an outside list is still unsaved. A real appearance change promotes it; a new empty deck with an appearance, notes, cover or format edit is retained. Seat headers show the deck title and size; tournament finishes remain in browsing metadata and saved names.
+
+A chosen deck applies its looks to its live seat. Personal coin defaults remain available; queued choices respect the latest deck and transient refusals retry. Accepted synchronization does not overwrite Undo. Solo can dress both seats, multiplayer only its own. Both viewers see each deck's mat. The card-back visibility preference continues to control card backs independently.
+
+Opening or remounting the editor retains a restored table's live looks. Explicitly choosing a deck or editing its appearance applies its saved choices, including choosing the same deck again. A list without saved looks takes defaults; deleting only the saved entry leaves the live table dressed until a real deck choice or card replacement. Accepted synchronization survives editor/board remounts and reconnects, while an explicit repeated choice starts a fresh attempt.
+
+Restored canonical coins take precedence before personal-default synchronization, including Standard after Undo. Fresh empty seats still take their personal default. Names, notes, covers and other metadata changes do not redress a live seat. A mat-only edit changes only the mat. Library loading completes before restored deck associations are baselined; explicit choices made during loading remain pending and apply afterward.
+
+Deleting a custom asset in Customize also takes it off saved decks wearing it, including live seats linked to those decks. Sleeves and mats share their asset collection; coins keep their own. Undo restores only the affected fields still at their defaults and never recreates a deleted deck or replaces a later choice. Coin deletion keeps the personal-default Undo behavior too. From the table's coin editor, deletion and Undo also change the selected live seat, including the other Solo seat and a coin set by its deck; newer live choices take precedence.
+
+## Canonical player metadata
+
+Each seat's name heads its hand's pill on the table (2026-11-12; until then, fields on Settings' first page). Solo can edit either, multiplayer only its own, and spectators/replays cannot change live names. `SetPlayerProfile` carries a bounded name and/or playmat through authority, events, projections, persistence and replay. The room resolves seat permissions before execution. Published acknowledgements update clean name fields without replacing a newer unsaved draft. Blur and Enter save trimmed edits; Escape cancels the draft. A name that can't be edited for now shows the canonical value while keeping an unsaved draft for editing to resume, including after a reconnect. A revert queues behind an earlier pending change. Name saves follow their actual submission outcome: version conflicts retry up to three attempts, and a final refusal or unsent request reports feedback and leaves the draft visibly retryable. Newer saved names supersede older retries; a room change or closed session cancels the old work. Late failures cannot mark a newer or escaped draft invalid.
+
+Authenticated session names follow a canonical player-name change in the same committed candidate, including Undo. Unchanged players' session records retain their identity and fields; command candidate validation permits only the corresponding name change alongside the ordinary issuer outcome update. Renaming does not invalidate a live connection.
+
+## Names on the table
+
+The owner found the names at the top of Settings out of place (2026-11-12) and chose to put them on the table: each seat's name heads its hand's pill, in that seat's colour, `[Red | 7 | 👁 | ⇅]`. Where the viewer may rename the seat (by the rules above), the name is a button ("Rename Red") that becomes a field in place ("Name for Red"), selected; Enter or leaving it saves, Esc puts the name back, and keyboard focus returns to the name, except on a touch screen, where the keyboard just closes. A new name shows at once while the room takes it. A refused save rings the name and keeps what was typed, flagged invalid, for the next press to retry. Elsewhere (a spectator, a replay) the name is plain text. Typing never reaches the table's keys.
+
+The table keeps room for the name in the pill's slot: up to 72px more (most names; a longer one ends in an ellipsis, and 96px squeezed a docked log's hand), taken from the start of the hand's strip only while the strip keeps 420px. Under 48px counts as no room. So a portrait phone's hand keeps the width the 2026-10-28 device QA set. Where no room is kept, the name sits beside the pill as a small pill of its own, toward the window's edge: below the near seat's, above the far seat's. The pill and name are positioned and kept on screen together (`TableSeatName`, `TableHandPill` in `LegacyBoardChrome.tsx`). The layout's count label carries the kept room as `nameRoomPx`.
+
+## Room entry
+
+Play online separates Host and Join, shares the Name field, and shows one primary action for the current flow. Join keeps explicit Play/Watch controls and native code/link paste. Explicit Paste buttons are removed from room entry and deck browsing; keyboard, system paste menus and file import remain.
+
+The form follows [GOV.UK's button guidance](https://design-system.service.gov.uk/components/button/) on a clear primary action and [NN/g's progressive-disclosure guidance](https://www.nngroup.com/videos/progressive-disclosure/) on revealing the relevant flow. It avoids nested competing form cards and the former OR divider.
+
+## Verification
+
+Coverage includes deck-look round trips and copies; preservation of real edits; latest queued choices and Undo; both Solo names, renamed on the table (`player-name-controls.spec.ts`, `TableSeatName.test.tsx`, the pill's room in `layout-table.test.ts`), and authority-session consistency; multiplayer seat permissions; landscape asset design; native paste/file-import races; and desktop/phone room entry. All 20 language catalogs are synchronized. The shared gate and independent review loop are required before shipping.

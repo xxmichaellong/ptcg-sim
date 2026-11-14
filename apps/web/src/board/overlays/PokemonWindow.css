@@ -1,0 +1,1115 @@
+/*
+ * The Pokémon window (PokemonWindow.tsx, ADR-043): a Pokémon in play, read
+ * and worked in one place. Its cards on one side -- the Pokémon over the
+ * Stages under it, then what is attached -- and on the other its damage,
+ * conditions and reminders, then its Abilities and attacks. Side by side
+ * where there is room; one column, scrolled, on a phone.
+ */
+
+/* Centred over the table, as tall as it needs up to the table's height. It
+   is the overlay layer's own child (its exit ghost needs that), so it is
+   centred by its margins rather than a wrapper. */
+.pokemon-window {
+  --pw-ability: oklch(0.6 0.19 27);
+  --pw-type: var(--color-border-strong);
+
+  position: absolute;
+  inset: 0;
+  z-index: var(--viewer-layer-preview);
+  isolation: isolate;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: min(1040px, calc(100% - 2 * var(--space-4)));
+  height: fit-content;
+  max-height: calc(100% - 2 * var(--space-4));
+  margin: auto;
+  overflow: hidden;
+  container: pokemon-window / inline-size;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-5), var(--highlight-top);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  pointer-events: auto;
+  -webkit-touch-callout: none;
+  animation:
+    ptcgsim-overlay-fade-in var(--overlay-enter-duration) var(--ease-fade)
+      backwards,
+    ptcgsim-overlay-preview-in var(--overlay-enter-duration) var(--ease-snappy)
+      backwards;
+  /* Back when a card dragged out of it is not put anywhere. */
+  transition:
+    opacity var(--overlay-enter-duration) var(--ease-fade),
+    translate var(--overlay-enter-duration) var(--ease-snappy);
+}
+
+.pokemon-window:focus-visible {
+  outline: none;
+}
+
+/* A card dragged out of it: it gets out of the drop's way, as the pile
+   viewers do; the drop closes it. */
+.pokemon-window[data-preview-dragging-card] {
+  z-index: -2;
+  opacity: 0;
+  pointer-events: none;
+  translate: 0 var(--overlay-panel-from-y);
+  transition:
+    opacity var(--overlay-exit-duration) var(--ease-fade),
+    translate var(--overlay-exit-duration) var(--ease-in);
+}
+
+/* ---- Title bar ---------------------------------------------------------- */
+
+/* Washed with the Pokémon's type at the top, as a card's frame is. */
+.pokemon-window__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--pw-type) 22%, transparent),
+    color-mix(in oklab, var(--pw-type) 4%, transparent)
+  );
+}
+
+.pokemon-window__header[data-type='Grass'] {
+  --pw-type: var(--energy-grass);
+}
+.pokemon-window__header[data-type='Fire'] {
+  --pw-type: var(--energy-fire);
+}
+.pokemon-window__header[data-type='Water'] {
+  --pw-type: var(--energy-water);
+}
+.pokemon-window__header[data-type='Lightning'] {
+  --pw-type: var(--energy-lightning);
+}
+.pokemon-window__header[data-type='Psychic'] {
+  --pw-type: var(--energy-psychic);
+}
+.pokemon-window__header[data-type='Fighting'] {
+  --pw-type: var(--energy-fighting);
+}
+.pokemon-window__header[data-type='Darkness'] {
+  --pw-type: var(--energy-darkness);
+}
+.pokemon-window__header[data-type='Metal'] {
+  --pw-type: var(--energy-metal);
+}
+.pokemon-window__header[data-type='Fairy'] {
+  --pw-type: var(--energy-fairy);
+}
+.pokemon-window__header[data-type='Dragon'] {
+  --pw-type: var(--energy-dragon);
+}
+.pokemon-window__header[data-type='Colorless'] {
+  --pw-type: var(--energy-colorless);
+}
+
+.pokemon-window__title-block {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: var(--space-0-5);
+}
+
+.pokemon-window__eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+}
+
+.pokemon-window__eyebrow > * + span:not(.ptcgsim-overlay-seat)::before {
+  margin-inline-end: var(--space-2);
+  color: var(--color-text-faint);
+  content: '·';
+}
+
+.pokemon-window__title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.pokemon-window__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Body: the cards, then the side with the moves ---------------------- */
+
+.pokemon-window__body {
+  --pw-hero-h: clamp(170px, 40vh, 320px);
+  --pw-stage-h: calc(var(--pw-hero-h) * 0.4);
+  --pw-attached-h: clamp(80px, 12.5vh, 112px);
+
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+  overflow: hidden;
+}
+
+/* The Pokémon large, and beside it the Stages under it over what is
+   attached. */
+.pokemon-window__cards {
+  display: grid;
+  min-height: 0;
+  align-content: start;
+  grid-template-areas:
+    'hero stages'
+    'hero attached';
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  gap: var(--space-4) var(--space-5);
+  padding: var(--space-5);
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: color-mix(in oklab, var(--color-surface-sunken) 55%, transparent);
+  scrollbar-color: var(--color-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.pokemon-window__side {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border-inline-start: 1px solid var(--color-border);
+  scrollbar-color: var(--color-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+/* A section's name, small and quiet over it. */
+.pokemon-window__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  margin: 0;
+  color: var(--color-text-faint);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pokemon-window__count {
+  padding: 1px var(--space-1-5);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-3);
+  color: var(--color-text-muted);
+  letter-spacing: 0;
+}
+
+/* The cards, each a button that opens it large and lifts to be dragged. */
+.pokemon-window .ptcgsim-legacy-stack-preview-card.is-hero {
+  --ptcgsim-stack-card-height: var(--pw-hero-h);
+
+  box-shadow: var(--shadow-3);
+}
+
+.pokemon-window .ptcgsim-legacy-stack-preview-card.is-stage {
+  --ptcgsim-stack-card-height: var(--pw-stage-h);
+}
+
+.pokemon-window .ptcgsim-legacy-stack-preview-card.is-attached {
+  --ptcgsim-stack-card-height: var(--pw-attached-h);
+}
+
+.pokemon-window .ptcgsim-legacy-stack-preview-card:focus-visible {
+  outline: 2px solid var(--ptcgsim-focus-ring, var(--color-accent));
+  outline-offset: 3px;
+}
+
+.pokemon-window__hero {
+  grid-area: hero;
+}
+
+.pokemon-window__stages {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  grid-area: stages;
+  gap: var(--space-2);
+}
+
+.pokemon-window__stage-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pokemon-window__attached {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  grid-area: attached;
+  gap: var(--space-3);
+}
+
+.pokemon-window__group {
+  display: grid;
+  gap: var(--space-1-5);
+}
+
+.pokemon-window__group-head {
+  display: flex;
+  min-height: 18px;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.pokemon-window__energy-summary {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+}
+
+.pokemon-window__special {
+  margin-inline-start: var(--space-1);
+  color: var(--color-text-faint);
+  font-weight: var(--weight-medium);
+}
+
+.pokemon-window__group-cards {
+  display: flex;
+  flex-wrap: wrap;
+  /* Room for a hovered card's lift. */
+  padding-top: var(--space-1);
+  gap: var(--space-1-5);
+}
+
+/* Energy fans out as it lies under the Pokémon on the table: each card
+   shows its left half, so a row of eight still reads at a glance. */
+.pokemon-window__group[data-group='energy'] .pokemon-window__group-cards {
+  gap: 0;
+}
+
+.pokemon-window__group[data-group='energy']
+  .ptcgsim-legacy-stack-preview-card
+  + .ptcgsim-legacy-stack-preview-card {
+  margin-inline-start: calc(var(--pw-attached-h) * 63 / 88 * -0.45);
+}
+
+.pokemon-window__group[data-group='energy']
+  .ptcgsim-legacy-stack-preview-card:hover,
+.pokemon-window__group[data-group='energy']
+  .ptcgsim-legacy-stack-preview-card:focus-visible {
+  z-index: 1;
+}
+
+/* A Pokémon whose attacks the table doesn't know still attacks, unnamed:
+   its button at the end of the line, under what the window could say. */
+.pokemon-window__plain-attack {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pokemon-window__empty {
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-faint);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+/* ---- Status: HP, damage, conditions, reminders -------------------------- */
+
+.pokemon-window__status {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-1);
+}
+
+.pokemon-window__vitals {
+  --pw-hp: var(--color-success);
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.pokemon-window__vitals[data-hp-tone='mid'] {
+  --pw-hp: var(--color-warning);
+}
+
+.pokemon-window__vitals[data-hp-tone='low'] {
+  --pw-hp: var(--color-danger);
+}
+
+.pokemon-window__hp {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 120px;
+  align-items: baseline;
+  grid-template-areas:
+    'label value modifier steps'
+    'bar bar bar bar';
+  grid-template-columns: auto 1fr auto auto;
+  gap: var(--space-1) var(--space-2);
+}
+
+/* What effects add to (or take from) the printed HP, beside it. */
+.pokemon-window__hp-modifier {
+  grid-area: modifier;
+  align-self: center;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--color-success) 18%, transparent);
+  color: var(--color-success-ink);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
+
+.pokemon-window__hp-modifier[data-direction='down'] {
+  background: color-mix(in oklab, var(--color-danger) 18%, transparent);
+  color: var(--color-danger);
+}
+
+.pokemon-window__hp-modifier:focus-visible {
+  outline: 2px solid var(--ptcgsim-focus-ring, var(--color-accent));
+  outline-offset: 2px;
+}
+
+/* Its HP up or down by 10, for an effect: small, beside the HP. */
+.pokemon-window__hp-steps {
+  display: inline-flex;
+  grid-area: steps;
+  align-self: center;
+  gap: 2px;
+}
+
+.pokemon-window__icon-button.is-small {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--color-border);
+  font-size: 12px;
+}
+
+.pokemon-window__hp-label {
+  grid-area: label;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pokemon-window__hp-value {
+  grid-area: value;
+  justify-self: end;
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  white-space: nowrap;
+}
+
+.pokemon-window__hp-left {
+  font-size: var(--text-xl);
+}
+
+.pokemon-window__hp-total {
+  margin-inline-start: 1px;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.pokemon-window__hp-bar {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  grid-area: bar;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-sunken);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+.pokemon-window__hp-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--pw-hp) 80%, white),
+    var(--pw-hp)
+  );
+  transition:
+    inline-size var(--duration-slow) var(--ease-out),
+    background-color var(--duration-normal) ease;
+}
+
+.pokemon-window__stepper {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-0-5);
+  padding: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-sunken);
+}
+
+.pokemon-window__icon-button {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: calc(var(--radius-control) - 3px);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 16px;
+  transition:
+    background-color var(--duration-instant) ease,
+    scale var(--control-press-timing);
+}
+
+.pokemon-window__icon-button.is-quiet {
+  color: var(--color-text-muted);
+}
+
+.pokemon-window__icon-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pokemon-window__icon-button:hover:not(:disabled) {
+    background: var(--color-surface-hover);
+  }
+}
+
+.pokemon-window__icon-button:active:not(:disabled) {
+  background: var(--color-surface-pressed);
+  scale: var(--control-press-scale);
+}
+
+.pokemon-window__icon-button:focus-visible,
+.pokemon-window__toggle:focus-visible {
+  outline: 2px solid var(--ptcgsim-focus-ring, var(--color-accent));
+  outline-offset: 1px;
+}
+
+/* The damage itself, on a damage counter: the table's counters' colors
+   (yellow, orange from 50, red from 100) and ink, a rim and a sheen as the
+   physical tokens have. No damage: an empty slot for one. */
+.pokemon-window__counter {
+  --counter-fill: transparent;
+  --counter-ink: var(--color-text-faint);
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  margin-inline: 2px;
+  border: 2px dashed var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--counter-fill);
+  color: var(--counter-ink);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.pokemon-window__counter:not([data-band='none']) {
+  border: 0;
+  background-image: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0.28),
+    rgb(255 255 255 / 0.04) 50%,
+    rgb(0 0 0 / 0.14)
+  );
+  box-shadow:
+    0 0 0 2px var(--counter-rim),
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    0 2px 6px rgb(0 0 0 / 0.3);
+}
+
+.pokemon-window__counter[data-band='10'] {
+  --counter-fill: var(--ptcgsim-counter-10);
+  --counter-rim: #d6b600;
+  --counter-ink: #17120a;
+}
+
+.pokemon-window__counter[data-band='50'] {
+  --counter-fill: var(--ptcgsim-counter-50);
+  --counter-rim: #be5c00;
+  --counter-ink: #17120a;
+}
+
+.pokemon-window__counter[data-band='100'] {
+  --counter-fill: var(--ptcgsim-counter-100);
+  --counter-rim: #96000c;
+  --counter-ink: #fff;
+}
+
+.pokemon-window__counter:has(.pokemon-window__damage-input:focus-visible) {
+  outline: 2px solid var(--ptcgsim-focus-ring, var(--color-accent));
+  outline-offset: 3px;
+}
+
+.pokemon-window__damage-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: center;
+}
+
+/* Four figures still fit the counter. */
+.pokemon-window__counter[data-long='true'] {
+  font-size: var(--text-sm);
+}
+
+.pokemon-window__damage-input::placeholder {
+  color: var(--color-text-faint);
+  opacity: 1;
+}
+
+.pokemon-window__damage-input:focus-visible {
+  outline: none;
+}
+
+.pokemon-window__damage-input[aria-invalid='true'] {
+  color: var(--color-danger);
+}
+
+.pokemon-window__counter.is-readout {
+  font-size: var(--text-md);
+}
+
+.pokemon-window__hint {
+  flex-basis: 100%;
+  color: var(--color-danger);
+  font-size: var(--text-xs);
+}
+
+.pokemon-window__markers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pokemon-window__markers:empty {
+  display: none;
+}
+
+/* The Special Conditions in their two sets (ADR-043 §14): Poisoned and
+   Burned, each on or off; then Asleep, Paralyzed and Confused, one at a
+   time -- set apart by a rule. */
+.pokemon-window__condition-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pokemon-window__condition-group + .pokemon-window__condition-group {
+  margin-inline-start: var(--space-1);
+  padding-inline-start: var(--space-2);
+  border-inline-start: 1px solid var(--color-border);
+}
+
+/* A marker that is on or off: lit, latched in, while it is on. */
+.pokemon-window__toggle {
+  display: inline-flex;
+  box-sizing: border-box;
+  height: 30px;
+  min-width: 30px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0 var(--space-0-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  transition:
+    background-color var(--duration-instant) ease,
+    border-color var(--duration-instant) ease,
+    color var(--duration-instant) ease,
+    scale var(--control-press-timing);
+}
+
+span.pokemon-window__toggle {
+  cursor: default;
+}
+
+.pokemon-window__toggle > svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pokemon-window__toggle > img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  opacity: 0.5;
+  filter: grayscale(0.7);
+  transition:
+    opacity var(--duration-instant) ease,
+    filter var(--duration-instant) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button.pokemon-window__toggle:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
+
+  button.pokemon-window__toggle:hover > img {
+    opacity: 0.85;
+  }
+}
+
+button.pokemon-window__toggle:active {
+  scale: var(--control-press-scale);
+}
+
+.pokemon-window__toggle[aria-pressed='true'],
+.pokemon-window__toggle[data-pressed='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--ds-accent-text, var(--color-text));
+}
+
+.pokemon-window__toggle[aria-pressed='true'] > img,
+.pokemon-window__toggle[data-pressed='true'] > img {
+  opacity: 1;
+  filter: none;
+}
+
+/* The conditions, then the reminders, then the Ability's marker: a little
+   room between the kinds. */
+.pokemon-window__toggle.is-condition + .pokemon-window__toggle.is-reminder,
+.pokemon-window__toggle.is-reminder + .pokemon-window__toggle.is-ability {
+  margin-inline-start: var(--space-2);
+}
+
+/* ---- Abilities and attacks ---------------------------------------------- */
+
+/* One grid for every move, so the names line up after the costs (an
+   attack's damage is left out: effects change it); then, where a move can
+   be used, a column of its buttons (Use, Attack) on the very end. */
+.pokemon-window__moves {
+  display: grid;
+  align-content: start;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2-5, 10px) var(--space-3);
+  container: pokemon-window-moves / inline-size;
+}
+
+.pokemon-window__moves[data-actions='true'] {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.pokemon-window__moves > :not(.pokemon-window__move-slot) {
+  grid-column: 1 / -1;
+}
+
+.pokemon-window__move-slot {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  row-gap: var(--space-1-5);
+}
+
+.pokemon-window__from {
+  grid-column: 1 / -1;
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.pokemon-window__move {
+  display: grid;
+  box-sizing: border-box;
+  width: 100%;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  row-gap: var(--space-1-5);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-3);
+  color: var(--color-text);
+  font: inherit;
+  text-align: start;
+}
+
+.pokemon-window__move-head {
+  display: grid;
+  min-height: 30px;
+  align-items: center;
+  grid-column: 1 / span 2;
+  grid-template-columns: subgrid;
+}
+
+.pokemon-window__move-name {
+  min-width: 0;
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.pokemon-window__move-text {
+  display: block;
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.pokemon-window__move-text .energy-symbol,
+.pokemon-window__rules .energy-symbol {
+  margin: 0 1px;
+  vertical-align: -3px;
+}
+
+.pokemon-window__cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* An attack that costs nothing: an empty socket where the Energy go. */
+.pokemon-window__cost-free {
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border: 2px dashed var(--color-border-strong);
+  border-radius: 50%;
+}
+
+/* An Ability: its kind in red, as the card prints it, and Use. */
+.pokemon-window__move.is-ability {
+  border-color: color-mix(in oklab, var(--pw-ability) 45%, var(--color-border));
+  background: color-mix(in oklab, var(--pw-ability) 9%, var(--color-surface-3));
+}
+
+.pokemon-window__ability-kind {
+  justify-self: start;
+  padding: 3px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--pw-ability);
+  color: #fff;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* A move's button (Use, Attack): on the end of its first line, the same
+   width as the others. Only it uses the move, so a tap on the text to read
+   it does nothing. */
+.pokemon-window__use {
+  grid-row: 1;
+  grid-column: -2 / -1;
+  align-self: center;
+  justify-self: stretch;
+  height: 32px;
+  padding-inline: var(--space-4);
+}
+
+/* Where the moves are narrow: the button under the move's text instead. */
+@container pokemon-window-moves (max-width: 440px) {
+  .pokemon-window__moves[data-actions='true'] {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .pokemon-window__use {
+    grid-row: auto;
+    grid-column: 1 / -1;
+    justify-self: end;
+    margin-block-start: var(--space-1);
+  }
+}
+
+.pokemon-window__rules {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: var(--space-2-5, 10px) var(--space-3);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+/* While the card's text is on its way: where the moves will be. */
+.pokemon-window__loading {
+  display: grid;
+  gap: var(--space-2-5, 10px);
+}
+
+.pokemon-window__skeleton {
+  display: block;
+  height: 72px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-3),
+    color-mix(in oklab, var(--color-surface-3) 60%, transparent)
+  );
+  opacity: 0.7;
+}
+
+/* Weakness, Resistance and Retreat, along the bottom as on the card. */
+.pokemon-window__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.pokemon-window__stats > div {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+}
+
+.pokemon-window__stats dt {
+  color: var(--color-text-faint);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pokemon-window__stats dd {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-weight: var(--weight-semibold);
+}
+
+.pokemon-window__stat-none {
+  color: var(--color-text-faint);
+}
+
+/* ---- Narrow: one column, scrolled under the title ----------------------- */
+
+@container pokemon-window (max-width: 720px) {
+  .pokemon-window__body {
+    --pw-hero-h: clamp(150px, 30vh, 236px);
+    --pw-stage-h: calc(var(--pw-hero-h) * 0.4);
+    --pw-attached-h: clamp(64px, 9vh, 84px);
+
+    display: block;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .pokemon-window__cards,
+  .pokemon-window__side {
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .pokemon-window__cards {
+    gap: var(--space-3) var(--space-4);
+    padding: var(--space-4);
+  }
+
+  .pokemon-window__side {
+    padding: var(--space-4);
+    border-inline-start: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .pokemon-window__header {
+    padding-inline-start: var(--space-4);
+  }
+
+  .pokemon-window__title {
+    font-size: var(--text-xl);
+  }
+}
+
+@container pokemon-window (max-width: 420px) {
+  .pokemon-window__move {
+    padding: var(--space-2-5, 10px) var(--space-3);
+  }
+}
+
+/* The Pokémon window's scrim: the pile viewer's, under the window. */
+.pokemon-window-scrim {
+  z-index: var(--viewer-layer-browser);
+}
+
+/* Where a card's picture won't load: its name, so it still reads. */
+.pokemon-window__card-name {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-items: center;
+  padding: var(--space-1);
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  text-align: center;
+  pointer-events: none;
+}
+
+.ptcgsim-legacy-overlay-card-image[data-overlay-image-state='failed']
+  + .pokemon-window__card-name {
+  display: grid;
+}
+
+/* An Ability's own Used mark, on its row while it is on; a press at the
+   table takes it off. */
+.pokemon-window__used {
+  display: inline-flex;
+  margin-inline-start: var(--space-2);
+  align-items: center;
+  gap: var(--space-1);
+  vertical-align: 1px;
+  color: var(--color-success-ink);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+}
+
+button.pokemon-window__used {
+  padding: 2px 9px 2px 7px;
+  border: 1px solid color-mix(in oklab, var(--color-success) 45%, transparent);
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--color-success) 14%, transparent);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button.pokemon-window__used:hover {
+    background: color-mix(in oklab, var(--color-success) 24%, transparent);
+  }
+}
+
+button.pokemon-window__used:focus-visible {
+  outline: 2px solid var(--ptcgsim-focus-ring, var(--color-accent));
+  outline-offset: 2px;
+}
+
+/* A tighter window where the table is short (a phone held sideways). */
+@media (max-height: 520px) {
+  .pokemon-window__header {
+    padding-block: var(--space-2);
+  }
+
+  .pokemon-window__title {
+    font-size: var(--text-lg);
+  }
+
+  .pokemon-window__eyebrow {
+    font-size: var(--text-2xs);
+  }
+
+  .pokemon-window__cards,
+  .pokemon-window__side {
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .pokemon-window__status {
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+}
+
+@container pokemon-window (max-width: 900px) {
+  .pokemon-window__cards,
+  .pokemon-window__side {
+    padding: var(--space-4);
+  }
+
+  .pokemon-window__status {
+    padding: var(--space-3);
+  }
+}
+
+/* Under a finger: room for it on every control. */
+@media (pointer: coarse) {
+  .pokemon-window__toggle {
+    height: 40px;
+    min-width: 40px;
+  }
+
+  .pokemon-window__icon-button,
+  .pokemon-window__damage-input {
+    height: 40px;
+  }
+
+  .pokemon-window__icon-button {
+    width: 40px;
+  }
+
+  .pokemon-window__use {
+    height: 40px;
+  }
+}

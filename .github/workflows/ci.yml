@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: ./.github/actions/setup
+      - run: corepack pnpm run audit:dependencies
+      - run: corepack pnpm run check:ci
+        env:
+          # Set during the build so the bundle check proves no secret ships.
+          CONTINUATION_KEYRING: ptcgsim-ci-secret-sentinel-never-ship-000001
+      - name: Nothing generated is left uncommitted
+        run: git diff --exit-code
+
+  # Chromium runs the suite in eight shards balanced by recorded time
+  # (scripts/browser-shards.mjs), Firefox and WebKit a cross-section. A test
+  # that fails runs once more; one that then passes is annotated as flaky.
+  browser:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Chromium 1/8, run: node scripts/browser-shards.mjs 1/8 }
+          - { name: Chromium 2/8, run: node scripts/browser-shards.mjs 2/8 }
+          - { name: Chromium 3/8, run: node scripts/browser-shards.mjs 3/8 }
+          - { name: Chromium 4/8, run: node scripts/browser-shards.mjs 4/8 }
+          - { name: Chromium 5/8, run: node scripts/browser-shards.mjs 5/8 }
+          - { name: Chromium 6/8, run: node scripts/browser-shards.mjs 6/8 }
+          - { name: Chromium 7/8, run: node scripts/browser-shards.mjs 7/8 }
+          - { name: Chromium 8/8, run: node scripts/browser-shards.mjs 8/8 }
+          - name: Chromium built app
+            run: corepack pnpm run test:browser:built
+          - name: Firefox
+            browser: firefox
+            run: corepack pnpm run test:cross-browser --project=firefox
+          - name: WebKit
+            browser: webkit
+            run: corepack pnpm run test:cross-browser --project=webkit
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: ./.github/actions/setup
+      - uses: ./.github/actions/playwright
+        with:
+          browser: ${{ matrix.browser || 'chromium' }}
+      - run: ${{ matrix.run }}
+      # Wrangler writes the dev server's own errors to a file, not the log.
+      - if: always()
+        run: mkdir -p test-results && cp -r ~/.config/.wrangler/logs test-results/wrangler-logs || true
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-${{ strategy.job-index }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,16 @@
+/* Play online (OnlineSheet.tsx): the lobby's sidebar panel, sized for the
+   sheet rather than v1's column. */
+
+.ptcgsim-online-sheet .legacy-room-sidebox.legacy-lobby-sidebox {
+  z-index: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.ptcgsim-online-sheet .legacy-lobby-sidebox .lobby-panel {
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+}

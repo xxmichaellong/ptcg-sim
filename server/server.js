@@ -301,7 +301,11 @@ async function main() {
     }
   });
 
-  const port = 4000;
+  const configuredPort = process.env.PORT ?? '4000';
+  const port = Number(configuredPort);
+  if (!Number.isSafeInteger(port) || port < 1 || port > 65535) {
+    throw new Error(`Invalid PORT: ${configuredPort}`);
+  }
   server.listen(port, () => {
     // eslint-disable-next-line no-console
     console.log(`Server is running at http://localhost:${port}`);

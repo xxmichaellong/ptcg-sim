@@ -1,0 +1,2204 @@
+import { DurableObject } from 'cloudflare:workers';
+import {
+  DEFAULT_ADMISSION_TICKET_POLICY,
+  DEFAULT_AUTHORITY_POLICY,
+  RoomAuthorityCoordinator,
+  type RoomAuthoritySnapshot,
+} from '@ptcgsim/room-authority';
+import {
+  HEARTBEAT_PING_FRAME,
+  HEARTBEAT_PONG_FRAME,
+  PAGE_REPORT_PATH,
+  type RoomCreationRequest,
+  type RoomCreationResponse,
+} from '@ptcgsim/protocol';
+
+import { handleAdmissionTicketRequest } from './admission-ticket-http.js';
+import {
+  browserJsonResponse as json,
+  isSameOriginBrowserRequest,
+  readBoundedJsonRequest,
+} from './browser-json-http.js';
+import {
+  accountRoute,
+  handleAccountRequest,
+} from './accounts/account-http.js';
+import {
+  PtcgAccount,
+  PtcgPresence,
+  PtcgSignIn,
+} from './accounts/account-objects.js';
+import {
+  readSessionToken,
+  sha256Hex as sessionSecretHash,
+} from './accounts/account-session.js';
+import { handleReplayRequest, replayRoute } from './accounts/replay-http.js';
+import {
+  friendsRoute,
+  handleFriendsRequest,
+} from './accounts/friends-http.js';
+import { readSignInConfiguration } from './accounts/sign-in-providers.js';
+import { WebCryptoAuthoritySource } from './authority-crypto.js';
+import { RoomReplayArchive, sessionOfResumeToken } from './replay-archive.js';
+import { createContinuationCryptographyFromConfiguration } from './continuation-configuration.js';
+import { handleContinuationCreationRequest } from './continuation-creation-http.js';
+import {
+  coordinateContinuationCreation,
+  type ContinuationCreationCoordinationResult,
+} from './continuation-create.js';
+import {
+  DurableContinuationCustody,
+  createContinuationSaveId,
+  expireContinuationCustody,
+  type ContinuationCreationReceipt,
+  type ReservedContinuationCreationResult,
+} from './continuation-custody.js';
+import { prepareContinuationFork } from './continuation-fork.js';
+import { continuationHttpMode } from './continuation-http-activation.js';
+import { readContinuationQuotaConfiguration } from './continuation-quota-configuration.js';
+import {
+  DurableContinuationQuotaShard,
+  continuationQuotaShardName,
+  expireContinuationQuotaLeases,
+  type ContinuationQuotaLeaseReservation,
+} from './continuation-quota.js';
+import { authenticateContinuationRequester } from './continuation-request-auth.js';
+import {
+  coordinateContinuationRestore,
+  type ContinuationRestoreTargetAcknowledgement,
+} from './continuation-restore.js';
+import { handleContinuationRestoreRequest } from './continuation-restore-http.js';
+import { handleContinuationRevocationRequest } from './continuation-revocation-http.js';
+import {
+  readContinuationRevocationRpcInput,
+  readContinuationSaveCreationRpcInput,
+  readContinuationSaveRecoveryRpcInput,
+  readContinuationQuotaReservationRpcInput,
+  readContinuationRestoreRpcInput,
+  readContinuationSourceCreationRpcInput,
+  type ContinuationRestoreRpcResult,
+} from './continuation-rpc.js';
+import { DurableRoomContinuationSource } from './continuation-source.js';
+import {
+  initializeContinuationTarget,
+  validateContinuationTargetPlan,
+} from './continuation-target.js';
+import {
+  CardCatalogBuilder,
+  type CatalogManifest,
+  type CatalogStore,
+} from './card-catalog/builder.js';
+import {
+  CARD_CATALOG_PATH,
+  cardCatalogBodyVersion,
+  handleCardCatalogBodyRequest,
+  handleCardCatalogManifestRequest,
+} from './card-catalog/http.js';
+import {
+  AnalyticsTelemetrySink,
+  requestOrigin,
+  type AnalyticsDataset,
+  type AnalyticsRequestOrigin,
+} from './analytics-sink.js';
+import { initializeNewRoom } from './create-room.js';
+import {
+  CURRENT_DECKS_PATH,
+  handleCurrentDecksRequest,
+} from './current-decks-http.js';
+import {
+  fetchCurrentDeckFeed,
+  readStoredCurrentDeckFeed,
+  type CurrentDeckFeed,
+} from './current-decks.js';
+import {
+  DeckIndex,
+  type PlayerListAnswer,
+  type SearchAnswer,
+  type TournamentAnswer,
+} from './deck-index/deck-index.js';
+import {
+  deckIndexRoute,
+  handleDeckIndexRequest,
+  type DeckIndexRoute,
+} from './deck-index/http.js';
+import type { IndexedFormat } from './deck-index/parse.js';
+import type { FinishKey } from './deck-index/store.js';
+import {
+  DurableRoomSnapshotStore,
+  RoomAlreadyInitializedError,
+} from './durable-storage.js';
+import {
+  handleImageImportRequest,
+  handleImageServeRequest,
+  handleImageUploadRequest,
+  IMAGE_IMPORT_PATH,
+  IMAGE_PATH,
+  servedImageHash,
+} from './images/image-http.js';
+import { sha256Hex as sha256Bytes } from './images/image-bytes.js';
+import {
+  checkImageBytes,
+  imageStoreName,
+  ImageStoreSql,
+  type ImagePutResult,
+  type StoredImage,
+} from './images/image-store.js';
+import { handlePageReportRequest } from './page-report-http.js';
+import { isRoomAlreadyInitialized } from './room-initialization.js';
+import {
+  consumeAccountRateLimit,
+  consumeContinuationCreationRateLimit,
+  consumeContinuationRestoreRateLimit,
+  consumeContinuationRevocationRateLimit,
+  consumeImageImportRateLimit,
+  consumeImageUploadRateLimit,
+  consumePageReportRateLimit,
+  consumeRoomCodeJoinRateLimit,
+  consumeRoomCreationRateLimit,
+  consumeRoomIngressRateLimit,
+  type RoomIngressOperation,
+} from './request-rate-limit.js';
+import {
+  handleRoomAliasRequest,
+  handleRoomCodeJoinRequest,
+  joinRoomByAlias,
+  RoomAliasCustody,
+  RoomAliasDirectoryRecord,
+  type RoomAliasRecord,
+} from './room-alias.js';
+import { handleRoomCreationRequest } from './room-creation-http.js';
+import { handleRoomInvitationRequest } from './room-invitation-http.js';
+import { handleRoomOpenRequest } from './room-open-http.js';
+import { DurableRoomRateLimiter } from './room-rate-limit.js';
+import { handleServerHealthRequest } from './server-health.js';
+import { activeSocketCountExcluding } from './socket-telemetry.js';
+import {
+  ConsoleServerTelemetrySink,
+  StructuredServerTelemetry,
+  nextTelemetryId,
+  type ContinuationLifecycleOperation,
+  type ContinuationLifecycleOutcome,
+  type ServerHttpRoute,
+  type ServerTelemetrySource,
+  type ServerTelemetryPort,
+} from './server-telemetry.js';
+import {
+  RoomSessionHub,
+  type AcceptedCommandPerformanceObservation,
+  type BoundedRoomCodeAdmissionResult,
+  type RuntimeConnection,
+} from './session-hub.js';
+
+/** Where a room keeps its public code (ADR-047), beside its snapshot. */
+const ROOM_ALIAS_STORAGE_KEY = 'room-alias:v1';
+/**
+ * Who restored a room's game from a save (its host, ADR-047): kept beside
+ * the snapshot, which keeps the saved seat order whoever restores it.
+ */
+const ROOM_RESTORED_BY_STORAGE_KEY = 'room-restored-by:v1';
+
+interface Env {
+  readonly BUILD_ID: string;
+  /** Secret binding, deliberately absent from checked-in production config. */
+  readonly CONTINUATION_KEYRING?: string;
+  /** Operator policy binding, deliberately absent from production defaults. */
+  readonly CONTINUATION_QUOTA_CONFIGURATION?: string;
+  /** Exact default-off edge activation token, absent from production config. */
+  readonly CONTINUATION_HTTP_ACTIVATION?: string;
+  readonly PTCG_CONTINUATION: DurableObjectNamespace<PtcgContinuation>;
+  readonly PTCG_CONTINUATION_QUOTA: DurableObjectNamespace<PtcgContinuationQuota>;
+  readonly PTCG_ROOM: DurableObjectNamespace<PtcgRoom>;
+  /** Room codes (ADR-047), one record per code. */
+  readonly PTCG_ROOM_CODE: DurableObjectNamespace<PtcgRoomCode>;
+  readonly PTCG_DECK_FEED: DurableObjectNamespace<PtcgDeckFeed>;
+  readonly PTCG_CARD_CATALOG: DurableObjectNamespace<PtcgCardCatalog>;
+  readonly PTCG_DECK_INDEX: DurableObjectNamespace<PtcgDeckIndex>;
+  /** Card-back pictures (ADR-041), sixteen stores by hash. */
+  readonly PTCG_IMAGE_STORE: DurableObjectNamespace<PtcgImageStore>;
+  /** Optional secret: a Limitless API key raises its rate limit. */
+  readonly LIMITLESS_API_KEY?: string;
+  /**
+   * `off` keeps the card catalog from fetching TCGdex at all (browser specs,
+   * which serve their own fixture); anything else, or nothing, builds it.
+   */
+  readonly CARD_CATALOG_SOURCE?: string;
+  /**
+   * `off` keeps the tournament deck index from calling Limitless at all
+   * (browser specs, which serve their own answers); anything else, or
+   * nothing, crawls it. wrangler.jsonc sets it off for both Workers until
+   * the account is on Workers Paid (ADR-037).
+   */
+  readonly DECK_INDEX_SOURCE?: string;
+  readonly CONTINUATION_CREATION_RATE_LIMITER: RateLimit;
+  readonly CONTINUATION_RESTORE_RATE_LIMITER: RateLimit;
+  readonly CONTINUATION_REVOCATION_RATE_LIMITER: RateLimit;
+  readonly ROOM_CREATION_RATE_LIMITER: RateLimit;
+  readonly ROOM_INGRESS_RATE_LIMITER: RateLimit;
+  readonly IMAGE_UPLOAD_RATE_LIMITER: RateLimit;
+  readonly IMAGE_IMPORT_RATE_LIMITER: RateLimit;
+  /** Lookups and joins by room code, per address (ADR-047). */
+  readonly ROOM_CODE_RATE_LIMITER: RateLimit;
+  /** Accounts (ADR-052): one per account, one per provider id. */
+  readonly PTCG_ACCOUNT: DurableObjectNamespace<PtcgAccount>;
+  readonly PTCG_SIGN_IN: DurableObjectNamespace<PtcgSignIn>;
+  /** Who is online, for friends (ADR-055): one hub. */
+  readonly PTCG_PRESENCE: DurableObjectNamespace<PtcgPresence>;
+  readonly SIGN_IN_RATE_LIMITER: RateLimit;
+  readonly ACCOUNT_RATE_LIMITER: RateLimit;
+  /**
+   * The site's analytics events (ADR-054): the server's own and each page's
+   * report. Absent in tests, where nothing is kept.
+   */
+  readonly ANALYTICS?: AnalyticsDataset;
+  /** Page reports, per address (ADR-054). */
+  readonly PAGE_REPORT_RATE_LIMITER: RateLimit;
+  /** `on` offers the stand-in sign-in (local and test builds only). */
+  readonly AUTH_TEST_PROVIDER?: string;
+  /** Optional secrets: a provider is offered once its app is set. */
+  readonly GOOGLE_CLIENT_ID?: string;
+  readonly GOOGLE_CLIENT_SECRET?: string;
+  readonly DISCORD_CLIENT_ID?: string;
+  readonly DISCORD_CLIENT_SECRET?: string;
+}
+
+interface SocketAttachment {
+  readonly connectionId: string;
+  readonly sessionId?: string;
+  readonly authorityVersion: number;
+  /** Absolute wall-clock deadline for an upgraded socket to complete Hello. */
+  readonly admissionExpiresAt?: number;
+  /** The presentation events its client reads (from its Hello). */
+  readonly presentationLevel?: number;
+  /** Its browser's account, checked at the upgrade (ADR-053). */
+  readonly accountId?: string;
+}
+
+type InitializedRoom = RoomCreationResponse;
+
+interface RoomRuntime {
+  readonly coordinator: RoomAuthorityCoordinator;
+  readonly hub: RoomSessionHub;
+}
+
+const activeSessionCount = (snapshot: RoomAuthoritySnapshot): number =>
+  Object.values(snapshot.sessions).filter((session) => session.active).length;
+
+const validAdmissionDeadline = (value: unknown): value is number =>
+  Number.isSafeInteger(value) && Number(value) >= 0;
+
+const liveAdmissionDeadline = (value: unknown, now: number): value is number =>
+  validAdmissionDeadline(value) &&
+  value > now &&
+  value - now <= DEFAULT_ADMISSION_TICKET_POLICY.lifetimeMs;
+
+const telemetrySink = new ConsoleServerTelemetrySink();
+/**
+ * Logs each event and keeps it in the site's analytics (ADR-054), with the
+ * visitor's country and data center when a request is at hand.
+ */
+const createTelemetry = (
+  source: ServerTelemetrySource,
+  env: Pick<Env, 'BUILD_ID' | 'ANALYTICS'>,
+  requestFrom?: AnalyticsRequestOrigin
+): StructuredServerTelemetry =>
+  new StructuredServerTelemetry(
+    source,
+    env.BUILD_ID,
+    new AnalyticsTelemetrySink(telemetrySink, env.ANALYTICS, requestFrom),
+    Date.now,
+    nextTelemetryId
+  );
+
+const observeHttp = async (
+  telemetry: ServerTelemetryPort,
+  route: ServerHttpRoute,
+  operation: () => Response | Promise<Response>
+): Promise<Response> => {
+  const startedAt = performance.now();
+  try {
+    const response = await operation();
+    telemetry.httpRequest({
+      route,
+      status: response.status,
+      durationMs: performance.now() - startedAt,
+    });
+    return response;
+  } catch (error) {
+    telemetry.httpRequest({
+      route,
+      status: 500,
+      durationMs: performance.now() - startedAt,
+    });
+    throw error;
+  }
+};
+
+const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const roomCode = (): string => {
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  return [...bytes]
+    .map((value) => ROOM_CODE_ALPHABET[value % ROOM_CODE_ALPHABET.length])
+    .join('');
+};
+
+const roomCodeFromPath = (pathname: string): string | undefined => {
+  const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/connect$/u.exec(pathname);
+  return match?.[1];
+};
+
+const admissionRoomCodeFromPath = (pathname: string): string | undefined => {
+  const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/admission-tickets$/u.exec(
+    pathname
+  );
+  return match?.[1];
+};
+
+const invitationRoomCodeFromPath = (pathname: string): string | undefined => {
+  const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/invitations$/u.exec(
+    pathname
+  );
+  return match?.[1];
+};
+
+const aliasRoomCodeFromPath = (pathname: string): string | undefined => {
+  const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/code$/u.exec(pathname);
+  return match?.[1];
+};
+
+/** A seat's player signed in or out mid-game (ADR-053). */
+const seatAccountRoomCodeFromPath = (pathname: string): string | undefined => {
+  const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/account$/u.exec(
+    pathname
+  );
+  return match?.[1];
+};
+
+const openRoomCodeFromPath = (pathname: string): string | undefined => {
+  const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/open$/u.exec(pathname);
+  return match?.[1];
+};
+
+const continuationCreationRoomCodeFromPath = (
+  pathname: string
+): string | undefined => {
+  const match = /^\/v2\/rooms\/([A-HJ-NP-Z2-9]{12})\/continuations$/u.exec(
+    pathname
+  );
+  return match?.[1];
+};
+
+const continuationRestoreSaveIdFromPath = (
+  pathname: string
+): string | undefined => {
+  const match = /^\/v2\/continuations\/([A-Za-z0-9_-]{22})\/restore$/u.exec(
+    pathname
+  );
+  return match?.[1];
+};
+
+const continuationRevocationSaveIdFromPath = (
+  pathname: string
+): string | undefined => {
+  const match = /^\/v2\/continuations\/([A-Za-z0-9_-]{22})$/u.exec(pathname);
+  return match?.[1];
+};
+
+/**
+ * Dedicated long-lived custody namespace. Only the gated restore and
+ * revocation edge routes may select it; every operation still crosses a
+ * typed internal Durable Object RPC. The rollout gate can retain revocation
+ * while create/restore are draining; open remains closed. Create is reachable
+ * only through the source room's private RPC.
+ */
+export class PtcgContinuation extends DurableObject<Env> {
+  private readonly authoritySource = new WebCryptoAuthoritySource();
+  private readonly telemetry: StructuredServerTelemetry;
+  private custodyPromise: Promise<DurableContinuationCustody> | undefined;
+
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    this.telemetry = createTelemetry('continuation', env);
+  }
+
+  async createContinuation(
+    value: unknown
+  ): Promise<ReservedContinuationCreationResult | undefined> {
+    return this.measureLifecycle(
+      'create',
+      async () => {
+        const input = readContinuationSaveCreationRpcInput(
+          value,
+          this.ctx.id.name
+        );
+        if (!input) return undefined;
+        return (await this.custody()).createReserved(input);
+      },
+      (result) =>
+        result ? (result.created ? 'accepted' : 'recovered') : 'rejected'
+    );
+  }
+
+  async recoverContinuation(
+    value: unknown
+  ): Promise<ContinuationCreationReceipt | undefined> {
+    return this.measureLifecycle(
+      'create',
+      async () => {
+        const input = readContinuationSaveRecoveryRpcInput(
+          value,
+          this.ctx.id.name
+        );
+        if (!input) return undefined;
+        return (await this.custody()).recoverReservedCreation(input);
+      },
+      (result) => (result ? 'recovered' : 'rejected')
+    );
+  }
+
+  async restore(value: unknown): Promise<ContinuationRestoreRpcResult> {
+    return this.measureLifecycle(
+      'restore',
+      async () => {
+        const input = readContinuationRestoreRpcInput(value, this.ctx.id.name);
+        if (!input) return undefined;
+        const custody = await this.custody();
+        return coordinateContinuationRestore(input, {
+          save: {
+            reserveRestore: (reserveInput) =>
+              custody.reserveRestore(reserveInput, async (checkpoint) => ({
+                targetRoomCode: roomCode(),
+                fork: await prepareContinuationFork(
+                  checkpoint,
+                  this.authoritySource,
+                  reserveInput.reservedAt
+                ),
+              })),
+            completeRestore: (completeInput) =>
+              custody.completeRestore(completeInput),
+          },
+          target: {
+            initializeRestoreTarget: (plan) =>
+              this.env.PTCG_ROOM.getByName(
+                plan.targetRoomCode
+              ).initializeContinuation(plan),
+          },
+          clock: { now: Date.now },
+        });
+      },
+      (result) => (result ? 'accepted' : 'rejected')
+    );
+  }
+
+  async revoke(value: unknown): Promise<boolean | undefined> {
+    return this.measureLifecycle(
+      'revoke',
+      async () => {
+        const input = readContinuationRevocationRpcInput(
+          value,
+          this.ctx.id.name
+        );
+        if (!input) return undefined;
+        return (await this.custody()).revoke(input.capability, Date.now());
+      },
+      (result) => (result ? 'accepted' : 'rejected')
+    );
+  }
+
+  override async alarm(): Promise<void> {
+    await this.measureLifecycle(
+      'expire',
+      () => expireContinuationCustody(this.ctx.storage, Date.now()),
+      (result) => result
+    );
+  }
+
+  private async measureLifecycle<Value>(
+    operation: ContinuationLifecycleOperation,
+    run: () => Promise<Value>,
+    outcome: (value: Value) => ContinuationLifecycleOutcome
+  ): Promise<Value> {
+    const startedAt = performance.now();
+    try {
+      const result = await run();
+      this.telemetry.continuationLifecycle({
+        operation,
+        outcome: outcome(result),
+        durationMs: performance.now() - startedAt,
+      });
+      return result;
+    } catch (error) {
+      this.telemetry.continuationLifecycle({
+        operation,
+        outcome: 'failed',
+        durationMs: performance.now() - startedAt,
+      });
+      throw error;
+    }
+  }
+
+  private custody(): Promise<DurableContinuationCustody> {
+    this.custodyPromise ??= createContinuationCryptographyFromConfiguration(
+      this.env.CONTINUATION_KEYRING
+    ).then(
+      (cryptography) =>
+        new DurableContinuationCustody(this.ctx.storage, cryptography)
+    );
+    return this.custodyPromise;
+  }
+}
+
+/**
+ * One fixed partition of the global continuation capacity. No edge route
+ * selects this namespace, and alarms need no production configuration.
+ */
+export class PtcgContinuationQuota extends DurableObject<Env> {
+  private readonly identity = new WebCryptoAuthoritySource();
+
+  async reserveContinuation(
+    value: unknown
+  ): Promise<ContinuationQuotaLeaseReservation | undefined> {
+    const input = readContinuationQuotaReservationRpcInput(value);
+    if (!input) return undefined;
+    const configuration = readContinuationQuotaConfiguration(
+      this.env.CONTINUATION_QUOTA_CONFIGURATION
+    );
+    const expectedShard = await continuationQuotaShardName(
+      input.sourceRoomCode,
+      configuration.shardCount,
+      this.identity
+    );
+    if (expectedShard !== this.ctx.id.name) return undefined;
+    const quota = new DurableContinuationQuotaShard(
+      this.ctx.storage,
+      this.identity,
+      configuration.shardPolicy
+    );
+    return quota.reserve(input);
+  }
+
+  override async alarm(): Promise<void> {
+    await expireContinuationQuotaLeases(this.ctx.storage, Date.now());
+  }
+}
+
+export class PtcgRoom extends DurableObject<Env> {
+  private readonly cryptoSource = new WebCryptoAuthoritySource();
+  private readonly store: DurableRoomSnapshotStore;
+  private readonly rateLimits: DurableRoomRateLimiter;
+  private readonly continuationSource: DurableRoomContinuationSource;
+  private readonly telemetry: StructuredServerTelemetry;
+  /** A signed-in seat's games, filed to its account (ADR-053). */
+  private readonly replays: RoomReplayArchive;
+  private socketAlarmTail: Promise<void> = Promise.resolve();
+  private runtimePromise: Promise<RoomRuntime | undefined>;
+  /** The room's public code (ADR-047), kept beside its snapshot. */
+  private readonly aliasCustody = new RoomAliasCustody({
+    roomCode: this.ctx.id.name ?? '',
+    snapshot: () => this.aliasRuntime?.coordinator.currentSnapshot(),
+    authentication: {
+      digestCapability: (value) => this.cryptoSource.digestCapability(value),
+      equalDigest: (left, right) => this.cryptoSource.equalDigest(left, right),
+    },
+    stored: {
+      get: () => this.ctx.storage.get<string>(ROOM_ALIAS_STORAGE_KEY),
+      put: (alias) => this.ctx.storage.put(ROOM_ALIAS_STORAGE_KEY, alias),
+    },
+    directory: (alias) => {
+      const record = this.env.PTCG_ROOM_CODE.getByName(alias);
+      return {
+        claim: (roomCode, now) => record.claim(roomCode, now),
+        release: (roomCode) => record.release(roomCode),
+      };
+    },
+    now: Date.now,
+    restoredBy: () => this.ctx.storage.get<string>(ROOM_RESTORED_BY_STORAGE_KEY),
+  });
+  /** The runtime the room's code is read against, once it is up. */
+  private aliasRuntime: RoomRuntime | undefined;
+
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    this.store = new DurableRoomSnapshotStore(ctx.storage);
+    this.rateLimits = new DurableRoomRateLimiter(ctx.storage);
+    this.continuationSource = new DurableRoomContinuationSource(ctx.storage, {
+      digestCapability: (value) => this.cryptoSource.digestCapability(value),
+      nextSaveId: createContinuationSaveId,
+    });
+    this.telemetry = createTelemetry('room', env);
+    this.replays = new RoomReplayArchive(
+      {
+        get: (key) => ctx.storage.get(key),
+        list: (options) => ctx.storage.list(options),
+        put: (entries) => ctx.storage.put(entries),
+        delete: (keys) => ctx.storage.delete(keys),
+      },
+      {
+        room: () => ctx.id.name ?? ctx.id.toString(),
+        file: async (accountId, filing) => {
+          await env.PTCG_ACCOUNT.getByName(accountId).fileReplay(filing);
+        },
+        now: Date.now,
+        onFailure: () =>
+          this.telemetry.failure({
+            subsystem: 'replay_filing',
+            retryable: true,
+          }),
+      }
+    );
+    this.store.archiveReplays(this.replays);
+    // A quiet client's heartbeat is answered by the runtime, so it never
+    // wakes the room or keeps it awake: a room asleep isn't billed (ADR-051).
+    ctx.setWebSocketAutoResponse(
+      new WebSocketRequestResponsePair(
+        HEARTBEAT_PING_FRAME,
+        HEARTBEAT_PONG_FRAME
+      )
+    );
+    this.runtimePromise = this.restoreRuntime();
+  }
+
+  async initialize(
+    roomCodeValue: string,
+    mode: RoomCreationRequest['mode']
+  ): Promise<InitializedRoom> {
+    const existing = await this.store.load();
+    if (existing) throw new RoomAlreadyInitializedError();
+    const startedAt = performance.now();
+    let created;
+    try {
+      created = await initializeNewRoom(
+        {
+          matchId: roomCodeValue,
+          mode,
+          playerOneCardBackUrl: '/v2/assets/cardback.png',
+          playerTwoCardBackUrl: '/v2/assets/cardback.png',
+          spectatorsAllowed: true,
+        },
+        this.store,
+        this.cryptoSource,
+        Date.now()
+      );
+    } catch (error) {
+      this.telemetry.failure({
+        subsystem: 'room_initialization',
+        retryable: true,
+      });
+      throw error;
+    }
+    this.runtimePromise = Promise.resolve(this.createRuntime(created.snapshot));
+    this.telemetry.roomLifecycle({
+      outcome: 'created',
+      mode,
+      authorityVersion: created.snapshot.authorityVersion,
+      activeSessions: 0,
+      activeSockets: 0,
+      durationMs: performance.now() - startedAt,
+    });
+    if (mode === 'solo') {
+      return {
+        mode,
+        roomCode: roomCodeValue,
+        credentials: {
+          playerOneSeatCapability: created.credentials.playerOneSeatCapability,
+          ...(created.credentials.spectatorCapability
+            ? {
+                spectatorCapability: created.credentials.spectatorCapability,
+              }
+            : {}),
+        },
+      };
+    }
+    return { mode, roomCode: roomCodeValue, credentials: created.credentials };
+  }
+
+  async initializeContinuation(
+    plan: unknown
+  ): Promise<ContinuationRestoreTargetAcknowledgement | undefined> {
+    let validated;
+    try {
+      validated = await validateContinuationTargetPlan(plan, this.cryptoSource);
+    } catch {
+      return undefined;
+    }
+    if (validated.targetRoomCode !== this.ctx.id.name) return undefined;
+    const result = await initializeContinuationTarget(
+      validated,
+      this.store,
+      this.cryptoSource,
+      validated.targetRoomCode
+    );
+    // This restore's room (made now, or by an earlier try of the same one):
+    // its restorer is its host, whichever seat they sit in.
+    await this.ctx.storage.put(
+      ROOM_RESTORED_BY_STORAGE_KEY,
+      validated.requesterPlayerId
+    );
+    const snapshot = await this.store.load();
+    if (!snapshot) {
+      throw new Error('Continuation target initialization was not recoverable');
+    }
+    this.runtimePromise = Promise.resolve(this.createRuntime(snapshot));
+    return result;
+  }
+
+  async createContinuation(
+    value: unknown
+  ): Promise<ContinuationCreationCoordinationResult | undefined> {
+    const input = readContinuationSourceCreationRpcInput(value);
+    if (!input) return undefined;
+    const runtime = await this.runtimePromise;
+    if (!runtime) return undefined;
+    const sourceRoomCode = this.ctx.id.name;
+    if (!sourceRoomCode) return undefined;
+    const snapshot = runtime.coordinator.currentSnapshot();
+    const requesterSessionId = await authenticateContinuationRequester(
+      snapshot,
+      input.resumeToken,
+      this.cryptoSource
+    );
+    if (!requesterSessionId) return undefined;
+    const result = await coordinateContinuationCreation(
+      {
+        operationId: input.operationId,
+        requesterSessionId,
+        sourceRoomCode,
+        sourceBuild: this.env.BUILD_ID,
+      },
+      {
+        source: {
+          reserveCreation: (reserveInput) =>
+            this.continuationSource.reserveCreation({
+              ...reserveInput,
+              snapshot,
+            }),
+          completeCreation: (completeInput) =>
+            this.continuationSource.completeCreation({
+              ...completeInput,
+              snapshot: runtime.coordinator.currentSnapshot(),
+            }),
+        },
+        quota: {
+          reserve: async (quotaInput) => {
+            const configuration = readContinuationQuotaConfiguration(
+              this.env.CONTINUATION_QUOTA_CONFIGURATION
+            );
+            const quotaShard = await continuationQuotaShardName(
+              sourceRoomCode,
+              configuration.shardCount,
+              this.cryptoSource
+            );
+            return this.env.PTCG_CONTINUATION_QUOTA.getByName(
+              quotaShard
+            ).reserveContinuation(quotaInput);
+          },
+        },
+        saveForId: (saveId) => {
+          const save = this.env.PTCG_CONTINUATION.getByName(saveId);
+          return {
+            createReserved: (createInput) =>
+              save.createContinuation(createInput),
+            recoverReserved: (recoverInput) =>
+              save.recoverContinuation(recoverInput),
+          };
+        },
+        clock: { now: Date.now },
+      }
+    );
+    if (result?.state === 'rate_limited') {
+      this.telemetry.roomRateLimit({
+        operation: 'continuation_create',
+        allowed: false,
+        retryAfterSeconds: result.retryAfterSeconds,
+      });
+    }
+    return result;
+  }
+
+  /**
+   * Admits someone who typed this room's public code (ADR-047), from the
+   * Worker once the code was looked up.
+   */
+  async joinByCode(request: {
+    readonly code: string;
+    readonly requestedRole: 'player' | 'spectator';
+    readonly displayName: string;
+  }): Promise<BoundedRoomCodeAdmissionResult> {
+    const runtime = await this.runtimePromise;
+    if (!runtime) return { accepted: false, code: 'room_not_ready' };
+    // Only by the room's code now: one it changed from answers as unknown.
+    const { code, ...admission } = request;
+    if (!(await this.aliasCustody.holds(code))) {
+      return { accepted: false, code: 'room_not_ready' };
+    }
+    const restoredBy = await this.ctx.storage.get<string>(
+      ROOM_RESTORED_BY_STORAGE_KEY
+    );
+    return runtime.hub.admitByCode({
+      ...admission,
+      ...(restoredBy ? { hostPlayerId: restoredBy } : {}),
+    });
+  }
+
+  /** Accounts ask this internally; a tab's claimed room alone proves nothing. */
+  async hasAccountPresence(accountId: string, code: string, role: 'player' | 'spectator'): Promise<boolean> {
+    const runtime = await this.runtimePromise;
+    if (!runtime || !(await this.aliasCustody.holds(code))) return false;
+    const snapshot = runtime.coordinator.currentSnapshot();
+    if (snapshot.mode !== 'multiplayer') return false;
+    return this.ctx.getWebSockets().some((socket) => {
+      if (socket.readyState !== WebSocket.OPEN) return false;
+      const attachment = socket.deserializeAttachment() as SocketAttachment | null;
+      if (attachment?.accountId !== accountId || !attachment.sessionId) return false;
+      const session = snapshot.sessions[attachment.sessionId];
+      return session?.active === true && session.viewer.kind === role &&
+        (session.viewer.kind !== 'player' || snapshot.admission?.seats[session.viewer.playerId]?.claimedSessionId === session.id);
+    });
+  }
+
+  override async fetch(request: Request): Promise<Response> {
+    const requestUrl = new URL(request.url);
+    if (seatAccountRoomCodeFromPath(requestUrl.pathname)) {
+      return observeHttp(this.telemetry, 'account', () =>
+        this.bindSeatAccount(request)
+      );
+    }
+    if (aliasRoomCodeFromPath(requestUrl.pathname)) {
+      return observeHttp(this.telemetry, 'room_code', async () => {
+        const runtime = await this.runtimePromise;
+        if (!runtime)
+          return new Response('Room not initialized', { status: 404 });
+        this.aliasRuntime = runtime;
+        return handleRoomAliasRequest(request, (input) =>
+          this.aliasCustody.respond(input)
+        );
+      });
+    }
+    if (invitationRoomCodeFromPath(requestUrl.pathname)) {
+      return observeHttp(this.telemetry, 'room_invitation', async () => {
+        const runtime = await this.runtimePromise;
+        if (!runtime)
+          return new Response('Room not initialized', { status: 404 });
+        return handleRoomInvitationRequest(request, (input) =>
+          runtime.hub.issueInvitation(input)
+        );
+      });
+    }
+    if (openRoomCodeFromPath(requestUrl.pathname)) {
+      return observeHttp(this.telemetry, 'room_open', async () => {
+        const runtime = await this.runtimePromise;
+        if (!runtime)
+          return new Response('Room not initialized', { status: 404 });
+        return handleRoomOpenRequest(request, (input) =>
+          runtime.hub.openSoloRoom(input)
+        );
+      });
+    }
+    if (admissionRoomCodeFromPath(requestUrl.pathname)) {
+      return observeHttp(this.telemetry, 'admission_ticket', async () => {
+        const runtime = await this.runtimePromise;
+        if (!runtime)
+          return new Response('Room not initialized', { status: 404 });
+        return handleAdmissionTicketRequest(request, (input) =>
+          runtime.hub.issueAdmissionTicket(input)
+        );
+      });
+    }
+    return observeHttp(this.telemetry, 'socket_upgrade', async () => {
+      if (requestUrl.search || !isSameOriginBrowserRequest(request)) {
+        return new Response('Forbidden', {
+          status: 403,
+          headers: { 'Cache-Control': 'no-store' },
+        });
+      }
+      if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') {
+        return new Response('Upgrade Required', { status: 426 });
+      }
+      const runtime = await this.runtimePromise;
+      if (!runtime)
+        return new Response('Room not initialized', { status: 404 });
+      let rateLimit;
+      try {
+        rateLimit = await runtime.hub.reserveSocketUpgrade();
+      } catch {
+        this.telemetry.failure({
+          subsystem: 'socket_upgrade',
+          retryable: true,
+        });
+        return json({ error: 'internal_retryable' }, 503, {
+          'Retry-After': '1',
+        });
+      }
+      if (!rateLimit.allowed) {
+        return json({ error: 'rate_limited' }, 429, {
+          'Retry-After': String(rateLimit.retryAfterSeconds),
+        });
+      }
+
+      const accountId = await this.signedInAccount(request);
+      const pair = new WebSocketPair();
+      const client = pair[0];
+      const server = pair[1];
+      const admissionExpiresAt =
+        Date.now() + DEFAULT_ADMISSION_TICKET_POLICY.lifetimeMs;
+      const attachment: SocketAttachment = {
+        connectionId: this.cryptoSource.nextSessionId(),
+        authorityVersion:
+          runtime.coordinator.currentSnapshot().authorityVersion,
+        admissionExpiresAt,
+        ...(accountId ? { accountId } : {}),
+      };
+      await this.coordinateSocketAlarm(() =>
+        this.ensureAlarmNoLaterThan(admissionExpiresAt)
+      );
+      server.serializeAttachment(attachment);
+      this.ctx.acceptWebSocket(server);
+      runtime.hub.restoreBinding(
+        this.connection(server, attachment.connectionId)
+      );
+      this.telemetry.roomSocket({
+        outcome: 'upgraded',
+        activeSockets: this.ctx.getWebSockets().length,
+      });
+      return new Response(null, { status: 101, webSocket: client });
+    });
+  }
+
+  override async webSocketMessage(
+    socket: WebSocket,
+    message: string | ArrayBuffer
+  ) {
+    if (typeof message !== 'string') {
+      // The protocol is text-only, and a binary frame never reaches the hub's
+      // ingress limits. Answering each one would hand any socket an unmetered
+      // way to make the room work, so the first one ends the connection.
+      try {
+        await this.disconnectSocket(socket);
+      } finally {
+        socket.close(1003, 'Binary messages are not supported');
+      }
+      return;
+    }
+    const runtime = await this.runtimePromise;
+    if (!runtime) {
+      socket.close(4404, 'Room not initialized');
+      return;
+    }
+    const attachment =
+      socket.deserializeAttachment() as SocketAttachment | null;
+    if (!attachment?.connectionId) {
+      socket.close(4400, 'Missing connection attachment');
+      return;
+    }
+    if (
+      !attachment.sessionId &&
+      !liveAdmissionDeadline(attachment.admissionExpiresAt, Date.now())
+    ) {
+      await runtime.hub.disconnect(attachment.connectionId);
+      socket.close(4408, 'Admission timed out');
+      return;
+    }
+    if (
+      attachment.sessionId &&
+      (!runtime.coordinator.currentSnapshot().sessions[attachment.sessionId]
+        ?.active ||
+        runtime.coordinator.currentSnapshot().sessions[attachment.sessionId]
+          ?.reconnectExpiresAt !== undefined)
+    ) {
+      await runtime.hub.disconnect(attachment.connectionId);
+      socket.close(4409, 'Session is no longer active');
+      return;
+    }
+    await runtime.hub.handleFrame(
+      this.connection(socket, attachment.connectionId),
+      message
+    );
+    const binding = runtime.hub.bindingForConnection(attachment.connectionId);
+    socket.serializeAttachment(
+      binding.sessionId
+        ? ({
+            connectionId: attachment.connectionId,
+            ...binding,
+            ...(attachment.accountId
+              ? { accountId: attachment.accountId }
+              : {}),
+          } satisfies SocketAttachment)
+        : ({
+            ...attachment,
+            authorityVersion: binding.authorityVersion,
+            ...(binding.presentationLevel === undefined
+              ? {}
+              : { presentationLevel: binding.presentationLevel }),
+          } satisfies SocketAttachment)
+    );
+    if (binding.sessionId && binding.sessionId !== attachment.sessionId) {
+      // Who sits in the seat this socket now holds: their account's games
+      // are filed to it.
+      const viewer =
+        runtime.coordinator.currentSnapshot().sessions[binding.sessionId]
+          ?.viewer;
+      if (viewer?.kind === 'player') {
+        try {
+          await this.replays.bindSeat(viewer.playerId, attachment.accountId);
+        } catch {
+          this.telemetry.failure({
+            subsystem: 'replay_filing',
+            retryable: true,
+          });
+        }
+      }
+    }
+    // A game that ended with this message is filed before the room sleeps.
+    await this.replays.settled();
+    if (binding.sessionId) {
+      await this.coordinateSocketAlarm(() =>
+        this.reconcileClaimedSocketAdmissionAlarm(Date.now(), runtime)
+      );
+    }
+  }
+
+  override async webSocketClose(
+    socket: WebSocket,
+    code: number
+  ): Promise<void> {
+    try {
+      await this.disconnectSocket(socket);
+      await this.fileWhenEmpty(socket);
+    } finally {
+      // The runtime doesn't answer a client's close itself: without this a
+      // transport dropped for a reconnect sits closing until it times out.
+      try {
+        socket.close(
+          code === 1000 || (code >= 3000 && code <= 4999) ? code : 1000,
+          'Closed'
+        );
+      } catch {
+        // Already closed.
+      }
+    }
+    this.telemetry.roomSocket({
+      outcome: 'closed',
+      closeCode: code,
+      activeSockets: activeSocketCountExcluding(
+        this.ctx.getWebSockets(),
+        socket
+      ),
+    });
+  }
+
+  override async webSocketError(socket: WebSocket): Promise<void> {
+    await this.disconnectSocket(socket);
+    this.telemetry.roomSocket({
+      outcome: 'error',
+      activeSockets: activeSocketCountExcluding(
+        this.ctx.getWebSockets(),
+        socket
+      ),
+    });
+  }
+
+  override async alarm(): Promise<void> {
+    await this.coordinateSocketAlarm(() => this.handleAlarm());
+  }
+
+  private async handleAlarm(): Promise<void> {
+    const startedAt = performance.now();
+    const runtime = await this.runtimePromise;
+    const now = Date.now();
+    const nextSocketAdmission = await this.expireSocketAdmissions(now, runtime);
+    await runtime?.hub.expireDisconnectedSessions(now);
+    const nextReconnect = runtime?.hub.nextReconnectExpiry();
+    // A game nobody is at any more is filed before the room can go.
+    await this.fileWhenEmpty();
+    // Read before the room can go: deleting it gives its code back.
+    const alias = await this.ctx.storage.get<string>(ROOM_ALIAS_STORAGE_KEY);
+    let result;
+    let idleDeadline;
+    try {
+      result = await this.store.expireUnclaimedRoom(
+        now,
+        this.ctx.getWebSockets().length > 0
+      );
+      idleDeadline =
+        result === 'claimed' ? await this.store.roomIdleDeadline() : undefined;
+    } catch (error) {
+      this.telemetry.failure({ subsystem: 'room_alarm', retryable: true });
+      throw error;
+    }
+    const nextDeadline = [nextSocketAdmission, nextReconnect, idleDeadline].reduce<
+      number | undefined
+    >(
+      (next, deadline) =>
+        deadline === undefined
+          ? next
+          : next === undefined
+            ? deadline
+            : Math.min(next, deadline),
+      undefined
+    );
+    if (result !== 'expired' && nextDeadline !== undefined) {
+      await this.ensureAlarmNoLaterThan(nextDeadline);
+    }
+    if (result === 'scheduled' || result === 'claimed') {
+      this.telemetry.roomLifecycle({
+        outcome:
+          result === 'scheduled' || nextDeadline !== undefined
+            ? 'alarm_rescheduled'
+            : 'alarm_cancelled',
+        authorityVersion:
+          runtime?.coordinator.currentSnapshot().authorityVersion ?? 0,
+        activeSessions: runtime
+          ? activeSessionCount(runtime.coordinator.currentSnapshot())
+          : 0,
+        activeSockets: this.ctx.getWebSockets().length,
+        durationMs: performance.now() - startedAt,
+      });
+    }
+    if (result !== 'expired') return;
+    this.runtimePromise = Promise.resolve(undefined);
+    for (const socket of this.ctx.getWebSockets()) {
+      socket.close(4404, 'Room expired before admission');
+    }
+    if (alias) {
+      try {
+        await this.env.PTCG_ROOM_CODE.getByName(alias).release(
+          this.ctx.id.name ?? ''
+        );
+      } catch {
+        // Its lease runs out on its own (ROOM_ALIAS_LEASE_MS).
+      }
+    }
+    this.telemetry.roomLifecycle({
+      outcome: 'expired',
+      ...(runtime ? { mode: runtime.coordinator.currentSnapshot().mode } : {}),
+      authorityVersion:
+        runtime?.coordinator.currentSnapshot().authorityVersion ?? 0,
+      activeSessions: 0,
+      activeSockets: 0,
+      durationMs: performance.now() - startedAt,
+    });
+  }
+
+  async recentAcceptedCommandPerformance(): Promise<
+    readonly AcceptedCommandPerformanceObservation[]
+  > {
+    const runtime = await this.runtimePromise;
+    return runtime?.hub.recentAcceptedCommandPerformance() ?? [];
+  }
+
+  /** The account a request's session cookie is signed in to, checked. */
+  private async signedInAccount(request: Request): Promise<string | undefined> {
+    const token = readSessionToken(request);
+    if (!token) return undefined;
+    try {
+      const view = await this.env.PTCG_ACCOUNT.getByName(token.accountId).read(
+        await sessionSecretHash(token.secret),
+        Date.now()
+      );
+      return view?.id === token.accountId ? token.accountId : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * A player who signed in or out with the table open: their seat, by its
+   * resume token, is now their account's (or nobody's). Same-origin only;
+   * the account is checked from the request's own session cookie.
+   */
+  private async bindSeatAccount(request: Request): Promise<Response> {
+    if (request.method !== 'POST') {
+      return json({ error: 'method_not_allowed' }, 405, { Allow: 'POST' });
+    }
+    if (!isSameOriginBrowserRequest(request)) {
+      return json({ error: 'forbidden' }, 403);
+    }
+    let resumeToken: unknown;
+    try {
+      resumeToken = Reflect.get(
+        Object(await readBoundedJsonRequest(request, 1024)),
+        'resumeToken'
+      );
+    } catch {
+      return json({ error: 'invalid_request' }, 400);
+    }
+    const runtime = await this.runtimePromise;
+    if (!runtime) return json({ error: 'not_found' }, 404);
+    const accountId = await this.signedInAccount(request);
+    const session = await sessionOfResumeToken(
+      runtime.coordinator.currentSnapshot(),
+      resumeToken,
+      this.cryptoSource
+    );
+    const current = session && runtime.coordinator.currentSnapshot().sessions[session.id];
+    if (!session || !current?.active || current.resumeCapabilityDigest !== session.resumeCapabilityDigest) return json({ error: 'forbidden' }, 403);
+    // The same authenticated room credential binds spectators too. It never
+    // changes another room session, even if the same account has several tabs.
+    for (const socket of this.ctx.getWebSockets()) {
+      const attachment = socket.deserializeAttachment() as SocketAttachment | null;
+      if (attachment?.sessionId !== session.id) continue;
+      const { accountId: _previous, ...rest } = attachment;
+      socket.serializeAttachment({ ...rest, ...(accountId ? {accountId} : {}) });
+    }
+    if (session.viewer.kind === 'player') await this.replays.bindSeat(session.viewer.playerId, accountId);
+    return new Response(null, {
+      status: 204,
+      headers: { 'Cache-Control': 'no-store' },
+    });
+  }
+
+  /** Files the game as it stands once nobody is connected (ADR-053). */
+  private async fileWhenEmpty(closing?: WebSocket): Promise<void> {
+    const open = closing
+      ? activeSocketCountExcluding(this.ctx.getWebSockets(), closing)
+      : this.ctx.getWebSockets().length;
+    if (open > 0) return;
+    const runtime = await this.runtimePromise;
+    if (!runtime) return;
+    try {
+      await this.replays.fileCurrent(runtime.coordinator.currentSnapshot());
+    } catch {
+      this.telemetry.failure({ subsystem: 'replay_filing', retryable: true });
+    }
+  }
+
+  private async disconnectSocket(socket: WebSocket): Promise<void> {
+    const attachment =
+      socket.deserializeAttachment() as SocketAttachment | null;
+    if (!attachment?.connectionId) return;
+    const runtime = await this.runtimePromise;
+    await runtime?.hub.disconnect(attachment.connectionId);
+  }
+
+  private coordinateSocketAlarm<Value>(
+    operation: () => Promise<Value>
+  ): Promise<Value> {
+    const run = this.socketAlarmTail.then(operation);
+    this.socketAlarmTail = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
+  }
+
+  private async ensureAlarmNoLaterThan(deadline: number): Promise<void> {
+    const current = await this.ctx.storage.getAlarm();
+    if (current === null || deadline < current) {
+      await this.ctx.storage.setAlarm(deadline);
+    }
+  }
+
+  private async expireSocketAdmissions(
+    now: number,
+    runtime: RoomRuntime | undefined
+  ): Promise<number | undefined> {
+    let nextDeadline: number | undefined;
+    for (const socket of this.ctx.getWebSockets()) {
+      const attachment =
+        socket.deserializeAttachment() as SocketAttachment | null;
+      if (!attachment?.connectionId || attachment.sessionId) continue;
+      const deadline = attachment.admissionExpiresAt;
+      if (!liveAdmissionDeadline(deadline, now)) {
+        await runtime?.hub.disconnect(attachment.connectionId);
+        socket.close(4408, 'Admission timed out');
+        continue;
+      }
+      nextDeadline =
+        nextDeadline === undefined
+          ? deadline
+          : Math.min(nextDeadline, deadline);
+    }
+    return nextDeadline;
+  }
+
+  private async reconcileClaimedSocketAdmissionAlarm(
+    now: number,
+    runtime: RoomRuntime
+  ): Promise<void> {
+    const nextDeadline = await this.expireSocketAdmissions(now, runtime);
+    const nextReconnect = runtime.hub.nextReconnectExpiry();
+    const idleDeadline = await this.store.roomIdleDeadline();
+    const earliest = [nextDeadline, nextReconnect, idleDeadline].reduce<
+      number | undefined
+    >(
+      (next, deadline) =>
+        deadline === undefined
+          ? next
+          : next === undefined
+            ? deadline
+            : Math.min(next, deadline),
+      undefined
+    );
+    if (earliest === undefined) {
+      await this.ctx.storage.deleteAlarm();
+    } else {
+      await this.ctx.storage.setAlarm(earliest);
+    }
+  }
+
+  private connection(socket: WebSocket, id: string): RuntimeConnection {
+    return {
+      id,
+      send: (frame) => socket.send(frame),
+      close: (code, reason) => socket.close(code, reason),
+    };
+  }
+
+  private createRuntime(snapshot: RoomAuthoritySnapshot): RoomRuntime {
+    const coordinator = new RoomAuthorityCoordinator(snapshot, this.store, {
+      commandContext: this.cryptoSource,
+      opaqueIds: this.cryptoSource,
+      policy: DEFAULT_AUTHORITY_POLICY,
+      monotonicNow: () => performance.now(),
+    });
+    return {
+      coordinator,
+      hub: new RoomSessionHub(coordinator, this.env.BUILD_ID, {
+        store: this.store,
+        rateLimits: this.rateLimits,
+        telemetry: this.telemetry,
+        monotonicNow: () => performance.now(),
+        admission: {
+          crypto: this.cryptoSource,
+          opaqueIds: this.cryptoSource,
+          persistence: this.store,
+          now: Date.now,
+        },
+      }),
+    };
+  }
+
+  private async restoreRuntime(): Promise<RoomRuntime | undefined> {
+    const startedAt = performance.now();
+    let snapshot;
+    try {
+      snapshot = await this.store.load();
+    } catch (error) {
+      this.telemetry.failure({
+        subsystem: 'room_restoration',
+        retryable: true,
+      });
+      throw error;
+    }
+    if (!snapshot) return undefined;
+    const runtime = this.createRuntime(snapshot);
+    const sockets = this.ctx
+      .getWebSockets()
+      .map((socket) => ({
+        socket,
+        attachment: socket.deserializeAttachment() as SocketAttachment | null,
+      }))
+      .filter(
+        (entry): entry is { socket: WebSocket; attachment: SocketAttachment } =>
+          Boolean(entry.attachment?.connectionId)
+      )
+      .sort(
+        (left, right) =>
+          left.attachment.authorityVersion - right.attachment.authorityVersion
+      );
+    const now = Date.now();
+    let nextSocketAdmission: number | undefined;
+    const restoredSockets: typeof sockets = [];
+    for (const { socket, attachment } of sockets) {
+      if (
+        attachment.sessionId &&
+        (!snapshot.sessions[attachment.sessionId]?.active ||
+          snapshot.sessions[attachment.sessionId]?.reconnectExpiresAt !==
+            undefined)
+      ) {
+        socket.close(4409, 'Session is no longer active');
+        continue;
+      }
+      if (
+        !attachment.sessionId &&
+        !liveAdmissionDeadline(attachment.admissionExpiresAt, now)
+      ) {
+        socket.close(4408, 'Admission timed out');
+        continue;
+      }
+      if (!attachment.sessionId) {
+        nextSocketAdmission =
+          nextSocketAdmission === undefined
+            ? attachment.admissionExpiresAt
+            : Math.min(nextSocketAdmission, attachment.admissionExpiresAt!);
+      }
+      runtime.hub.restoreBinding(
+        this.connection(socket, attachment.connectionId),
+        attachment.sessionId,
+        attachment.presentationLevel
+      );
+      restoredSockets.push({ socket, attachment });
+    }
+    const nextReconnect = await runtime.hub.reconcileDisconnectedBindings();
+    const restoredSnapshot = runtime.coordinator.currentSnapshot();
+    const nextDeadline =
+      nextSocketAdmission === undefined
+        ? nextReconnect
+        : nextReconnect === undefined
+          ? nextSocketAdmission
+          : Math.min(nextSocketAdmission, nextReconnect);
+    if (Object.keys(restoredSnapshot.sessions).length > 0) {
+      if (nextDeadline === undefined) {
+        await this.ctx.storage.deleteAlarm();
+      } else {
+        await this.ctx.storage.setAlarm(nextDeadline);
+      }
+    } else {
+      const lifecycle = await this.store.expireUnclaimedRoom(now);
+      if (lifecycle === 'expired') {
+        for (const { socket } of restoredSockets) {
+          socket.close(4404, 'Room expired before admission');
+        }
+        this.telemetry.roomLifecycle({
+          outcome: 'expired',
+          authorityVersion: snapshot.authorityVersion,
+          activeSessions: 0,
+          activeSockets: 0,
+          durationMs: performance.now() - startedAt,
+        });
+        return undefined;
+      }
+      if (nextSocketAdmission !== undefined) {
+        await this.ensureAlarmNoLaterThan(nextSocketAdmission);
+      }
+    }
+    this.telemetry.roomLifecycle({
+      outcome: 'restored',
+      authorityVersion: restoredSnapshot.authorityVersion,
+      activeSessions: activeSessionCount(restoredSnapshot),
+      activeSockets: restoredSockets.length,
+      durationMs: performance.now() - startedAt,
+    });
+    if (restoredSockets.length > 0) {
+      this.telemetry.roomSocket({
+        outcome: 'restored',
+        activeSockets: restoredSockets.length,
+      });
+    }
+    return runtime;
+  }
+}
+
+const DECK_FEED_STORAGE_KEY = 'current-decks:feed';
+/** When a failed attempt lets the next one go to Limitless. */
+const DECK_FEED_RETRY_STORAGE_KEY = 'current-decks:retry-after';
+/** One feed for everyone. */
+const DECK_FEED_NAME = 'limitless-standard';
+/** The daily refresh missed (or failed) for longer than this: try again. */
+const DECK_FEED_STALE_AFTER_MS = 30 * 60 * 60 * 1000;
+/** After a failed attempt, wait before asking Limitless again. */
+const DECK_FEED_RETRY_AFTER_MS = 10 * 60 * 1000;
+
+/**
+ * The deck picker's current lists from Limitless (current-decks.ts). The
+ * daily cron refreshes them; a request finding none, or a day-old set,
+ * refreshes them too. Attempts are serialized, and a failed one keeps the
+ * lists already stored and holds the next one back for a while -- stored,
+ * so an outage still holds it back after the object is evicted.
+ */
+export class PtcgDeckFeed extends DurableObject<Env> {
+  private refreshing: Promise<CurrentDeckFeed | null> | undefined;
+  private readonly telemetry = createTelemetry('deck_feed', this.env);
+
+  async current(): Promise<CurrentDeckFeed | null> {
+    const stored = await this.stored();
+    if (!stored) return this.refreshFeed();
+    if (Date.now() - Date.parse(stored.fetchedAt) > DECK_FEED_STALE_AFTER_MS) {
+      this.ctx.waitUntil(this.refreshFeed());
+    }
+    return stored;
+  }
+
+  /** The cron's entry point: how many decks the feed now holds. */
+  async refresh(): Promise<number> {
+    const feed = await this.refreshFeed();
+    return feed
+      ? Object.values(feed.groups).reduce(
+          (total, decks) => total + Object.keys(decks).length,
+          0
+        )
+      : 0;
+  }
+
+  private async stored(): Promise<CurrentDeckFeed | null> {
+    return readStoredCurrentDeckFeed(
+      await this.ctx.storage.get(DECK_FEED_STORAGE_KEY)
+    );
+  }
+
+  private refreshFeed(): Promise<CurrentDeckFeed | null> {
+    if (this.refreshing) return this.refreshing;
+    this.refreshing = this.attemptRefresh().finally(() => {
+      this.refreshing = undefined;
+    });
+    return this.refreshing;
+  }
+
+  private async attemptRefresh(): Promise<CurrentDeckFeed | null> {
+    const retryAfter = await this.ctx.storage.get<unknown>(
+      DECK_FEED_RETRY_STORAGE_KEY
+    );
+    if (typeof retryAfter === 'number' && Date.now() < retryAfter) {
+      return this.stored();
+    }
+    try {
+      const feed = await fetchCurrentDeckFeed({
+        fetch: (input, init) => fetch(input, init),
+        now: Date.now,
+        ...(this.env.LIMITLESS_API_KEY
+          ? { apiKey: this.env.LIMITLESS_API_KEY }
+          : {}),
+      });
+      await this.ctx.storage.put(DECK_FEED_STORAGE_KEY, feed);
+      await this.ctx.storage.delete(DECK_FEED_RETRY_STORAGE_KEY);
+      return feed;
+    } catch {
+      this.telemetry.failure({
+        subsystem: 'deck_feed_refresh',
+        retryable: true,
+      });
+      await this.ctx.storage.put(
+        DECK_FEED_RETRY_STORAGE_KEY,
+        Date.now() + DECK_FEED_RETRY_AFTER_MS
+      );
+      return this.stored();
+    }
+  }
+}
+
+/**
+ * This location's Cloudflare cache, where there is one (not on workers.dev
+ * or in tests, where its operations do nothing or it is absent).
+ */
+const edgeCache = (): Cache | undefined =>
+  typeof caches === 'undefined'
+    ? undefined
+    : (caches as unknown as { readonly default?: Cache }).default;
+
+/** One catalog for everyone, built from TCGdex's English cards. */
+const CARD_CATALOG_NAME = 'tcgdex-en';
+
+const sha256Hex = async (value: string): Promise<string> =>
+  [
+    ...new Uint8Array(
+      await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))
+    ),
+  ]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+
+const durableCatalogStore = (storage: DurableObjectStorage): CatalogStore => ({
+  get: async <T>(key: string) => await storage.get<T>(key),
+  getMany: async <T>(keys: readonly string[]) =>
+    await storage.get<T>([...keys]),
+  put: async (key, value) => {
+    await storage.put(key, value);
+  },
+  delete: async (key) => {
+    await storage.delete(key);
+  },
+  getAlarm: async () => await storage.getAlarm(),
+  setAlarm: async (at) => {
+    await storage.setAlarm(at);
+  },
+});
+
+/**
+ * The deck builder's card catalog (card-catalog/builder.ts, ADR-032): built
+ * from TCGdex one set per alarm, refreshed by the daily cron and by a
+ * request that finds it missing or stale, and served as one immutable body
+ * per version.
+ */
+export class PtcgCardCatalog extends DurableObject<Env> {
+  private readonly telemetry = createTelemetry('card_catalog', this.env);
+  private readonly builder = new CardCatalogBuilder({
+    store: durableCatalogStore(this.ctx.storage),
+    fetch: (input, init) => fetch(input, init),
+    now: Date.now,
+    sha256: sha256Hex,
+    onFailure: () =>
+      this.telemetry.failure({
+        subsystem: 'card_catalog_refresh',
+        retryable: true,
+      }),
+  });
+
+  private get disabled(): boolean {
+    return this.env.CARD_CATALOG_SOURCE === 'off';
+  }
+
+  async manifest(): Promise<CatalogManifest | null> {
+    if (this.disabled) return null;
+    // Requests arriving together all find it stale; the first refresh
+    // freshens it, and the others then find nothing to do.
+    if (await this.builder.needsRefresh()) {
+      this.ctx.waitUntil(this.builder.refreshIfDue());
+    }
+    return this.builder.manifest();
+  }
+
+  /** The cron's entry point: how many sets are queued. */
+  async refresh(): Promise<number> {
+    return this.disabled ? 0 : this.builder.refresh();
+  }
+
+  async body(version: string): Promise<ReadableStream<Uint8Array> | null> {
+    const parts = await this.builder.body(version);
+    return parts ? new Blob([...parts]).stream() : null;
+  }
+
+  override async alarm(): Promise<void> {
+    if (!this.disabled) await this.builder.step();
+  }
+}
+
+/**
+ * Pictures players upload for their card backs (images/, ADR-041), stored
+ * once each by the SHA-256 of their bytes and spread over sixteen stores by
+ * the hash's first digit. Each store checks the bytes and their hash again.
+ */
+/**
+ * One room code's record (ADR-047): which room it stands for, on a lease
+ * the room renews while it is in use. Named by the code itself, so a code
+ * is looked up, taken or given back without any shared index.
+ */
+export class PtcgRoomCode extends DurableObject<Env> {
+  private readonly record = new RoomAliasDirectoryRecord({
+    get: () => this.ctx.storage.get<RoomAliasRecord>('record'),
+    put: (record) => this.ctx.storage.put('record', record),
+    delete: async () => {
+      await this.ctx.storage.delete('record');
+    },
+  });
+
+  async claim(roomCode: string, now: number): Promise<boolean> {
+    return this.record.claim(roomCode, now);
+  }
+
+  async renew(roomCode: string, now: number): Promise<boolean> {
+    return this.record.renew(roomCode, now);
+  }
+
+  async resolve(now: number): Promise<string | null> {
+    return this.record.resolve(now);
+  }
+
+  async release(roomCode: string): Promise<void> {
+    return this.record.release(roomCode);
+  }
+}
+
+export class PtcgImageStore extends DurableObject<Env> {
+  private readonly store = new ImageStoreSql(this.ctx.storage.sql);
+
+  async put(bytes: Uint8Array): Promise<ImagePutResult> {
+    return this.store.put(new Uint8Array(bytes), Date.now());
+  }
+
+  async get(sha256: string): Promise<StoredImage | null> {
+    return this.store.get(sha256);
+  }
+
+  /** Bans a picture by its hash (moderation, by RPC only). */
+  async block(sha256: string): Promise<void> {
+    this.store.block(sha256, Date.now());
+  }
+}
+
+/** One index for everyone, built from Limitless's online tournaments. */
+const DECK_INDEX_NAME = 'index';
+/** Finishes and tournaments per page. */
+const DECK_INDEX_PAGE_SIZE = 50;
+/** After a crawl step throws, the next one waits this long. */
+const DECK_INDEX_FAILURE_DELAY_MS = 10 * 60 * 1000;
+
+/**
+ * The tournament deck index (deck-index/, ADR-037): Limitless's online
+ * tournaments and Labs' majors, their standings and lists, crawled a
+ * request per lane per alarm step within each one's budget, and searchable
+ * by deck name. The daily cron and the first request start the crawl; its
+ * alarms keep it going.
+ */
+export class PtcgDeckIndex extends DurableObject<Env> {
+  private readonly telemetry = createTelemetry('deck_index', this.env);
+  private readonly index: DeckIndex;
+
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    this.index = new DeckIndex({
+      storage: {
+        sql: ctx.storage.sql,
+        transaction: (body) => ctx.storage.transactionSync(body),
+      },
+      fetch: (input, init) => fetch(input, init),
+      now: Date.now,
+      enabled: env.DECK_INDEX_SOURCE !== 'off',
+      majors: true,
+      ...(env.LIMITLESS_API_KEY ? { apiKey: env.LIMITLESS_API_KEY } : {}),
+      onFailure: (reason) =>
+        this.telemetry.failure({
+          subsystem:
+            reason === 'rate_limited'
+              ? 'deck_index_limitless_rate_limited'
+              : 'deck_index_limitless',
+          retryable: true,
+        }),
+    });
+    void ctx.blockConcurrencyWhile(async () => {
+      this.index.migrate();
+    });
+  }
+
+  /** Starts the crawl if no step is scheduled. */
+  private async crawl(): Promise<void> {
+    if (!this.index.enabled) return;
+    if ((await this.ctx.storage.getAlarm()) === null) {
+      await this.ctx.storage.setAlarm(Date.now() + 1_000);
+    }
+  }
+
+  /** The cron's entry point: discover new tournaments now. */
+  async refresh(): Promise<void> {
+    if (!this.index.enabled) return;
+    this.index.discoverSoon();
+    await this.ctx.storage.setAlarm(Date.now() + 1_000);
+  }
+
+  async search(
+    query: string,
+    format: IndexedFormat,
+    limit: number,
+    options: { readonly majors?: boolean } = {}
+  ): Promise<SearchAnswer> {
+    await this.crawl();
+    return this.index.search(query, format, limit, options);
+  }
+
+  async archetype(
+    id: string,
+    format: IndexedFormat,
+    sinceDays: number,
+    after: FinishKey | null,
+    options: { readonly majors?: boolean } = {}
+  ): Promise<ReturnType<DeckIndex['archetype']>> {
+    await this.crawl();
+    return this.index.archetype(
+      id,
+      format,
+      sinceDays,
+      after,
+      DECK_INDEX_PAGE_SIZE,
+      options
+    );
+  }
+
+  async tournaments(query: {
+    readonly q: string;
+    readonly format: IndexedFormat | null;
+    readonly minimumPlayers: number;
+    readonly before: { readonly date: number; readonly id: string } | null;
+    readonly majors?: boolean;
+  }): Promise<ReturnType<DeckIndex['tournaments']>> {
+    await this.crawl();
+    return this.index.tournaments({
+      ...query,
+      pageSize: DECK_INDEX_PAGE_SIZE,
+    });
+  }
+
+  async tournament(id: string): Promise<TournamentAnswer> {
+    await this.crawl();
+    return this.index.tournament(id);
+  }
+
+  async playerList(id: string, playerId: string): Promise<PlayerListAnswer> {
+    await this.crawl();
+    return this.index.playerList(id, playerId);
+  }
+
+  override async alarm(): Promise<void> {
+    let next: number | null;
+    try {
+      next = await this.index.step();
+    } catch {
+      this.telemetry.failure({
+        subsystem: 'deck_index_crawl',
+        retryable: true,
+      });
+      next = Date.now() + DECK_INDEX_FAILURE_DELAY_MS;
+    }
+    if (next !== null) await this.ctx.storage.setAlarm(next);
+  }
+}
+
+const deckIndexTelemetryRoute = (
+  route: DeckIndexRoute | 'invalid'
+): ServerHttpRoute => {
+  if (route === 'invalid') return 'deck_index_invalid';
+  switch (route.kind) {
+    case 'search':
+      return 'deck_search';
+    case 'archetype':
+      return 'deck_archetype';
+    case 'tournaments':
+      return 'tournaments';
+    case 'tournament':
+      return 'tournament';
+    case 'player_list':
+      return 'tournament_player_list';
+  }
+};
+
+const worker: ExportedHandler<Env> = {
+  async scheduled(_controller, env, ctx) {
+    ctx.waitUntil(env.PTCG_DECK_FEED.getByName(DECK_FEED_NAME).refresh());
+    ctx.waitUntil(env.PTCG_CARD_CATALOG.getByName(CARD_CATALOG_NAME).refresh());
+    ctx.waitUntil(env.PTCG_DECK_INDEX.getByName(DECK_INDEX_NAME).refresh());
+  },
+
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const telemetry = createTelemetry('edge', env, requestOrigin(request));
+    if (
+      url.pathname === CARD_CATALOG_PATH &&
+      env.CARD_CATALOG_SOURCE === 'off'
+    ) {
+      return Response.json(
+        { available: false, building: false },
+        { headers: { 'Cache-Control': 'no-store' } }
+      );
+    }
+    if (url.pathname === CARD_CATALOG_PATH) {
+      return observeHttp(telemetry, 'card_catalog', () =>
+        handleCardCatalogManifestRequest(request, () =>
+          env.PTCG_CARD_CATALOG.getByName(CARD_CATALOG_NAME).manifest()
+        )
+      );
+    }
+    const catalogVersion = cardCatalogBodyVersion(url.pathname);
+    if (catalogVersion) {
+      return observeHttp(telemetry, 'card_catalog_body', () =>
+        handleCardCatalogBodyRequest(
+          request,
+          catalogVersion,
+          (version) =>
+            env.PTCG_CARD_CATALOG.getByName(CARD_CATALOG_NAME).body(version),
+          {
+            cache: edgeCache(),
+            waitUntil: (promise) => ctx.waitUntil(promise),
+          }
+        )
+      );
+    }
+    if (url.pathname === CURRENT_DECKS_PATH) {
+      return observeHttp(telemetry, 'current_decks', () =>
+        handleCurrentDecksRequest(request, () =>
+          env.PTCG_DECK_FEED.getByName(DECK_FEED_NAME).current()
+        )
+      );
+    }
+    const deckIndex = deckIndexRoute(url.pathname);
+    if (deckIndex !== undefined) {
+      return observeHttp(telemetry, deckIndexTelemetryRoute(deckIndex), () =>
+        handleDeckIndexRequest(
+          request,
+          deckIndex,
+          env.PTCG_DECK_INDEX.getByName(DECK_INDEX_NAME)
+        )
+      );
+    }
+    if (url.pathname === IMAGE_PATH) {
+      return observeHttp(telemetry, 'image_upload', () =>
+        handleImageUploadRequest(
+          request,
+          async (bytes) => {
+            // Routed by the hash of what was sent; the store checks both.
+            const checked = checkImageBytes(bytes);
+            if ('refusal' in checked)
+              return { kind: 'invalid', reason: checked.refusal };
+            const sha256 = await sha256Bytes(bytes);
+            return env.PTCG_IMAGE_STORE.getByName(imageStoreName(sha256)).put(
+              bytes
+            );
+          },
+          () =>
+            consumeImageUploadRateLimit(request, env.IMAGE_UPLOAD_RATE_LIMITER)
+        )
+      );
+    }
+    if (url.pathname === IMAGE_IMPORT_PATH) {
+      return observeHttp(telemetry, 'image_import', () =>
+        handleImageImportRequest(
+          request,
+          (input, init) => fetch(input, init),
+          () =>
+            consumeImageImportRateLimit(request, env.IMAGE_IMPORT_RATE_LIMITER)
+        )
+      );
+    }
+    const replay = replayRoute(url.pathname);
+    if (replay !== undefined) {
+      return observeHttp(telemetry, 'account', () =>
+        handleReplayRequest(request, replay, {
+          account: (accountId) => env.PTCG_ACCOUNT.getByName(accountId),
+          now: Date.now,
+          rateLimit: () =>
+            consumeAccountRateLimit(
+              request,
+              env.ACCOUNT_RATE_LIMITER,
+              'account'
+            ),
+        })
+      );
+    }
+    const friends = friendsRoute(url.pathname);
+    if (friends !== undefined) {
+      return observeHttp(telemetry, 'account', () =>
+        handleFriendsRequest(request, friends, {
+          account: (accountId) => env.PTCG_ACCOUNT.getByName(accountId),
+          now: Date.now,
+          rateLimit: () =>
+            consumeAccountRateLimit(
+              request,
+              env.ACCOUNT_RATE_LIMITER,
+              'account'
+            ),
+        })
+      );
+    }
+    const account = accountRoute(url.pathname);
+    if (account !== undefined) {
+      return observeHttp(
+        telemetry,
+        account.kind === 'start' ||
+          account.kind === 'callback' ||
+          account.kind === 'test_authorize'
+          ? 'sign_in'
+          : 'account',
+        () =>
+          handleAccountRequest(request, account, {
+            account: (accountId) => env.PTCG_ACCOUNT.getByName(accountId),
+            signInRecord: (provider, subject) =>
+              env.PTCG_SIGN_IN.getByName(`${provider}:${subject}`),
+            configuration: readSignInConfiguration(env),
+            fetch: (input, init) => fetch(input, init),
+            now: Date.now,
+            rateLimit: (scope) =>
+              consumeAccountRateLimit(
+                request,
+                scope === 'sign_in'
+                  ? env.SIGN_IN_RATE_LIMITER
+                  : env.ACCOUNT_RATE_LIMITER,
+                scope
+              ),
+          })
+      );
+    }
+    const imageHash = servedImageHash(url.pathname);
+    if (imageHash) {
+      return observeHttp(telemetry, 'image_serve', () =>
+        handleImageServeRequest(request, imageHash, (sha256) =>
+          env.PTCG_IMAGE_STORE.getByName(imageStoreName(sha256)).get(sha256)
+        )
+      );
+    }
+    if (url.pathname === PAGE_REPORT_PATH) {
+      return observeHttp(telemetry, 'page_report', () =>
+        handlePageReportRequest(request, {
+          dataset: env.ANALYTICS,
+          build: env.BUILD_ID,
+          origin: requestOrigin(request),
+          rateLimit: () =>
+            consumePageReportRateLimit(request, env.PAGE_REPORT_RATE_LIMITER),
+        })
+      );
+    }
+    if (url.pathname === '/v2/health') {
+      return observeHttp(telemetry, 'health', () =>
+        handleServerHealthRequest(
+          request,
+          env.BUILD_ID,
+          continuationHttpMode(env.CONTINUATION_HTTP_ACTIVATION)
+        )
+      );
+    }
+    if (url.pathname === '/v2/rooms') {
+      return observeHttp(telemetry, 'room_creation', () =>
+        handleRoomCreationRequest(
+          request,
+          async ({ mode }) => {
+            for (let attempt = 0; attempt < 8; attempt += 1) {
+              const code = roomCode();
+              const stub = env.PTCG_ROOM.getByName(code);
+              try {
+                return await stub.initialize(code, mode);
+              } catch (error) {
+                if (isRoomAlreadyInitialized(error)) continue;
+                throw error;
+              }
+            }
+            throw new Error('room_code_exhausted');
+          },
+          () =>
+            consumeRoomCreationRateLimit(
+              request,
+              env.ROOM_CREATION_RATE_LIMITER
+            )
+        )
+      );
+    }
+    const continuationMode = continuationHttpMode(
+      env.CONTINUATION_HTTP_ACTIVATION
+    );
+    if (continuationMode === 'enabled') {
+      const sourceRoomCode = continuationCreationRoomCodeFromPath(url.pathname);
+      if (sourceRoomCode) {
+        return observeHttp(telemetry, 'continuation_creation', () =>
+          handleContinuationCreationRequest(
+            request,
+            (input) =>
+              env.PTCG_ROOM.getByName(sourceRoomCode).createContinuation(input),
+            () =>
+              consumeContinuationCreationRateLimit(
+                request,
+                env.CONTINUATION_CREATION_RATE_LIMITER
+              )
+          )
+        );
+      }
+      const saveId = continuationRestoreSaveIdFromPath(url.pathname);
+      if (saveId) {
+        return observeHttp(telemetry, 'continuation_restore', () =>
+          handleContinuationRestoreRequest(
+            request,
+            saveId,
+            (selectedSaveId, input) =>
+              env.PTCG_CONTINUATION.getByName(selectedSaveId).restore(input),
+            () =>
+              consumeContinuationRestoreRateLimit(
+                request,
+                env.CONTINUATION_RESTORE_RATE_LIMITER
+              )
+          )
+        );
+      }
+    }
+    if (continuationMode === 'enabled' || continuationMode === 'draining') {
+      const revocationSaveId = continuationRevocationSaveIdFromPath(
+        url.pathname
+      );
+      if (revocationSaveId) {
+        return observeHttp(telemetry, 'continuation_revocation', () =>
+          handleContinuationRevocationRequest(
+            request,
+            revocationSaveId,
+            (selectedSaveId, input) =>
+              env.PTCG_CONTINUATION.getByName(selectedSaveId).revoke(input),
+            () =>
+              consumeContinuationRevocationRateLimit(
+                request,
+                env.CONTINUATION_REVOCATION_RATE_LIMITER
+              )
+          )
+        );
+      }
+    }
+    const forwardToRoom = async (
+      roomCode: string,
+      operation: RoomIngressOperation,
+      route: ServerHttpRoute
+    ): Promise<Response> => {
+      const decision = await consumeRoomIngressRateLimit(
+        request,
+        env.ROOM_INGRESS_RATE_LIMITER,
+        operation,
+        roomCode
+      );
+      if (!decision.allowed) {
+        return observeHttp(telemetry, route, () =>
+          json({ error: 'rate_limited' }, 429, {
+            'Retry-After': String(decision.retryAfterSeconds),
+          })
+        );
+      }
+      return env.PTCG_ROOM.getByName(roomCode).fetch(request);
+    };
+    const code = roomCodeFromPath(url.pathname);
+    if (request.method === 'GET' && code) {
+      // ADR-025: the upgrade is throttled by a managed edge rule, not here.
+      return env.PTCG_ROOM.getByName(code).fetch(request);
+    }
+    const admissionCode = admissionRoomCodeFromPath(url.pathname);
+    if (admissionCode) {
+      return forwardToRoom(
+        admissionCode,
+        'admission_ticket',
+        'admission_ticket'
+      );
+    }
+    const invitationCode = invitationRoomCodeFromPath(url.pathname);
+    if (invitationCode) {
+      return forwardToRoom(invitationCode, 'invitation', 'room_invitation');
+    }
+    const openCode = openRoomCodeFromPath(url.pathname);
+    if (openCode) {
+      return forwardToRoom(openCode, 'invitation', 'room_open');
+    }
+    const aliasCode = aliasRoomCodeFromPath(url.pathname);
+    if (aliasCode) {
+      return forwardToRoom(aliasCode, 'room_code', 'room_code');
+    }
+    const seatAccountCode = seatAccountRoomCodeFromPath(url.pathname);
+    if (seatAccountCode) {
+      return forwardToRoom(seatAccountCode, 'room_code', 'account');
+    }
+    if (url.pathname === '/v2/join') {
+      return observeHttp(telemetry, 'room_code_join', () =>
+        handleRoomCodeJoinRequest(
+          request,
+          joinRoomByAlias({
+            directory: (code) => {
+              const record = env.PTCG_ROOM_CODE.getByName(code);
+              return {
+                resolve: (now) => record.resolve(now),
+                renew: (roomCode, now) => record.renew(roomCode, now),
+              };
+            },
+            join: (roomCode, admission) =>
+              env.PTCG_ROOM.getByName(roomCode).joinByCode(admission),
+            now: Date.now,
+          }),
+          () =>
+            consumeRoomCodeJoinRateLimit(request, env.ROOM_CODE_RATE_LIMITER)
+        )
+      );
+    }
+    // Reached by any file the assets don't have (wrangler.jsonc). An
+    // address typed or kept for a page is the app's one page; anything
+    // else, a script of a build this edge hasn't yet included, is a 404
+    // the browser asks about again rather than keeps.
+    if (
+      request.method === 'GET' &&
+      url.pathname !== '/' &&
+      !url.pathname.startsWith('/v2/') &&
+      request.headers.get('Sec-Fetch-Mode') === 'navigate'
+    ) {
+      return observeHttp(telemetry, 'not_found', () =>
+        Response.redirect(new URL(`/${url.search}`, url).toString(), 302)
+      );
+    }
+    return observeHttp(
+      telemetry,
+      'not_found',
+      () =>
+        new Response('Not Found', {
+          status: 404,
+          headers: { 'Cache-Control': 'no-store' },
+        })
+    );
+  },
+};
+
+export { PtcgAccount, PtcgPresence, PtcgSignIn };
+
+export default worker;

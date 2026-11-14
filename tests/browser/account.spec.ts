@@ -1,0 +1,258 @@
+import { expect, test, type Page } from '@playwright/test';
+
+import { routeCardCatalog } from './support/card-catalog-fixture.js';
+import { ownRoomBudget } from './support/room-budget.js';
+import {
+  closeDeck,
+  dismissWelcome,
+  openAppMenu,
+  openDeck,
+} from './support/table-shell.js';
+
+/**
+ * ADR-052: Settings' first row signs in through the stand-in provider's
+ * popup (local and test builds only) and becomes the account; the Account
+ * page renames it, the avatar takes an emblem, Sign out ends this session,
+ * and Delete account takes a held press. Decks and settings follow the
+ * account to another device (step 2), and Sign out and clear takes them off.
+ */
+
+const openTable = async (page: Page): Promise<void> => {
+  await ownRoomBudget(page.context());
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await expect(
+    page.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
+  ).toBeVisible({ timeout: 30_000 });
+  await dismissWelcome(page);
+};
+
+/** Signs in from Settings as `name`, in the provider's popup. */
+const signIn = async (page: Page, name: string): Promise<void> => {
+  await openAppMenu(page);
+  await page.locator('#settings #signInRow').click();
+  await expect(page.locator('#settings #settingsSignIn')).toBeVisible();
+  const popupOpened = page.waitForEvent('popup');
+  await page.locator('#settings #signInWith-test').click();
+  const popup = await popupOpened;
+  await popup.locator('#testSignInName').fill(name);
+  const closed = popup.waitForEvent('close');
+  await popup.locator('#testSignInContinue').click();
+  await closed;
+};
+
+/** A name of its own for each run: runs side by side never share a person. */
+const someone = (name: string): string =>
+  `${name} ${Math.random().toString(36).slice(2, 7)}`;
+
+test('signs in from Settings, renames, signs out and deletes', async ({
+  page,
+}) => {
+  const dawn = someone('Dawn');
+  await openTable(page);
+  await signIn(page, dawn);
+
+  // The Sign in page gives way to Settings' first page, now the account's.
+  const row = page.locator('#settings #accountRow');
+  await expect(row).toContainText('Dawn');
+  await expect(page.locator('#settings #settingsHome')).toBeVisible();
+  await expect(
+    page.locator('[data-ptcgsim-overlay="toast"]').filter({
+      hasText: 'Signed in as Dawn',
+    })
+  ).toBeVisible();
+  // A first sign-in names the player for Play online.
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('ptcgsim.player.v1')))
+    .toContain('Dawn');
+
+  await row.click();
+  const account = page.locator('#settings #settingsAccount');
+  await expect(account).toBeVisible();
+  await expect(account.locator('#signInMethodsRow')).toContainText('Test');
+  const name = account.locator('#accountName');
+  await name.fill('Dawn Berlitz');
+  await name.press('Enter');
+  await page.locator('#settingsBackButton').click();
+  await expect(page.locator('#settings #accountRow')).toContainText(
+    'Dawn Berlitz'
+  );
+
+  // The avatar: an emblem from the sleeve designer, then back to the initial.
+  await page.locator('#settings #accountRow').click();
+  await page.locator('#settings #accountAvatarRow').click();
+  const avatarPage = page.locator('#settings #settingsAccountAvatar');
+  await expect(avatarPage).toBeVisible();
+  await avatarPage.locator('.card-back-emblems__search input').fill('25');
+  await avatarPage.locator('[data-emblem="pokemon-25"]').click();
+  await expect(avatarPage.locator('input[value="pokemon-25"]')).toBeChecked();
+  await page.locator('#settingsBackButton').click();
+  await expect(
+    page.locator('#settings #settingsAccount .account-avatar img')
+  ).toHaveAttribute('src', /pokemon-25\.webp$/u);
+
+  // Its only sign-in method can't be removed.
+  await page.locator('#settings #signInMethodsRow').click();
+  await expect(page.locator('#settings #disconnect-test')).toBeDisabled();
+  await expect(page.locator('#settings #settingsSignInMethods')).toContainText(
+    'This session'
+  );
+  await page.locator('#settingsBackButton').click();
+
+  // Sign out leaves the account; signing in again finds it.
+  await page.locator('#settings #signOutButton').click();
+  await page.locator('#settings #signOutKeep').click();
+  await expect(page.locator('#settings #signInRow')).toBeVisible();
+  await signIn(page, dawn);
+  await expect(page.locator('#settings #accountRow')).toContainText(
+    'Dawn Berlitz'
+  );
+
+  // Delete takes a held press; a tap does nothing.
+  await page.locator('#settings #accountRow').click();
+  await page.locator('#settings #deleteAccountRow').click();
+  const hold = page.locator('#settings #deleteAccountButton');
+  await hold.click();
+  await expect(page.locator('#settings #settingsDeleteAccount')).toBeVisible();
+  const box = await hold.boundingBox();
+  if (!box) throw new Error('no delete button');
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await expect(page.locator('#settings #signInRow')).toBeVisible({
+    timeout: 5_000,
+  });
+  await page.mouse.up();
+  await expect(
+    page.locator('[data-ptcgsim-overlay="toast"]').filter({
+      hasText: 'Account deleted',
+    })
+  ).toBeVisible();
+
+  // A new sign-in as the same person is a new account.
+  await signIn(page, dawn);
+  await expect(page.locator('#settings #accountRow')).toContainText('Dawn');
+  await expect(page.locator('#settings #accountRow')).not.toContainText(
+    'Berlitz'
+  );
+});
+
+test('a sign-in finished in one tab shows in another', async ({ page }) => {
+  await openTable(page);
+  const other = await page.context().newPage();
+  await other.goto('/');
+  await expect(
+    other.locator('[data-app-route="remote-room"][data-session-phase="ready"]')
+  ).toBeVisible({ timeout: 30_000 });
+  const misty = someone('Misty');
+  await signIn(page, misty);
+  await dismissWelcome(other);
+  await openAppMenu(other);
+  await expect(other.locator('#settings #accountRow')).toContainText(misty);
+  // Signing out tells the other tab too.
+  await page.locator('#settings #accountRow').click();
+  await page.locator('#settings #signOutButton').click();
+  await page.locator('#settings #signOutKeep').click();
+  await expect(other.locator('#settings #signInRow')).toBeVisible();
+});
+
+/** A new deck named `name`, from the deck screen. */
+const makeDeck = async (page: Page, name: string): Promise<void> => {
+  await openDeck(page);
+  await page.locator('#deckNewButton').click();
+  await page.locator('#deckNameInput').fill(name);
+  await page.locator('#deckNameInput').press('Enter');
+  await page.locator('#deckEditorBackButton').click();
+  await expect(
+    page
+      .getByRole('list', { name: 'Your decks' })
+      .getByRole('listitem')
+      .filter({
+        hasText: name,
+      })
+  ).toBeVisible();
+  await closeDeck(page);
+};
+
+const deckNames = async (page: Page): Promise<string[]> => {
+  await openDeck(page);
+  const names = await page
+    .getByRole('list', { name: 'Your decks' })
+    .getByRole('listitem')
+    .allInnerTexts();
+  await closeDeck(page);
+  return names;
+};
+
+/** Settled: nothing of this device's left to send. */
+const synced = async (page: Page, decks: number): Promise<void> => {
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const state = JSON.parse(
+            localStorage.getItem('ptcgsim.account-sync.v1') ?? '{}'
+          ) as { base?: Record<string, { hash: string | null }> };
+          return Object.entries(state.base ?? {}).filter(
+            ([key, entry]) => key.startsWith('deck:') && entry.hash !== null
+          ).length;
+        }),
+      { timeout: 20_000 }
+    )
+    .toBe(decks);
+};
+
+test('decks and settings follow the account to another device', async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(120_000);
+  const brock = someone('Brock');
+  await routeCardCatalog(page);
+  await openTable(page);
+  // A deck this device had before signing in waits to be added.
+  await makeDeck(page, 'Onix Rock');
+  await signIn(page, brock);
+  const offer = page.locator('[data-ptcgsim-overlay="toast"]').filter({
+    hasText: "Add this device's deck to your account?",
+  });
+  await expect(offer).toBeVisible();
+  await offer.getByRole('button', { name: 'Add' }).click();
+  await makeDeck(page, 'Geodude Wall');
+  // The table's theme, a setting that follows the account.
+  await openAppMenu(page);
+  await page.locator('#settings #settingsTableRow').click();
+  await page.locator('#darkModeCheckbox').uncheck();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'day');
+  await synced(page, 2);
+
+  // Another device, signed in as the same person.
+  const laptop = await browser.newContext();
+  const other = await laptop.newPage();
+  await routeCardCatalog(other);
+  await openTable(other);
+  await expect(other.locator('html')).not.toHaveAttribute('data-theme', 'day');
+  await signIn(other, brock);
+  await expect(other.locator('html')).toHaveAttribute('data-theme', 'day');
+  await synced(other, 2);
+  const names = (await deckNames(other)).join('\n');
+  expect(names).toContain('Onix Rock');
+  expect(names).toContain('Geodude Wall');
+  // No offer there: it had no decks of its own.
+  await expect(
+    other
+      .locator('[data-ptcgsim-overlay="toast"]')
+      .filter({ hasText: 'Add this device' })
+  ).toHaveCount(0);
+
+  // Signing out and clearing takes the account's decks and settings off it.
+  await openAppMenu(other);
+  await other.locator('#settings #accountRow').click();
+  await other.locator('#settings #signOutButton').click();
+  await other.locator('#settings #signOutClear').click();
+  await expect(other.locator('#settings #signInRow')).toBeVisible();
+  await expect(other.locator('html')).not.toHaveAttribute('data-theme', 'day');
+  expect(await deckNames(other)).toEqual([]);
+  // The first device keeps everything.
+  expect((await deckNames(page)).join('\n')).toContain('Geodude Wall');
+  await laptop.close();
+});

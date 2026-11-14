@@ -1,0 +1,36 @@
+/*
+ * The Energy symbols, as the cards print them: one sprite of the eleven
+ * types (from PokéWiki's TCG symbols, 72px WebP), named by its content so
+ * it is cached for good. The deck screen and the table's Pokémon window
+ * both draw them (EnergySymbol.tsx). The colours stay for what is tinted
+ * by a type (the window's band).
+ */
+:root {
+  --energy-grass: #4a9e45;
+  --energy-fire: #d9532c;
+  --energy-water: #3c8fd8;
+  --energy-lightning: #e3b81d;
+  --energy-psychic: #8f5bbf;
+  --energy-fighting: #b0622f;
+  --energy-darkness: #2f4148;
+  --energy-metal: #8b97a0;
+  --energy-fairy: #d76fa6;
+  --energy-dragon: #a08636;
+  --energy-colorless: #c9c4b8;
+}
+
+.energy-symbol {
+  --energy-size: 18px;
+  --energy-index: 10;
+
+  display: inline-block;
+  flex: none;
+  width: var(--energy-size);
+  height: var(--energy-size);
+  border-radius: 50%;
+  /* Eleven 72px symbols side by side; the type's index picks its own. */
+  background: url('/v2/assets/energy/types.eb5656aeac.webp') no-repeat
+    calc(var(--energy-index) * 10%) 0 / 1100% 100%;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.14);
+  vertical-align: middle;
+}

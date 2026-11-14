@@ -1,0 +1,196 @@
+import {
+  parseContinuationHandoffText,
+  serializeRoomInvitationHandoffText,
+} from '@ptcgsim/protocol';
+
+import {
+  createBrowserContinuationPort,
+  RemoteContinuationCustody,
+  type RemoteContinuationPort,
+} from './RemoteContinuationCustody.js';
+import {
+  bootstrapRemoteRoom,
+  type RemoteRoomBootstrapResult,
+} from './RemoteRoomBootstrap.js';
+import { RemoteContinuationTransportError } from './RemoteContinuationTransport.js';
+import type { RemoteRoomRuntime } from './RemoteRoomRuntime.js';
+import { waitForAdmission } from './wait-for-admission.js';
+
+export type RemoteRoomRestorationFailureCode =
+  | 'invalid_handoff'
+  | 'expired_handoff'
+  | 'restore_in_progress'
+  | 'installation_failed'
+  | 'disposed';
+
+export class RemoteRoomRestorationError extends Error {
+  constructor(readonly code: RemoteRoomRestorationFailureCode) {
+    super(`Remote room restoration failed: ${code}`);
+    this.name = 'RemoteRoomRestorationError';
+  }
+}
+
+export interface RemoteRoomRestorationInput {
+  readonly buildId: string;
+  readonly displayName: string;
+  /**
+   * The opponent's invitation, and how long it lasts from the restore by
+   * the server's clock (its expiry less the restore's completion), to be
+   * timed on this device: the two clocks needn't agree.
+   */
+  readonly deliverOpponentInvitation: (
+    text: string,
+    lifetimeMs: number
+  ) => Promise<void>;
+  readonly signal?: AbortSignal;
+}
+
+export interface RemoteRoomRestorationDependencies {
+  readonly port?: RemoteContinuationPort;
+  readonly createOperationId?: () => string;
+  readonly now?: () => number;
+  readonly bootstrap?: typeof bootstrapRemoteRoom;
+}
+
+const waitForRestoredPlayer = (
+  runtime: RemoteRoomRuntime,
+  signal: AbortSignal
+): Promise<void> => waitForAdmission(runtime, signal, 'player');
+
+/**
+ * Retains one imported bearer and stable restore operation outside React. A
+ * failed target install can therefore retry the exact completed server result.
+ */
+export class RemoteRoomRestorationCustody {
+  readonly #capability: string;
+  readonly #saveId: string;
+  readonly #expiresAt: number;
+  readonly #custody: RemoteContinuationCustody;
+  readonly #now: () => number;
+  readonly #bootstrap: typeof bootstrapRemoteRoom;
+  #busy = false;
+  #disposed = false;
+
+  constructor(
+    handoffText: string,
+    dependencies: RemoteRoomRestorationDependencies = {}
+  ) {
+    const parsed = parseContinuationHandoffText(handoffText);
+    if (!parsed.ok) {
+      throw new RemoteRoomRestorationError('invalid_handoff');
+    }
+    // Its expiry is the server's to judge, by its own clock: this
+    // browser's may be minutes off either way.
+    const now = dependencies.now ?? Date.now;
+    this.#capability = parsed.value.capability;
+    this.#saveId = parsed.value.saveId;
+    this.#expiresAt = parsed.value.expiresAt;
+    this.#now = now;
+    this.#bootstrap = dependencies.bootstrap ?? bootstrapRemoteRoom;
+    this.#custody = new RemoteContinuationCustody({
+      port: dependencies.port ?? createBrowserContinuationPort(),
+      capability: parsed.value.capability,
+      ...(dependencies.createOperationId
+        ? { createOperationId: dependencies.createOperationId }
+        : {}),
+    });
+  }
+
+  getSnapshot(): { readonly saveId: string; readonly expiresAt: number } {
+    return Object.freeze({ saveId: this.#saveId, expiresAt: this.#expiresAt });
+  }
+
+  matchesHandoff(handoffText: string): boolean {
+    if (this.#disposed) return false;
+    const parsed = parseContinuationHandoffText(handoffText);
+    return (
+      parsed.ok &&
+      parsed.value.saveId === this.#saveId &&
+      parsed.value.capability === this.#capability &&
+      parsed.value.expiresAt === this.#expiresAt
+    );
+  }
+
+  async restore(
+    input: RemoteRoomRestorationInput
+  ): Promise<RemoteRoomBootstrapResult> {
+    if (this.#disposed) throw new RemoteRoomRestorationError('disposed');
+    if (this.#busy) {
+      throw new RemoteRoomRestorationError('restore_in_progress');
+    }
+    this.#busy = true;
+    let installed: RemoteRoomBootstrapResult | undefined;
+    try {
+      await this.#custody.restore(async (receipt, signal) => {
+        let candidate: RemoteRoomBootstrapResult | undefined;
+        try {
+          candidate = await this.#bootstrap({
+            buildId: input.buildId,
+            roomCode: receipt.targetRoomCode,
+            displayName: input.displayName,
+            requestedRole: 'player',
+            capability: receipt.requesterSeatCapability,
+            signal,
+          });
+          await waitForRestoredPlayer(candidate.runtime, signal);
+          const invitation = serializeRoomInvitationHandoffText({
+            roomCode: receipt.targetRoomCode,
+            requestedRole: 'player',
+            invitation: receipt.opponentInvitation.invitation,
+            expiresAt: receipt.opponentInvitation.expiresAt,
+          });
+          await input.deliverOpponentInvitation(
+            invitation,
+            receipt.opponentInvitation.expiresAt - receipt.completedAt
+          );
+          if (signal.aborted) throw new Error('Restoration was cancelled');
+          installed = candidate;
+        } catch {
+          candidate?.runtime.dispose();
+          throw new RemoteRoomRestorationError('installation_failed');
+        }
+      }, input.signal);
+      if (!installed) {
+        throw new RemoteRoomRestorationError('installation_failed');
+      }
+      const result = installed;
+      void this.#custody
+        .revoke()
+        .catch(() => undefined)
+        .finally(() => this.dispose());
+      return result;
+    } catch (error) {
+      if (installed) installed.runtime.dispose();
+      // The server didn't have it: called expired if this clock agrees.
+      if (
+        error instanceof RemoteContinuationTransportError &&
+        error.code === 'unavailable' &&
+        this.#expiredHere()
+      ) {
+        throw new RemoteRoomRestorationError('expired_handoff');
+      }
+      throw error;
+    } finally {
+      this.#busy = false;
+    }
+  }
+
+  #expiredHere(): boolean {
+    try {
+      const now = this.#now();
+      return Number.isSafeInteger(now) && this.#expiresAt <= now;
+    } catch {
+      return false;
+    }
+  }
+
+  toJSON(): { readonly saveId: string; readonly expiresAt: number } {
+    return this.getSnapshot();
+  }
+
+  dispose(): void {
+    if (this.#disposed) return;
+    this.#disposed = true;
+    this.#custody.dispose();
+  }
+}

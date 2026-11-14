@@ -1,0 +1,36 @@
+/* The eye on a hand card shown to the opponent (RevealedHandBadges): over
+   the table's cards, a fingertip wide, the accent marking it as live. */
+.ptcgsim-revealed-badge {
+  position: absolute;
+  z-index: var(--viewer-layer-editor);
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-2), var(--highlight-top);
+  color: var(--color-accent);
+  font-size: 16px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* A finger gets a wider reach than the eye it sees. */
+@media (pointer: coarse) {
+  .ptcgsim-revealed-badge::after {
+    position: absolute;
+    inset: -7px;
+    border-radius: inherit;
+    content: '';
+  }
+}
+
+.ptcgsim-revealed-badge:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

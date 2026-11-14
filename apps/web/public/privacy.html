@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Privacy · PTCG Sim</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #231b16;
+        --fg: #f4ede6;
+        --muted: #b3a597;
+        --line: #43372f;
+        --link: #9fb4ff;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          color-scheme: light;
+          --bg: #f7f4f1;
+          --fg: #1d1915;
+          --muted: #5f554d;
+          --line: #ddd3ca;
+          --link: #2b5fc4;
+        }
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.6 system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+      }
+      main {
+        max-width: 40rem;
+        margin: 0 auto;
+        padding: 40px max(20px, env(safe-area-inset-left)) 64px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 1.8rem;
+      }
+      h2 {
+        margin: 32px 0 6px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+        font-size: 1.1rem;
+      }
+      p,
+      ul {
+        margin: 8px 0;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      a {
+        color: var(--link);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Privacy</h1>
+      <p class="muted">PTCG Sim · Updated November 11, 2026</p>
+
+      <p>
+        You can play PTCG Sim without an account. Decks and settings then stay
+        in your browser on this device, and we keep nothing about you.
+      </p>
+
+      <h2>When you sign in</h2>
+      <p>Signing in with Google or Discord keeps:</p>
+      <ul>
+        <li>the name and avatar you choose;</li>
+        <li>
+          your sign-in methods: the provider's id for you, and the email address
+          (Google) or username (Discord) that shows which account it is;
+        </li>
+        <li>when you joined;</li>
+        <li>
+          which browsers are signed in, as random codes with the date each was
+          last used. A browser unused for 90 days is signed out.
+        </li>
+      </ul>
+      <p>
+        We never see your Google or Discord password, and we keep none of their
+        tokens: we ask who you are once, when you sign in.
+      </p>
+      <p>
+        Your account also keeps what you save to it: your decks and settings, so
+        they're the same on every device, and saved games.
+      </p>
+      <p>
+        It keeps your last 100 games, and any you star, so you can watch them
+        again. A game you keep includes the other player's name and moves; you
+        only ever see it from your own seat. If you share a game, anyone with
+        its link can watch it as a spectator sees it, until you stop sharing.
+      </p>
+
+      <h2>Friends</h2>
+      <p>
+        Other players can add you as a friend with your User ID or your invite
+        link; nobody can search for you by name. A friend sees your name and
+        avatar. Players you met in an online game while signed in see you under
+        Recent players, by the name you played under.
+      </p>
+      <p>
+        Friends also see whether you're online, in a game or watching one, or
+        when you were last seen. Appear offline, in Friends, shows you as
+        offline to everyone. Nothing about it is kept beyond your current state
+        and when it last changed. While you're in an online game, friends can
+        ask to join it or watch it, and you can invite them; invites aren't
+        kept, and the room's code is never shown to them.
+      </p>
+      <p>
+        Blocking someone ends your friendship and stops their requests, and they
+        aren't told. Deleting your account takes you off every friend's list.
+      </p>
+
+      <h2>Cookies</h2>
+      <p>
+        One cookie keeps you signed in. Another lasts ten minutes while you sign
+        in. There are no ads, no tracking cookies, and nothing is sold or shared
+        for marketing.
+      </p>
+
+      <h2>Where it's kept</h2>
+      <p>
+        On Cloudflare, which runs PTCG Sim. Games in progress are kept on its
+        servers while you play, and removed after they go unused.
+      </p>
+
+      <h2>Children</h2>
+      <p>
+        Accounts are for players 13 and older. If we learn an account belongs to
+        someone younger, we delete it. Anyone can still play without one.
+      </p>
+
+      <h2>Deleting your account</h2>
+      <p>
+        In Settings, open your account and choose Delete account. Everything it
+        keeps, games included, is deleted straight away and can't be brought
+        back. Decks in your browser stay there.
+      </p>
+
+      <h2>Questions</h2>
+      <p>
+        Use Report a bug in Settings, or open an issue on
+        <a href="https://github.com/xxmichaellong/ptcg-sim">GitHub</a>.
+      </p>
+    </main>
+  </body>
+</html>

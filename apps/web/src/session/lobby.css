@@ -1,0 +1,188 @@
+/* Play online's panel (ADR-047): your name, then host a room or join one
+   by its code. Controls come from design/panel-controls.css. */
+
+.legacy-lobby-sidebox .lobby-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: var(--space-1);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  scrollbar-width: thin;
+  transition:
+    opacity var(--ds-enter-duration) var(--ease-fade),
+    translate var(--ds-enter-duration) var(--ease-snappy);
+}
+
+@starting-style {
+  .legacy-lobby-sidebox .lobby-panel {
+    opacity: 0;
+    translate: 0 var(--ds-enter-rise);
+  }
+}
+
+.legacy-lobby-sidebox .lobby-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Host a room -- or -- Join a room (ADR-047): two compact cards, each a
+   row of a code field and its button, and a small round "or" between. */
+.legacy-lobby-sidebox .lobby-choice {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-1);
+}
+
+.legacy-lobby-sidebox .lobby-choice-title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.legacy-lobby-sidebox .lobby-choice-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.legacy-lobby-sidebox .lobby-choice-row .lobby-room-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.legacy-lobby-sidebox .lobby-choice-row .ds-button {
+  flex: none;
+}
+
+.legacy-lobby-sidebox .lobby-paste {
+  aspect-ratio: 1;
+  padding: 0;
+  justify-content: center;
+}
+
+.legacy-lobby-sidebox .lobby-join-row .lobby-role {
+  flex: 1 1 auto;
+  align-self: center;
+}
+
+/* Each choice takes presses across the control's padding too, so under a
+   finger Play and Watch are 44px tall without the control growing. */
+.legacy-lobby-sidebox .lobby-role .ptcgsim-segmented-control__option input {
+  inset: -3px -1px;
+  width: auto;
+  height: auto;
+}
+
+.legacy-lobby-sidebox .lobby-or {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: calc(-1 * var(--space-1)) 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.legacy-lobby-sidebox .lobby-or::before,
+.legacy-lobby-sidebox .lobby-or::after {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+  content: '';
+}
+
+.legacy-lobby-sidebox .lobby-or span {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface-2);
+}
+
+/* Room codes are short and typed by hand; give them room to read. */
+.legacy-lobby-sidebox .lobby-room-input {
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  letter-spacing: 0.08em;
+}
+
+.legacy-lobby-sidebox .lobby-room-input::placeholder {
+  font-family: var(--font-ui);
+  letter-spacing: normal;
+}
+
+/* Under a finger the panel's buttons and fields are 44px tall. */
+@media (pointer: coarse) {
+  .legacy-lobby-sidebox {
+    --ds-control-height: 44px;
+  }
+}
+
+.legacy-lobby-sidebox #lobby[aria-busy='true'] button:disabled,
+.legacy-lobby-sidebox #lobby[aria-busy='true'] input:disabled {
+  cursor: wait;
+}
+
+.legacy-lobby-sidebox .lobby-status {
+  flex: none;
+}
+
+.legacy-lobby-sidebox .lobby-choice[hidden] {
+  display: none;
+}
+.legacy-lobby-sidebox .lobby-flow {
+  display: flex;
+  padding: 4px;
+  gap: 4px;
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+.legacy-lobby-sidebox .lobby-flow button {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background 150ms,
+    color 150ms;
+}
+.legacy-lobby-sidebox .lobby-flow button[aria-pressed='true'] {
+  background: var(--color-surface-3);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+}
+.legacy-lobby-sidebox .lobby-choice {
+  border: 0;
+  padding: var(--space-3) 0 0;
+  background: transparent;
+}
+.legacy-lobby-sidebox .lobby-choice-title {
+  display: none;
+}
+.legacy-lobby-sidebox #joinRoomButton {
+  min-width: 112px;
+}

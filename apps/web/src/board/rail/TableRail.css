@@ -1,0 +1,359 @@
+/*
+ * The table rail (TableRail.tsx): the game's actions in a dock of their
+ * own along the seam (see "The dock" below). A button is as tall as
+ * the seam allows; under a finger the layout gives the seam room for 44px
+ * targets. Labels give way to icons when the actions run short of room
+ * before the Stadium. `.ptcgsim-rail-button` alone is the app bar's and the
+ * activity sheet's button too, which keep the plain control look.
+ */
+
+.ptcgsim-table-rail {
+  position: absolute;
+  left: 0;
+  z-index: var(--table-layer-rail);
+  pointer-events: none;
+}
+
+/* A pile browser or work area over the table: the game actions stay
+   visible but dim, and take no presses until the panel is put away (v1's
+   #cover). The app bar in the corner still works. */
+.ptcgsim-table-rail__actions[data-covered='true'] {
+  opacity: 0.15;
+}
+
+.ptcgsim-table-rail__actions[data-covered='true'] * {
+  pointer-events: none !important;
+}
+
+.ptcgsim-table-rail__actions {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.ptcgsim-table-rail__actions {
+  min-width: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+/* A group's bar has the seam (TableRail's `taken`): the actions make way. */
+.ptcgsim-table-rail__actions[data-yielded='true'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ptcgsim-table-rail__taken {
+  position: absolute;
+  top: 50%;
+  display: flex;
+  justify-content: center;
+  transform: translateY(-50%);
+  pointer-events: auto;
+}
+
+/* Past the Stadium, the actions line up against the seam's right end. */
+.ptcgsim-table-rail__actions[data-align='end'] {
+  justify-content: flex-end;
+}
+
+.ptcgsim-rail-button {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  box-sizing: border-box;
+  height: var(--rail-height, 32px);
+  min-width: var(--rail-height, 32px);
+  margin: 0;
+  padding: 0 0.85em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-2), var(--highlight-top);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: clamp(11px, calc(var(--rail-height, 32px) * 0.42), 15px);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    scale var(--control-press-timing);
+}
+
+.ptcgsim-rail-button[data-icon-only='true'] {
+  width: var(--rail-height, 32px);
+  padding: 0;
+}
+
+.ptcgsim-rail-button[data-tone='primary'] {
+  border-color: transparent;
+  background: var(--color-accent-fill);
+  color: var(--color-text-on-accent);
+}
+
+.ptcgsim-rail-button__icon {
+  flex: none;
+  width: 1.3em;
+  height: 1.3em;
+}
+
+.ptcgsim-rail-button__badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border-radius: var(--radius-pill);
+  /* News, not an alarm: the accent, not red. */
+  background: var(--color-accent-fill);
+  color: var(--color-text-on-accent);
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-rail-button:hover {
+    background-color: var(--color-surface-3);
+    box-shadow: var(--shadow-3), var(--highlight-top);
+  }
+  .ptcgsim-rail-button[data-tone='primary']:hover {
+    background-color: var(--color-accent-fill-hover);
+  }
+}
+
+.ptcgsim-rail-button:active {
+  scale: var(--control-press-scale);
+}
+
+.ptcgsim-rail-button:focus-visible {
+  outline: 2px solid var(--color-felt-focus, var(--color-accent));
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 2px var(--color-felt-focus-halo, transparent),
+    var(--shadow-2),
+    var(--highlight-top);
+}
+
+.ptcgsim-rail-button[aria-expanded='true'],
+.ptcgsim-rail-button[aria-pressed='true'] {
+  background-color: var(--color-surface-3);
+  border-color: var(--color-border-strong);
+}
+
+/* Nothing to do now (Undo on a lesson's deal): dimmed in its place, its
+   tooltip still there. */
+.ptcgsim-rail-button[aria-disabled='true'] {
+  box-shadow: none;
+  cursor: default;
+  opacity: 0.5;
+  scale: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-rail-button[aria-disabled='true']:hover {
+    background-color: var(--color-surface-2);
+    box-shadow: none;
+  }
+}
+
+/* The coin: only the room rolls it, so the button waits rather than guess,
+   showing it in its icon rather than the pointer. */
+.ptcgsim-rail-button[data-control-pending='true'] {
+  cursor: default;
+}
+
+.ptcgsim-rail-button[data-control-pending='true'] .ptcgsim-rail-button__icon {
+  color: var(--color-gold);
+}
+
+:root:not([data-motion='reduced'])
+  .ptcgsim-rail-button[data-control-pending='true'] {
+  animation: ptcgsim-rail-pending 0.9s ease-in-out infinite;
+}
+
+@keyframes ptcgsim-rail-pending {
+  50% {
+    box-shadow:
+      0 0 0 3px color-mix(in oklab, var(--color-gold) 35%, transparent),
+      var(--shadow-2);
+  }
+}
+
+/* The game actions are icons; the tooltips carry the words and keys. */
+.ptcgsim-table-rail__actions[data-labels='none'] .ptcgsim-rail-button__label {
+  display: none;
+}
+
+.ptcgsim-table-rail__actions[data-labels='none'] .ptcgsim-rail-button {
+  width: var(--rail-height, 32px);
+  padding: 0;
+}
+
+/* Save the stage's lead action ("Load a deck", "Set up"), which says its
+   name where the dock has the room (fitRailActions). */
+.ptcgsim-table-rail__actions[data-labels='none']
+  .ptcgsim-rail-button[data-labelled='true'] {
+  width: auto;
+  gap: 6px;
+  padding-inline: 9px 12px;
+}
+
+.ptcgsim-table-rail__actions[data-labels='none']
+  .ptcgsim-rail-button[data-labelled='true']
+  .ptcgsim-rail-button__label {
+  display: inline;
+  max-width: calc(3 * (var(--rail-height, 32px) + 4px));
+  overflow: hidden;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* An action that joins the rail (the next stage's) fades and grows in
+   rather than popping. */
+:root:not([data-motion='reduced'])
+  .ptcgsim-table-rail__actions
+  > .ptcgsim-rail-button {
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    scale var(--control-press-timing),
+    opacity calc(var(--duration-normal) * var(--motion-scale, 1))
+      var(--ease-out);
+}
+
+@starting-style {
+  :root:not([data-motion='reduced'])
+    .ptcgsim-table-rail__actions
+    > .ptcgsim-rail-button {
+    opacity: 0;
+    scale: 0.85;
+  }
+}
+
+/* ---- The dock ------------------------------------------------------- */
+
+/* The game's actions are meta actions, not part of the game on the mat:
+   they sit together in a slim dock of their own, in the app bar's smoked
+   glass (--chrome-*, the same by Night and by Day), which covers the
+   seam's line under it and leaves a strip of felt clear above and below
+   it (railButtonPx). Its buttons are plain icons in the glass's ink; the
+   stage's main action is filled in the accent, an acting seat's in its
+   colour. Tilted, the dock lies on the table's plane with the mat
+   (LegacyBoardChrome's rail plane). */
+.ptcgsim-table-rail__dock {
+  --dock-fill: var(--color-accent-fill);
+  --dock-fill-hover: var(--color-accent-fill-hover);
+  --dock-edge: var(--chrome-glass-edge);
+
+  display: flex;
+  flex: none;
+  align-items: center;
+  /* GAP_PX and DOCK_PAD_PX in TableRail.tsx; the edge is drawn inside, so
+     the dock is its buttons and its padding tall. */
+  gap: 2px;
+  padding: 2px;
+  border: 0;
+  border-radius: calc(var(--radius-control) + 2px);
+  background: var(--chrome-glass);
+  box-shadow:
+    inset 0 0 0 1px var(--dock-edge),
+    var(--chrome-glass-shadow);
+  -webkit-backdrop-filter: var(--chrome-glass-blur);
+  backdrop-filter: var(--chrome-glass-blur);
+  pointer-events: auto;
+}
+
+/* Acting for the other seat (a turned-around table): the dock is ringed
+   in its colour, and its main action filled in it. */
+.ptcgsim-table-rail__dock[data-seat='opponent'] {
+  --dock-fill: color-mix(in oklab, var(--color-opponent) 82%, black);
+  --dock-fill-hover: color-mix(in oklab, var(--color-opponent) 72%, black);
+  --dock-edge: color-mix(in oklab, var(--color-opponent) 75%, transparent);
+}
+
+.ptcgsim-table-rail .ptcgsim-rail-button {
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  box-shadow: none;
+  color: var(--chrome-ink);
+}
+
+/* Under a finger each button is a 44px target: 44px wide
+   (RAIL_TOUCH_TARGET_PX, which the rail fits its actions by), and its
+   target reaching into the felt clear above and below the slim dock
+   (TOUCH_SEAM_BAND_PX). */
+@media (pointer: coarse) {
+  .ptcgsim-table-rail .ptcgsim-rail-button,
+  .ptcgsim-table-rail__actions[data-labels='none'] .ptcgsim-rail-button {
+    min-width: 44px;
+  }
+
+  .ptcgsim-table-rail .ptcgsim-rail-button::before {
+    content: '';
+    position: absolute;
+    inset: min(0px, calc((var(--rail-height, 36px) - 44px) / 2)) 0;
+  }
+}
+
+.ptcgsim-table-rail .ptcgsim-rail-button[data-tone='primary'] {
+  background: var(--dock-fill);
+  color: var(--color-text-on-accent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ptcgsim-table-rail .ptcgsim-rail-button:hover {
+    background-color: var(--chrome-hover);
+    box-shadow: none;
+    color: var(--chrome-ink);
+  }
+
+  .ptcgsim-table-rail .ptcgsim-rail-button[data-tone='primary']:hover {
+    background-color: var(--dock-fill-hover);
+    color: var(--color-text-on-accent);
+  }
+
+  .ptcgsim-table-rail .ptcgsim-rail-button[aria-disabled='true']:hover {
+    background-color: transparent;
+  }
+}
+
+.ptcgsim-table-rail .ptcgsim-rail-button[aria-expanded='true'],
+.ptcgsim-table-rail .ptcgsim-rail-button[aria-pressed='true'] {
+  background-color: var(--chrome-pressed);
+}
+
+/* The keyboard's ring in the glass's ink, from just inside the button
+   over the dock's 2px padding: on the glass in every look, never on the
+   felt beside the dock. */
+.ptcgsim-table-rail .ptcgsim-rail-button:focus-visible {
+  outline: 3px solid var(--chrome-ink);
+  outline-offset: -1px;
+  box-shadow: none;
+}
+
+.ptcgsim-table-rail .ptcgsim-rail-button[data-tone='primary']:focus-visible {
+  outline-color: var(--color-text-on-accent);
+}
+
+/* Nothing to do now: faded, still in its place. */
+.ptcgsim-table-rail .ptcgsim-rail-button[aria-disabled='true'] {
+  opacity: 0.4;
+}

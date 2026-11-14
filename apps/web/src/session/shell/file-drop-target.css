@@ -1,0 +1,32 @@
+/* A file held over the page: where it can be dropped (FileDropTarget). It
+   never takes the pointer, so the drop lands on the window behind it. */
+.ptcgsim-file-drop {
+  position: fixed;
+  inset: 0;
+  z-index: 9800;
+  display: grid;
+  place-items: center;
+  border: 3px dashed var(--color-border-strong);
+  background: color-mix(in srgb, var(--color-desk, #2a2622) 55%, transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity calc(var(--duration-fast) * var(--motion-scale, 1))
+    var(--ease-out);
+}
+
+.ptcgsim-file-drop[data-over='true'] {
+  opacity: 1;
+  transition-duration: calc(var(--duration-normal) * var(--motion-scale, 1));
+}
+
+.ptcgsim-file-drop__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-2);
+  color: var(--color-text);
+  font-weight: var(--weight-semibold);
+}
